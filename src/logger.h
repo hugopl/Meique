@@ -1,0 +1,81 @@
+/*
+   This library is free software; you can redistribute it and/or
+   modify it under the terms of the GNU Library General Public
+   License version 2 as published by the Free Software Foundation.
+
+   This library is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   Library General Public License for more details.
+
+   You should have received a copy of the GNU Library General Public License
+   along with this library; see the file COPYING.LIB.  If not, write to
+   the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
+   Boston, MA 02110-1301, USA.
+*/
+
+#ifndef LOGGER_H
+#define LOGGER_H
+
+#include <iostream>
+
+#ifndef NOCOLOR
+    #define COLOR_END "\033[0m"
+    #define COLOR_WHITE "\033[1;37m"
+    #define COLOR_YELLOW "\033[1;33m"
+    #define COLOR_GREEN "\033[0;32m"
+    #define COLOR_RED "\033[0;31m"
+#else
+    #define COLOR_END ""
+    #define COLOR_WHITE ""
+    #define COLOR_YELLOW ""
+    #define COLOR_GREEN ""
+    #define COLOR_RED ""
+#endif
+
+class BaseLogger
+{
+public:
+    BaseLogger(std::ostream& output, const char* tag) : m_stream(output), m_tag(tag) {}
+    ~BaseLogger()
+    {
+        m_stream << std::endl;
+    }
+    std::ostream& operator()() { return m_stream; };
+    template <typename T>
+    std::ostream& operator<<(const T& t) { return m_stream << m_tag << " :: " << t; }
+private:
+    std::ostream& m_stream;
+    const char* m_tag;
+};
+
+class Warn : public BaseLogger
+{
+public:
+    Warn() : BaseLogger(std::cout, COLOR_YELLOW "WARNING" COLOR_END) {}
+};
+
+struct MeiqueError
+{
+    MeiqueError();
+    static bool errorAlreadyset;
+};
+
+class Error : public BaseLogger
+{
+public:
+    Error() : BaseLogger(std::cerr, COLOR_RED "ERROR" COLOR_END) {}
+    ~Error()
+    {
+        if (!MeiqueError::errorAlreadyset)
+            throw MeiqueError();
+    }
+};
+
+class Notice : public BaseLogger
+{
+public:
+    Notice() : BaseLogger(std::cout, COLOR_GREEN "NOTICE" COLOR_END) {}
+};
+
+#endif // LOGGER_H
