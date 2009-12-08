@@ -22,7 +22,8 @@ void Config::parseArguments(int argc, char** argv)
         // non-option, must be the source directory
         if (arg.find("--") != 0) {
             if (m_mainArgument.size()) {
-                Error() << "Source directory already specified! This is probably not what you want [source directory: " << m_mainArgument << "]";
+                // TODO: A better error message
+                Error() << "The main argument already was specified [main argument: " << m_mainArgument << "].";
             } else {
                 m_mainArgument = arg;
             }
