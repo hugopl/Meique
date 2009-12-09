@@ -35,4 +35,13 @@ static void readLuaTable(lua_State* L, int tableIndex, Map& map)
     }
 }
 
+template<typename T>
+T GetField(lua_State* L, const char* key, int tableIndex = -1)
+{
+    lua_getfield(L, tableIndex, key);
+    T retval = lua_tocpp<T>(L, -1);
+    lua_pop(L, 1);
+    return retval;
+}
+
 #endif
