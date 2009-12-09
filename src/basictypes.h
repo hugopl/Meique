@@ -5,5 +5,6 @@
 #include <string>
 
 typedef std::map<std::string, std::string> StringMap;
+typedef std::map<int, std::string> IntStrMap;
 
 #endif

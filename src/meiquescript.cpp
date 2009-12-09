@@ -1,6 +1,7 @@
 #include "meiquescript.h"
 #include "config.h"
 #include "logger.h"
+#include "luacpputil.h"
 #include <string>
 #include <cstring>
 #include <cassert>
@@ -97,7 +98,7 @@ const char meiqueApi[] = "\n"
 "\n"
 "_meiqueOptions = {}\n"
 "function AddOption(name, description, defaultValue)\n"
-"    AbortIf(name, \"An option can't have a nil name\")\n"
+"    AbortIf(name == nil, \"An option can't have a nil name\")\n"
 "    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
@@ -165,4 +166,28 @@ void MeiqueScript::exportApi()
     translateLuaError(sanityCheck);
     assert(!sanityCheck);
     lua_settop(m_L, 0);
+}
+
+template<>
+inline MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
+{
+    if (!lua_istable(L, index))
+        Error() << "Expecting a lua table! Got " << lua_typename(L, lua_type(L, index));
+    IntStrMap map;
+    readLuaTable(L, index, map);
+    return MeiqueOption(map[1], map[2]);
+}
+
+OptionsMap MeiqueScript::options()
+{
+    if (m_options.size())
+        return m_options;
+
+    lua_getglobal(m_L, "_meiqueOptions");
+    int tableIndex = lua_gettop(m_L);
+    if (!lua_istable(m_L, tableIndex))
+        Error() << "Your script is evil! Do not declare variables starting with _meique!";
+
+    readLuaTable(m_L, tableIndex, m_options);
+    return m_options;
 }
