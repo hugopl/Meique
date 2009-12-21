@@ -29,6 +29,9 @@ public:
     operator lua_State*() { return m_L; }
 private:
     lua_State* m_L;
+
+    LuaState(const LuaState&);
+    LuaState& operator=(const LuaState&);
 };
 
 #endif
