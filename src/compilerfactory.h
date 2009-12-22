@@ -16,23 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef COMPILERFACTORY_H
+#define COMPILERFACTORY_H
 
 class Compiler;
-class Meique
+class CompilerFactory
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-private:
-    Config m_config;
-    Compiler* m_compiler;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
+    /// Returns a null terminated array of available compiler names.
+    static const char** availableCompilers();
+    static Compiler* createCompiler(const char* compiler);
+    static Compiler* findCompiler();
 };
-
 #endif

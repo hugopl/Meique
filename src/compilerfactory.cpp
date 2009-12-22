@@ -16,23 +16,32 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#include "compilerfactory.h"
+#include <cstring>
+#include "gcc.h"
+#include "logger.h"
 
-class Compiler;
-class Meique
+const char** CompilerFactory::availableCompilers()
 {
-public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-private:
-    Config m_config;
-    Compiler* m_compiler;
+    static const char* compilers[] = {"Gcc", 0};
+    return compilers;
+}
 
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-};
+Compiler* CompilerFactory::createCompiler(const char* compiler)
+{
+    if (!std::strcmp(compiler, "Gcc"))
+        return new Gcc;
+    return 0;
+}
 
-#endif
+Compiler* CompilerFactory::findCompiler()
+{
+    const char** compilers = availableCompilers();
+    for (int i = 0; compilers[i]; ++i) {
+        Compiler* compiler = createCompiler(compilers[i]);
+        if (compiler->isAvailable())
+            return compiler;
+        delete compiler;
+    }
+    Error() << "No usable compilers were found!";
+}

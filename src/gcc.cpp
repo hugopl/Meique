@@ -16,23 +16,9 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#include "gcc.h"
 
-class Compiler;
-class Meique
+bool Gcc::isAvailable() const
 {
-public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-private:
-    Config m_config;
-    Compiler* m_compiler;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-};
-
-#endif
+    return true;
+}

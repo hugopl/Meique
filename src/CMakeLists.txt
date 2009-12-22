@@ -9,6 +9,8 @@ meiquescript.cpp
 config.cpp
 luastate.cpp
 cppstringssux.cpp
+compilerfactory.cpp
+gcc.cpp
 )
 
 include_directories(${LUA_INCLUDE_DIR})

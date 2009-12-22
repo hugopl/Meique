@@ -19,9 +19,16 @@
 #include "meique.h"
 #include "logger.h"
 #include "meiquescript.h"
+#include "compiler.h"
+#include "compilerfactory.h"
 
-Meique::Meique(int argc, char** argv) : m_config(argc, argv)
+Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0)
 {
+}
+
+Meique::~Meique()
+{
+    delete m_compiler;
 }
 
 void Meique::exec()
@@ -31,6 +38,8 @@ void Meique::exec()
     if (m_config.isInConfigureMode()) {
         Notice() << "Configuring project...";
         checkOptionsAgainstArguments(script.options());
+        m_compiler = CompilerFactory::findCompiler();
+        m_config.setCompiler(m_compiler->name());
     }
     m_config.saveCache();
 }

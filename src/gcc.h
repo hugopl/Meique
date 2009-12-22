@@ -16,23 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef GCC_H
+#define GCC_H
+#include "compiler.h"
 
-class Compiler;
-class Meique
+class Gcc : public Compiler
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-private:
-    Config m_config;
-    Compiler* m_compiler;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
+    const char* name() const { return "Gcc"; }
+    bool isAvailable() const;
 };
 
 #endif
