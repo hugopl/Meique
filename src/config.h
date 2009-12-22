@@ -22,7 +22,8 @@
 #include "basictypes.h"
 
 #define MEIQUECACHE "meiquecache.lua"
-
+#define CFG_SOURCE_ROOT "sourceRoot"
+#define CFG_COMPILER "compiler"
 struct lua_State;
 
 class Config
@@ -38,14 +39,16 @@ public:
 
     std::string mainArgument() const { return m_mainArgument; }
     StringMap arguments() const { return m_args; }
-    std::string sourceRoot() const { return m_sourceRoot; }
+    std::string sourceRoot() const { return m_meiqueConfig.at(CFG_SOURCE_ROOT); }
+    std::string compiler() const { return m_meiqueConfig.at(CFG_COMPILER); }
+    void setCompiler(const std::string& name) { m_meiqueConfig[CFG_COMPILER] = name; }
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
     bool isInBuildMode() const { return m_mode == BuildMode; }
     void setUserOptions(const StringMap& userOptions);
     void saveCache();
 private:
     std::string m_mainArgument;
-    std::string m_sourceRoot;
+    StringMap m_meiqueConfig;
     Mode m_mode;
     StringMap m_args;
     StringMap m_userOptions;

@@ -57,7 +57,7 @@ void Config::parseArguments(int argc, char** argv)
     }
 
     if (m_mode == ConfigureMode)
-        m_sourceRoot = m_mainArgument;
+        m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument;
 }
 
 void Config::detectMode()
@@ -116,11 +116,14 @@ void Config::saveCache()
                 "}\n\n";
     }
 
-    std::string sourceRoot(m_sourceRoot);
-    stringReplace(sourceRoot, "\"", "\\\"");
-    file << "meiqueConfig {\n"
-            "    sourceRoot = \"" << sourceRoot << "\"\n"
-            "}\n\n";
+    file << "meiqueConfig {\n";
+    it = m_meiqueConfig.begin();
+    for (; it != m_meiqueConfig.end(); ++it) {
+        std::string value = it->second;
+        stringReplace(value, "\"", "\\\"");
+        file << "    " << it->first << " = \"" << value << "\",\n";
+    }
+    file << "}\n\n";
 
 }
 
@@ -136,7 +139,7 @@ int Config::readOption(lua_State* L)
 int Config::readMeiqueConfig(lua_State* L)
 {
     Config* self = getSelf(L);
-    self->m_sourceRoot = GetField<std::string>(L, "sourceRoot");
+    readLuaTable(L, lua_gettop(L), self->m_meiqueConfig);
     return 0;
 }
 
