@@ -20,6 +20,7 @@
 #define LUACPPUTIL_H
 
 #include <string>
+#include <cassert>
 extern "C" {
 #include <lua.h>
 }
@@ -44,6 +45,7 @@ inline int lua_tocpp<int>(lua_State* L, int index)
 template<typename Map>
 static void readLuaTable(lua_State* L, int tableIndex, Map& map)
 {
+    assert(tableIndex >= 0);
     lua_pushnil(L);  /* first key */
     while (lua_next(L, tableIndex) != 0) {
         typename Map::key_type key = lua_tocpp<typename Map::key_type>(L, -2);
