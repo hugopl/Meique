@@ -20,6 +20,7 @@
 #define LOGGER_H
 
 #include <iostream>
+#include <list>
 
 #ifndef NOCOLOR
     #define COLOR_END "\033[0m"
@@ -50,6 +51,20 @@ private:
     std::ostream& m_stream;
     const char* m_tag;
 };
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
+{
+    out << '[';
+    if (list.size()) {
+        out << list.front();
+        typename std::list<T>::const_iterator it = ++list.begin();
+        for (; it != list.end(); ++it)
+            out << ", " << *it;
+    }
+    out << ']';
+    return out;
+}
 
 class Warn : public BaseLogger
 {
