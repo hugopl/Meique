@@ -20,6 +20,7 @@
 #define LUACPPUTIL_H
 
 #include <string>
+#include <list>
 #include <cassert>
 extern "C" {
 #include <lua.h>
@@ -46,11 +47,27 @@ template<typename Map>
 static void readLuaTable(lua_State* L, int tableIndex, Map& map)
 {
     assert(tableIndex >= 0);
+    assert(lua_istable(L, tableIndex));
+
     lua_pushnil(L);  /* first key */
     while (lua_next(L, tableIndex) != 0) {
         typename Map::key_type key = lua_tocpp<typename Map::key_type>(L, -2);
         typename Map::mapped_type value = lua_tocpp<typename Map::mapped_type>(L, lua_gettop(L));
         map[key] = value;
+        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+}
+
+template<typename List>
+static void readLuaList(lua_State* L, int tableIndex, List& list)
+{
+    assert(tableIndex >= 0);
+    assert(lua_istable(L, tableIndex));
+
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, tableIndex) != 0) {
+        typename List::value_type value = lua_tocpp<typename List::value_type>(L, lua_gettop(L));
+        list.push_back(value);
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 }
