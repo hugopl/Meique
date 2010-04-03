@@ -127,7 +127,7 @@ MeiqueScript::MeiqueScript(const Config& config)
     translateLuaError(luaL_loadfile(m_L, m_scriptName.c_str()));
 }
 
-int meiqueErrorHandler(lua_State* L)
+static int meiqueErrorHandler(lua_State* L)
 {
     int level = 2;
     lua_Debug ar;
@@ -187,7 +187,7 @@ void MeiqueScript::exportApi()
 }
 
 template<>
-inline MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
+MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
 {
     if (!lua_istable(L, index))
         Error() << "Expecting a lua table! Got " << lua_typename(L, lua_type(L, index));
