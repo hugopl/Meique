@@ -42,7 +42,7 @@ void Config::parseArguments(int argc, char** argv)
         if (arg.find("--") != 0) {
             if (m_mainArgument.size()) {
                 // TODO: A better error message
-                Error() << "The main argument already was specified [main argument: " << m_mainArgument << "].";
+                Error() << "The main argument was already specified [main argument: " << m_mainArgument << "].";
             } else {
                 m_mainArgument = arg;
             }
@@ -50,14 +50,14 @@ void Config::parseArguments(int argc, char** argv)
             arg.erase(0, 2);
             size_t equalPos = arg.find("=");
             if (equalPos == std::string::npos)
-                m_args.insert(std::make_pair(arg, std::string()));
+                m_args[arg] = std::string();
             else
-                m_args.insert(std::make_pair(arg.substr(0, equalPos), arg.substr(equalPos+1, arg.size()-equalPos)));
+                m_args[arg.substr(0, equalPos)] = arg.substr(equalPos + 1, arg.size() - equalPos);
         }
     }
 
     if (m_mode == ConfigureMode)
-        m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument;
+        m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument.empty() ? "." : m_mainArgument;
 }
 
 void Config::detectMode()
