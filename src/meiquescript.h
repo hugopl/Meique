@@ -22,7 +22,9 @@
 #include <string>
 #include "basictypes.h"
 #include "luastate.h"
+#include <list>
 
+class Target;
 class Config;
 
 struct MeiqueOption
@@ -39,12 +41,19 @@ class MeiqueScript
 {
 public:
     MeiqueScript(const Config& config);
+    ~MeiqueScript();
     void exec();
     OptionsMap options();
+    const Config& config() const { return m_config; }
+    Target* getTarget(const std::string& name);
+    TargetList targets() const;
+    lua_State* luaState() { return m_L; }
 private:
     LuaState m_L;
     std::string m_scriptName;
     OptionsMap m_options;
+    TargetsMap m_targets;
+    const Config& m_config;
 
     // disable copy
     MeiqueScript(const MeiqueScript&);
@@ -52,6 +61,7 @@ private:
 
     void translateLuaError(int code);
     void exportApi();
+    void extractTargets();
 };
 
 #endif

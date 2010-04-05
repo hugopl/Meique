@@ -21,6 +21,7 @@
 #include "meiquescript.h"
 #include "compiler.h"
 #include "compilerfactory.h"
+#include "target.h"
 
 Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0)
 {
@@ -40,6 +41,12 @@ void Meique::exec()
         checkOptionsAgainstArguments(script.options());
         m_compiler = CompilerFactory::findCompiler();
         m_config.setCompiler(m_compiler->name());
+    } else {
+        m_compiler = CompilerFactory::createCompiler(m_config.compiler());
+        std::string target = m_config.mainArgument();
+        if (target.empty())
+            target = "all";
+        script.getTarget(target)->run(m_compiler);
     }
     m_config.saveCache();
 }
@@ -59,5 +66,3 @@ void Meique::checkOptionsAgainstArguments(const OptionsMap& options)
     }
     m_config.setUserOptions(userOptions);
 }
-
-

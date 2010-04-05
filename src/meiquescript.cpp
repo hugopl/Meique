@@ -29,6 +29,16 @@ extern "C" {
 #include <lualib.h>
 #include <lua.h>
 }
+#include "target.h"
+#include "compilabletarget.h"
+#include "librarytarget.h"
+#include "customtarget.h"
+
+enum TargetTypes {
+    COMPILABLE_TARGET = 1,
+    LIBRARY_TARGET,
+    CUSTOM_TARGET
+};
 
 const char meiqueApi[] = "\n"
 "function AbortIf(var, message, level)\n"
@@ -45,9 +55,10 @@ const char meiqueApi[] = "\n"
 "    o = {}\n"
 "    setmetatable(o, Target)\n"
 "    Target.__index = Target\n"
-"    o._files = {}\n"
-"    o._name = name\n"
-"    _meiqueAllTargets[name] = o\n"
+"    if type(name) ~= \"table\" then\n"
+"        o._files = {}\n"
+"        _meiqueAllTargets[tostring(name)] = o\n"
+"    end\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -65,6 +76,7 @@ const char meiqueApi[] = "\n"
 "    setmetatable(o, self)\n"
 "    self.__index = self\n"
 "    o._func = func\n"
+"    o._type = 3\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -78,6 +90,7 @@ const char meiqueApi[] = "\n"
 "    o._incDirs = {}\n"
 "    o._libDirs = {}\n"
 "    o._linkLibraries = {}\n"
+"    o._type = 1\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -111,6 +124,7 @@ const char meiqueApi[] = "\n"
 "    setmetatable(o, self)\n"
 "    self.__index = self\n"
 "    o._flags = flags\n"
+"    o._type = 2\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -120,11 +134,18 @@ const char meiqueApi[] = "\n"
 "    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
-MeiqueScript::MeiqueScript(const Config& config)
+MeiqueScript::MeiqueScript(const Config& config) : m_config(config)
 {
     exportApi();
-    m_scriptName = config.sourceRoot()+"/meique.lua";
+    m_scriptName = m_config.sourceRoot()+"/meique.lua";
     translateLuaError(luaL_loadfile(m_L, m_scriptName.c_str()));
+}
+
+MeiqueScript::~MeiqueScript()
+{
+    TargetsMap::const_iterator it = m_targets.begin();
+    for (; it != m_targets.end(); ++it)
+        delete it->second;
 }
 
 static int meiqueErrorHandler(lua_State* L)
@@ -150,6 +171,9 @@ void MeiqueScript::exec()
     lua_insert(m_L, errorIndex);
     int errorCode = lua_pcall(m_L, 0, 0, 1);
     translateLuaError(errorCode);
+
+    if (m_config.isInBuildMode())
+        extractTargets();
 }
 
 void MeiqueScript::translateLuaError(int code)
@@ -208,4 +232,60 @@ OptionsMap MeiqueScript::options()
 
     readLuaTable(m_L, tableIndex, m_options);
     return m_options;
+}
+
+void MeiqueScript::extractTargets()
+{
+    lua_getglobal(m_L, "_meiqueAllTargets");
+    int tableIndex = lua_gettop(m_L);
+    lua_pushnil(m_L);  /* first key */
+    while (lua_next(m_L, tableIndex) != 0) {
+        // Get target type
+        lua_getfield(m_L, -1, "_type");
+        int targetType = lua_tocpp<int>(m_L, -1);
+        lua_pop(m_L, 1);
+
+        std::string targetName = lua_tocpp<std::string>(m_L, -2);
+
+        Target* target;
+        switch (targetType) {
+            case COMPILABLE_TARGET:
+                target = new CompilableTarget(targetName, this);
+                break;
+            case LIBRARY_TARGET:
+                target = new LibraryTarget(targetName, this);
+                break;
+            case CUSTOM_TARGET:
+                target = new CustomTarget(targetName, this);
+                break;
+            default:
+                Error() << "Unknown target type for target " << targetName;
+                break;
+        };
+        lua_pushlightuserdata(m_L, (void*) target);
+        lua_insert(m_L, -2);
+        lua_settable(m_L, LUA_REGISTRYINDEX);
+        m_targets[targetName] = target;
+    }
+    // Create special "all" target.
+    if (m_targets["all"])
+        Error() << "You can't define a target with the name \"all\"! It's a reserved target name.";
+     m_targets["all"] = new Target("all", this);
+}
+
+Target* MeiqueScript::getTarget(const std::string& name)
+{
+    TargetsMap::const_iterator it = m_targets.find(name);
+    if (it == m_targets.end())
+        Error() << "Target \"" << name << "\" not found!";
+    return it->second;
+}
+
+TargetList MeiqueScript::targets() const
+{
+    TargetList list;
+    TargetsMap::const_iterator it = m_targets.begin();
+    for (; it != m_targets.end(); ++it)
+        list.push_back(it->second);
+    return list;
 }

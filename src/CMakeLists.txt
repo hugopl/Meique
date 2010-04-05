@@ -11,8 +11,16 @@ luastate.cpp
 cppstringssux.cpp
 compilerfactory.cpp
 gcc.cpp
+target.cpp
+compilabletarget.cpp
+librarytarget.cpp
+customtarget.cpp
+os_unix.cpp
 )
+
+add_definitions("-Wall")
 
 include_directories(${LUA_INCLUDE_DIR})
 add_executable(meique ${meique_SRC})
 target_link_libraries(meique ${LUA_LIBRARIES})
+install(TARGETS meique DESTINATION bin)

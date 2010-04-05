@@ -20,9 +20,15 @@
 #define BASICTYPES_H
 
 #include <map>
+#include <list>
 #include <string>
+
+class Target;
 
 typedef std::map<std::string, std::string> StringMap;
 typedef std::map<int, std::string> IntStrMap;
+typedef std::list<std::string> StringList;
+typedef std::map<std::string, Target*> TargetsMap;
+typedef std::list<Target*> TargetList;
 
 #endif

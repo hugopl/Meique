@@ -19,6 +19,8 @@
 #ifndef COMPILER_H
 #define COMPILER_H
 
+#include "basictypes.h"
+
 /**
 *   Interface for all compiler implementations.
 */
@@ -28,6 +30,8 @@ public:
     virtual ~Compiler() {}
     virtual const char* name() const = 0;
     virtual bool isAvailable() const = 0;
+    virtual bool compile(const std::string& fileName, const std::string& output) const = 0;
+    virtual void link(const StringList& objects) const = 0;
 };
 
 #endif
