@@ -27,9 +27,9 @@ const char** CompilerFactory::availableCompilers()
     return compilers;
 }
 
-Compiler* CompilerFactory::createCompiler(const char* compiler)
+Compiler* CompilerFactory::createCompiler(const std::string& compiler)
 {
-    if (!std::strcmp(compiler, "Gcc"))
+    if (compiler == "Gcc")
         return new Gcc;
     return 0;
 }
@@ -44,4 +44,5 @@ Compiler* CompilerFactory::findCompiler()
         delete compiler;
     }
     Error() << "No usable compilers were found!";
+    return 0;
 }

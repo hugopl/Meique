@@ -19,13 +19,15 @@
 #ifndef COMPILERFACTORY_H
 #define COMPILERFACTORY_H
 
+#include <string>
+
 class Compiler;
 class CompilerFactory
 {
 public:
     /// Returns a null terminated array of available compiler names.
     static const char** availableCompilers();
-    static Compiler* createCompiler(const char* compiler);
+    static Compiler* createCompiler(const std::string& compiler);
     static Compiler* findCompiler();
 };
 #endif
