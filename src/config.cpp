@@ -56,8 +56,15 @@ void Config::parseArguments(int argc, char** argv)
         }
     }
 
-    if (m_mode == ConfigureMode)
-        m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument.empty() ? "." : m_mainArgument;
+    if (m_mode == ConfigureMode) {
+        if (!m_mainArgument.empty()) {
+            if (*(--m_mainArgument.end()) != '/')
+                m_mainArgument += '/';
+            m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument;
+        } else {
+            m_meiqueConfig[CFG_SOURCE_ROOT] = "./";
+        }
+    }
 }
 
 void Config::detectMode()
