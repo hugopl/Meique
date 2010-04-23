@@ -134,6 +134,12 @@ void Config::saveCache()
 
 }
 
+bool Config::hasArgument(const std::string& arg) const
+{
+    StringMap::const_iterator it = m_args.find(arg);
+    return it != m_args.end();
+}
+
 int Config::readOption(lua_State* L)
 {
     Config* self = getSelf(L);

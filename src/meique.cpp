@@ -22,6 +22,8 @@
 #include "compiler.h"
 #include "compilerfactory.h"
 #include "target.h"
+// TODO: Integrate the version number on build system
+#define MEIQUE_VERSION "0.1"
 
 Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0)
 {
@@ -34,9 +36,21 @@ Meique::~Meique()
 
 void Meique::exec()
 {
+    if (m_config.hasArgument("version")) {
+        showVersion();
+        return;
+    } else if (m_config.isInConfigureMode()
+               && m_config.mainArgument().empty()
+               && m_config.hasArgument("help")) {
+        showHelp();
+        return;
+    }
+
     MeiqueScript script(m_config);
     script.exec();
-    if (m_config.isInConfigureMode()) {
+    if (m_config.hasArgument("help")) {
+        showHelp(script.options());
+    } else if (m_config.isInConfigureMode()) {
         Notice() << "Configuring project...";
         checkOptionsAgainstArguments(script.options());
         m_compiler = CompilerFactory::findCompiler();
@@ -65,4 +79,35 @@ void Meique::checkOptionsAgainstArguments(const OptionsMap& options)
         userOptions[it->first] = it->second;
     }
     m_config.setUserOptions(userOptions);
+}
+
+void Meique::showVersion()
+{
+    std::cout << "Meique version " MEIQUE_VERSION << std::endl;
+    std::cout << "Copyright 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>\n";
+}
+
+void Meique::showHelp(const OptionsMap& options)
+{
+    std::cout << "Use meique OPTIONS TARGET\n\n";
+    std::cout << "When in configure mode, TARGET is the directory of meique.lua file.\n";
+    std::cout << "When in build mode, TARGET is the target name.\n\n";
+    std::cout << "General options:\n";
+    std::cout << " --help                             Print this message and exit.\n";
+    std::cout << " --version                          Print the version number of meique and exit.\n";
+    if (options.size()) {
+        std::cout << "Config mode options for this project:\n";
+        OptionsMap::const_iterator it = options.begin();
+        for (; it != options.end(); ++it) {
+            std::cout << "  --" << std::left;
+            std::cout.width(32);
+            std::cout << it->first;
+            std::cout << it->second.description;
+            if (!it->second.defaultValue.empty())
+                std::cout << " [default value: " << it->second.defaultValue << ']';
+            std::cout << std::endl;
+        }
+    }
+    std::cout << "Build mode options:\n";
+    std::cout << " -jN                                Allow N jobs at once.\n";
 }

@@ -28,6 +28,8 @@ public:
     Meique(int argc, char** argv);
     ~Meique();
     void exec();
+    void showVersion();
+    void showHelp(const OptionsMap& options = OptionsMap());
 private:
     Config m_config;
     Compiler* m_compiler;

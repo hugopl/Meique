@@ -46,6 +46,7 @@ public:
     bool isInBuildMode() const { return m_mode == BuildMode; }
     void setUserOptions(const StringMap& userOptions);
     void saveCache();
+    bool hasArgument(const std::string& arg) const;
 private:
     std::string m_mainArgument;
     StringMap m_meiqueConfig;
