@@ -15,6 +15,9 @@ void CompilableTarget::doRun(Compiler* compiler)
     StringList files;
     readLuaList(luaState(), lua_gettop(luaState()), files);
 
+    if (files.empty())
+        Error() << "Compilable target '" << name() << "' has no files!";
+
     StringList objects;
     StringList::const_iterator it = files.begin();
     for (; it != files.end(); ++it) {
@@ -25,7 +28,7 @@ void CompilableTarget::doRun(Compiler* compiler)
             Error() << "Compilation fail!";
         objects.push_back(output);
     }
-    compiler->link(objects);
+    compiler->link(name(), objects);
     // send them to the compiler
 }
 
