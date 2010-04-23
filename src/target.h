@@ -16,6 +16,7 @@ public:
     void run(Compiler* compiler);
     lua_State* luaState();
     const Config& config() const;
+    const std::string& name() const { return m_name; }
 protected:
     virtual void doRun(Compiler* compiler);
     void getLuaField(const char* field);
