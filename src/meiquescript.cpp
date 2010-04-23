@@ -137,7 +137,7 @@ const char meiqueApi[] = "\n"
 MeiqueScript::MeiqueScript(const Config& config) : m_config(config)
 {
     exportApi();
-    m_scriptName = m_config.sourceRoot()+"/meique.lua";
+    m_scriptName = m_config.sourceRoot()+"meique.lua";
     translateLuaError(luaL_loadfile(m_L, m_scriptName.c_str()));
 }
 
