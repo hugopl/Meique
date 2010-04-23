@@ -16,6 +16,7 @@ int exec(const std::string& cmd, const StringList& args)
         cmdline += *it;
     }
 
+    Notice() << cmdline;
     return system(cmdline.c_str());
 }
 

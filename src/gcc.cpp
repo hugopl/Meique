@@ -29,14 +29,18 @@ bool Gcc::compile(const std::string& fileName, const std::string& output) const
 {
     // TODO: Identify what to use, g++ or gcc
     StringList args;
+    args.push_back("-c");
     args.push_back(fileName);
     args.push_back("-o");
     args.push_back(output);
     return !OS::exec("g++", args);
 }
 
-void Gcc::link(const StringList& objects) const
+void Gcc::link(const std::string& output, const StringList& objects) const
 {
-    Warn() << "Eis que vou linkar " << objects;
+    StringList args = objects;
+    args.push_back("-o");
+    args.push_back(output);
+    OS::exec("g++", args);
 }
 

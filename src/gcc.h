@@ -26,7 +26,7 @@ public:
     const char* name() const { return "Gcc"; }
     bool isAvailable() const;
     bool compile(const std::string& fileName, const std::string& output) const;
-    void link(const StringList& objects) const;
+    void link(const std::string& output, const StringList& objects) const;
 };
 
 #endif

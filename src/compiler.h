@@ -31,7 +31,7 @@ public:
     virtual const char* name() const = 0;
     virtual bool isAvailable() const = 0;
     virtual bool compile(const std::string& fileName, const std::string& output) const = 0;
-    virtual void link(const StringList& objects) const = 0;
+    virtual void link(const std::string& output, const StringList& objects) const = 0;
 };
 
 #endif
