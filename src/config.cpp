@@ -26,7 +26,9 @@
 extern "C" {
 #include <lualib.h>
 #include <lauxlib.h>
-};
+}
+
+#include "os.h"
 
 Config::Config(int argc, char** argv)
 {
@@ -58,11 +60,13 @@ void Config::parseArguments(int argc, char** argv)
 
     if (m_mode == ConfigureMode) {
         if (!m_mainArgument.empty()) {
+            if (m_mainArgument[0] != '/')
+                m_mainArgument = OS::pwd() + m_mainArgument;
             if (*(--m_mainArgument.end()) != '/')
                 m_mainArgument += '/';
             m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument;
         } else {
-            m_meiqueConfig[CFG_SOURCE_ROOT] = "./";
+            m_meiqueConfig[CFG_SOURCE_ROOT] = OS::pwd();
         }
     }
 }

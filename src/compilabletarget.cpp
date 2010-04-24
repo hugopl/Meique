@@ -3,6 +3,7 @@
 #include "compiler.h"
 #include "logger.h"
 #include "config.h"
+#include "os.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script) : Target(targetName, script)
 {
@@ -18,12 +19,7 @@ void CompilableTarget::doRun(Compiler* compiler)
     if (files.empty())
         Error() << "Compilable target '" << name() << "' has no files!";
 
-    getLuaField("_dir");
-    std::string sourceDir(lua_tocpp<std::string>(luaState(), -1));
-    lua_pop(luaState(), 1);
-    if (!sourceDir.empty())
-        sourceDir += '/';
-    sourceDir = config().sourceRoot() + sourceDir;
+    std::string sourceDir = config().sourceRoot() + directory();
 
     StringList objects;
     StringList::const_iterator it = files.begin();

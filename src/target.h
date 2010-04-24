@@ -17,11 +17,13 @@ public:
     lua_State* luaState();
     const Config& config() const;
     const std::string& name() const { return m_name; }
+    const std::string& directory();
 protected:
     virtual void doRun(Compiler* compiler);
     void getLuaField(const char* field);
 private:
     std::string m_name;
+    std::string m_directory;
     MeiqueScript* m_script;
     TargetList m_dependencies;
     bool m_dependenciesCached;

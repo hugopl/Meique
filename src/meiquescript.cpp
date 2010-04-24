@@ -33,6 +33,7 @@ extern "C" {
 #include "compilabletarget.h"
 #include "librarytarget.h"
 #include "customtarget.h"
+#include "os.h"
 
 enum TargetTypes {
     COMPILABLE_TARGET = 1,
@@ -178,6 +179,7 @@ static int meiqueErrorHandler(lua_State* L)
 
 void MeiqueScript::exec()
 {
+    OS::ChangeWorkingDirectory dirChanger(m_config.sourceRoot());
     int errorIndex = lua_gettop(m_L);
     lua_pushcfunction(m_L, meiqueErrorHandler);
     lua_insert(m_L, errorIndex);
@@ -259,7 +261,7 @@ void MeiqueScript::extractTargets()
 
         std::string targetName = lua_tocpp<std::string>(m_L, -2);
 
-        Target* target;
+        Target* target = 0;
         switch (targetType) {
             case COMPILABLE_TARGET:
                 target = new CompilableTarget(targetName, this);
