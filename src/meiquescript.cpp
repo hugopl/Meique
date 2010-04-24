@@ -41,7 +41,7 @@ enum TargetTypes {
 };
 
 const char meiqueApi[] = "\n"
-"function AbortIf(var, message, level)\n"
+"function abortIf(var, message)\n"
 "    if var then\n"
 "       error(message, 0)\n"
 "    end\n"
@@ -51,7 +51,7 @@ const char meiqueApi[] = "\n"
 "_meiqueAllTargets = {}\n"
 "\n"
 "function Target:new(name)\n"
-"    AbortIf(name == nil and name ~= Target, \"Target name can't be nil\")\n"
+"    abortIf(name == nil and name ~= Target, \"Target name can't be nil\")\n"
 "    o = {}\n"
 "    setmetatable(o, Target)\n"
 "    Target.__index = Target\n"
@@ -129,8 +129,8 @@ const char meiqueApi[] = "\n"
 "end\n"
 "\n"
 "_meiqueOptions = {}\n"
-"function AddOption(name, description, defaultValue)\n"
-"    AbortIf(name == nil, \"An option can't have a nil name\")\n"
+"function addOption(name, description, defaultValue)\n"
+"    abortIf(name == nil, \"An option can't have a nil name\")\n"
 "    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
