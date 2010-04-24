@@ -16,6 +16,7 @@ compilabletarget.cpp
 librarytarget.cpp
 customtarget.cpp
 os_unix.cpp
+filehash.cpp
 )
 
 add_definitions("-Wall")
