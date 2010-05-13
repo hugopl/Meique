@@ -61,4 +61,12 @@ void mkdir(const std::string& dir)
         meiqueMkdir(dir);
 }
 
+bool fileExists(const std::string& fileName)
+{
+    struct stat fileAtt;
+    if (::stat(fileName.c_str(), &fileAtt) != 0)
+        return false;
+    return S_ISREG(fileAtt.st_mode);
+}
+
 }

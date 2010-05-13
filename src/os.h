@@ -12,6 +12,8 @@ namespace OS
     std::string pwd();
     /// Like mkdir -p.
     void mkdir(const std::string& dir);
+    /// Returns true if \p fileName exists.
+    bool fileExists(const std::string& fileName);
 
     class ChangeWorkingDirectory
     {
