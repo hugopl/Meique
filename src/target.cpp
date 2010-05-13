@@ -55,7 +55,7 @@ lua_State* Target::luaState()
     return m_script->luaState();
 }
 
-const Config& Target::config() const
+Config& Target::config()
 {
     return m_script->config();
 }

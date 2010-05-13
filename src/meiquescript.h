@@ -40,11 +40,11 @@ typedef std::map<std::string, MeiqueOption> OptionsMap;
 class MeiqueScript
 {
 public:
-    MeiqueScript(const Config& config);
+    MeiqueScript(Config& config);
     ~MeiqueScript();
     void exec();
     OptionsMap options();
-    const Config& config() const { return m_config; }
+    Config& config() { return m_config; }
     Target* getTarget(const std::string& name);
     TargetList targets() const;
     lua_State* luaState() { return m_L; }
@@ -53,7 +53,7 @@ private:
     std::string m_scriptName;
     OptionsMap m_options;
     TargetsMap m_targets;
-    const Config& m_config;
+    Config& m_config;
 
     // disable copy
     MeiqueScript(const MeiqueScript&);

@@ -147,7 +147,7 @@ const char meiqueApi[] = "\n"
 "    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
-MeiqueScript::MeiqueScript(const Config& config) : m_config(config)
+MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
     m_scriptName = m_config.sourceRoot()+"meique.lua";

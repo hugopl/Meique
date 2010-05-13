@@ -15,7 +15,7 @@ public:
     TargetList dependencies();
     void run(Compiler* compiler);
     lua_State* luaState();
-    const Config& config() const;
+    Config& config();
     const std::string& name() const { return m_name; }
     const std::string& directory();
 protected:

@@ -4,6 +4,7 @@
 #include "logger.h"
 #include "config.h"
 #include "os.h"
+#include "filehash.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script) : Target(targetName, script)
 {
@@ -26,8 +27,13 @@ void CompilableTarget::doRun(Compiler* compiler)
     for (; it != files.end(); ++it) {
         std::string source = sourceDir + *it;
         std::string output = *it + ".o";
-        if (!compiler->compile(source, output))
-            Error() << "Compilation fail!";
+
+        std::string hash = FileHash(source).toString();
+        if (!OS::fileExists(output) || hash != config().fileHash(source)) {
+            if (!compiler->compile(source, output))
+                Error() << "Compilation fail!";
+        }
+        config().setFileHash(source, hash);
         objects.push_back(output);
     }
     compiler->link(name(), objects);
