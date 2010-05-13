@@ -28,7 +28,7 @@
 class FileHash
 {
 public:
-    FileHash(const std::string& fileName);
+    explicit FileHash(const std::string& fileName);
     static FileHash fromString(const std::string& hash);
     bool operator==(const FileHash& other) const;
     bool operator!=(const FileHash& other) const;
