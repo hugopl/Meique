@@ -158,8 +158,8 @@ bool Config::hasArgument(const std::string& arg) const
 int Config::readOption(lua_State* L)
 {
     Config* self = getSelf(L);
-    std::string name = GetField<std::string>(L, "name");
-    std::string value = GetField<std::string>(L, "value");
+    std::string name = getField<std::string>(L, "name");
+    std::string value = getField<std::string>(L, "value");
     self->m_userOptions[name] = value;
     return 0;
 }
@@ -174,8 +174,8 @@ int Config::readMeiqueConfig(lua_State* L)
 int Config::readFileHash(lua_State* L)
 {
     Config* self = getSelf(L);
-    std::string name = GetField<std::string>(L, "file");
-    std::string value = GetField<std::string>(L, "hash");
+    std::string name = getField<std::string>(L, "file");
+    std::string value = getField<std::string>(L, "hash");
     self->m_fileHashes[name] = value;
     return 0;
 }

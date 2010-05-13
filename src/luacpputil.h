@@ -73,7 +73,7 @@ static void readLuaList(lua_State* L, int tableIndex, List& list)
 }
 
 template<typename T>
-T GetField(lua_State* L, const char* key, int tableIndex = -1)
+T getField(lua_State* L, const char* key, int tableIndex = -1)
 {
     lua_getfield(L, tableIndex, key);
     T retval = lua_tocpp<T>(L, -1);
