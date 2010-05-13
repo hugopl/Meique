@@ -88,6 +88,7 @@ void Config::loadCache()
     LuaState L;
     lua_register(L, "userOption", &readOption);
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
+    lua_register(L, "fileHash", &readFileHash);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
     lua_pushlightuserdata(L, (void *)L);
     lua_pushlightuserdata(L, (void *)this);
@@ -136,6 +137,16 @@ void Config::saveCache()
     }
     file << "}\n\n";
 
+    it = m_fileHashes.begin();
+    for (; it != m_fileHashes.end(); ++it) {
+        std::string name(it->first);
+        stringReplace(name, "\"", "\\\"");
+        std::string value(it->second);
+        file << "fileHash {\n"
+                "    file = \"" << name << "\",\n"
+                "    hash = \"" << value << "\"\n"
+                "}\n\n";
+    }
 }
 
 bool Config::hasArgument(const std::string& arg) const
@@ -158,6 +169,29 @@ int Config::readMeiqueConfig(lua_State* L)
     Config* self = getSelf(L);
     readLuaTable(L, lua_gettop(L), self->m_meiqueConfig);
     return 0;
+}
+
+int Config::readFileHash(lua_State* L)
+{
+    Config* self = getSelf(L);
+    std::string name = GetField<std::string>(L, "file");
+    std::string value = GetField<std::string>(L, "hash");
+    self->m_fileHashes[name] = value;
+    return 0;
+}
+
+void Config::setFileHash(const std::string& fileName, const std::string& hash)
+{
+    if (!fileName.empty() && !hash.empty())
+        m_fileHashes[fileName] = hash;
+}
+
+std::string Config::fileHash(const std::string& fileName) const
+{
+    StringMap::const_iterator it = m_fileHashes.find(fileName);
+    if (it != m_fileHashes.end())
+        return it->second;
+    return std::string();
 }
 
 void Config::setUserOptions(const StringMap& userOptions)

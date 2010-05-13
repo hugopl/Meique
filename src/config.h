@@ -47,12 +47,15 @@ public:
     void setUserOptions(const StringMap& userOptions);
     void saveCache();
     bool hasArgument(const std::string& arg) const;
+    void setFileHash(const std::string& fileName, const std::string& hash);
+    std::string fileHash(const std::string& fileName) const;
 private:
     std::string m_mainArgument;
     StringMap m_meiqueConfig;
     Mode m_mode;
     StringMap m_args;
     StringMap m_userOptions;
+    StringMap m_fileHashes;
 
     // disable copy
     Config(const Config&);
@@ -62,6 +65,7 @@ private:
     void loadCache();
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
+    static int readFileHash(lua_State* L);
 };
 
 #endif
