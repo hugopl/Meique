@@ -20,6 +20,7 @@
 #define LUACPPUTIL_H
 
 #include <string>
+#include <sstream>
 #include <list>
 #include <cassert>
 extern "C" {
@@ -80,5 +81,21 @@ T getField(lua_State* L, const char* key, int tableIndex = -1)
     lua_pop(L, 1);
     return retval;
 }
+
+class LuaError
+{
+public:
+    LuaError(lua_State* L) : m_L(L) {}
+    ~LuaError()
+    {
+        lua_pushstring(m_L, m_stream.str().c_str());
+        lua_error(m_L);
+    }
+    template <typename T>
+    std::ostream& operator<<(const T& t) { return m_stream << t; }
+private:
+    lua_State* m_L;
+    std::ostringstream m_stream;
+};
 
 #endif
