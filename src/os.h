@@ -5,7 +5,7 @@
 
 namespace OS
 {
-    int exec(const std::string& cmd, const StringList& args);
+    int exec(const std::string& cmd, const StringList& args, std::string* output = 0);
     /// Like cd command.
     void cd(const std::string& dir);
     /// Like pwd command.

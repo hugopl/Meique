@@ -5,11 +5,12 @@
 #include <errno.h>
 #include "logger.h"
 #include <stdlib.h>
+#include <cstdio>
 
 namespace OS
 {
 
-int exec(const std::string& cmd, const StringList& args)
+int exec(const std::string& cmd, const StringList& args, std::string* output)
 {
     std::string cmdline = cmd;
     StringList::const_iterator it = args.begin();
@@ -19,7 +20,19 @@ int exec(const std::string& cmd, const StringList& args)
     }
 
     Notice() << cmdline;
-    return system(cmdline.c_str());
+
+    if (!output) {
+        // keep it simple, stupid!
+        return system(cmdline.c_str());
+    } else {
+        FILE* pipeFp = popen(cmdline.c_str(), "r");
+        if (!pipeFp)
+            Error() << "Error running command: " << cmdline;
+        char buffer[512];
+        while(std::fgets(buffer, sizeof(buffer), pipeFp))
+            *output += buffer;
+        return pclose(pipeFp);
+    }
 }
 
 void cd(const std::string& dir)
