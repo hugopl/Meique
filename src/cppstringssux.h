@@ -22,5 +22,10 @@
 #include <string>
 
 void stringReplace(std::string& str, const std::string& substr, const std::string& replace);
+/**
+*   Remove the left and right blank caracters of the string \p str
+*   \param  str The string that will be "trim'ed".
+*/
+void trim(std::string& str);
 
 #endif

@@ -29,3 +29,13 @@ void stringReplace(std::string& str, const std::string& substr, const std::strin
     }
 }
 
+void trim(std::string& str)
+{
+    size_t e = str.find_last_not_of(" \t\r\n");
+    if (e != std::string::npos)
+        str.erase(e + 1);
+    size_t s = str.find_first_not_of(" \t\r\n");
+    if (s != std::string::npos)
+        str.erase(0, s);
+}
+
