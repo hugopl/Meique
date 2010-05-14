@@ -34,6 +34,7 @@ extern "C" {
 #include "librarytarget.h"
 #include "customtarget.h"
 #include "os.h"
+#include "cppstringssux.h"
 
 enum TargetTypes {
     COMPILABLE_TARGET = 1,
@@ -221,6 +222,7 @@ void MeiqueScript::exportApi()
     sanityCheck = lua_pcall(m_L, 0, 0, 0);
     translateLuaError(sanityCheck);
     assert(!sanityCheck);
+    lua_register(m_L, "findPackage", &findPackage);
     lua_settop(m_L, 0);
 }
 
@@ -302,4 +304,55 @@ TargetList MeiqueScript::targets() const
     for (; it != m_targets.end(); ++it)
         list.push_back(it->second);
     return list;
+}
+
+int MeiqueScript::findPackage(lua_State* L)
+{
+    const char PKGCONFIG[] = "pkg-config";
+    int nargs = lua_gettop(L);
+    if (nargs < 1 || nargs > 2)
+        LuaError(L) << "findPackage(name [, version]) called with wrong number of arguments.";
+    std::string pkgName = lua_tocpp<std::string>(L, 1);
+    std::string version = lua_tocpp<std::string>(L, 2);
+    StringList args;
+
+    // Check if the package exists
+    args.push_back(pkgName);
+    // TODO: Interpret >, >=, < and <= from the version expression
+    if (!version.empty())
+        args.push_back("--atleast-version="+version);
+    int retval = OS::exec(PKGCONFIG, args);
+    if (retval)
+        LuaError(L) << pkgName << " package not found!";
+
+    // Get config options
+    const char* pkgConfigCmds[] = {"--libs-only-L",
+                                   "--libs-only-l",
+                                   "--libs-only-other",
+                                   "--cflags-only-I",
+                                   "--cflags-only-other",
+                                   "--modversion"
+                                  };
+    const char* names[] = {"libraryPaths",
+                           "linkLibraries",
+                           "linkerFlags",
+                           "includePaths",
+                           "cflags",
+                           "version"
+                          };
+    const int N = sizeof(pkgConfigCmds)/sizeof(const char*);
+    lua_settop(L, 0);
+    lua_createtable(L, 0, N);
+    assert(sizeof(pkgConfigCmds) == sizeof(names));
+    for (int i = 0; i < N; ++i) {
+        std::string output;
+        args.push_back(pkgConfigCmds[i]);
+        OS::exec("pkg-config", args, &output);
+        args.pop_back();
+        trim(output);
+        lua_pushstring(L, output.c_str());
+        lua_setfield(L, -2, names[i]);
+    }
+
+    return 1;
 }

@@ -62,6 +62,8 @@ private:
     void translateLuaError(int code);
     void exportApi();
     void extractTargets();
+
+    static int findPackage(lua_State* L);
 };
 
 #endif
