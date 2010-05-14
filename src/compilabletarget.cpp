@@ -22,6 +22,7 @@ void CompilableTarget::doRun(Compiler* compiler)
 
     std::string sourceDir = config().sourceRoot() + directory();
 
+    bool needLink = false;
     StringList objects;
     StringList::const_iterator it = files.begin();
     for (; it != files.end(); ++it) {
@@ -32,11 +33,14 @@ void CompilableTarget::doRun(Compiler* compiler)
         if (!OS::fileExists(output) || hash != config().fileHash(source)) {
             if (!compiler->compile(source, output))
                 Error() << "Compilation fail!";
+            needLink = true;
         }
         config().setFileHash(source, hash);
         objects.push_back(output);
     }
-    compiler->link(name(), objects);
+
+    if (needLink)
+        compiler->link(name(), objects);
     // send them to the compiler
 }
 
