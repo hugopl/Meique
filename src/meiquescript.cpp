@@ -34,7 +34,7 @@ extern "C" {
 #include "librarytarget.h"
 #include "customtarget.h"
 #include "os.h"
-#include "cppstringssux.h"
+#include "stdstringsux.h"
 
 enum TargetTypes {
     COMPILABLE_TARGET = 1,

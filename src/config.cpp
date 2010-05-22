@@ -20,7 +20,7 @@
 #include "logger.h"
 #include "luastate.h"
 #include "luacpputil.h"
-#include "cppstringssux.h"
+#include "stdstringsux.h"
 #include <fstream>
 
 extern "C" {

@@ -16,26 +16,16 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "cppstringssux.h"
+#ifndef STDSTRINGSUX_H
+#define STDSTRINGSUX_H
 
-void stringReplace(std::string& str, const std::string& substr, const std::string& replace) {
-    size_t n = 0;
-    while (true) {
-        n = str.find(substr, n);
-        if (n == std::string::npos)
-            break;
-        str.replace(n, substr.length(), replace);
-        n += substr.length()+1;
-    }
-}
+#include <string>
 
-void trim(std::string& str)
-{
-    size_t e = str.find_last_not_of(" \t\r\n");
-    if (e != std::string::npos)
-        str.erase(e + 1);
-    size_t s = str.find_first_not_of(" \t\r\n");
-    if (s != std::string::npos)
-        str.erase(0, s);
-}
+void stringReplace(std::string& str, const std::string& substr, const std::string& replace);
+/**
+*   Remove the left and right blank caracters of the string \p str
+*   \param  str The string that will be "trim'ed".
+*/
+void trim(std::string& str);
 
+#endif

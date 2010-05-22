@@ -8,7 +8,7 @@ logger.cpp
 meiquescript.cpp
 config.cpp
 luastate.cpp
-cppstringssux.cpp
+stdstringsux.cpp
 compilerfactory.cpp
 gcc.cpp
 target.cpp
