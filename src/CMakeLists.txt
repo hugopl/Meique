@@ -11,6 +11,7 @@ luastate.cpp
 stdstringsux.cpp
 compilerfactory.cpp
 gcc.cpp
+compileroptions.cpp
 target.cpp
 compilabletarget.cpp
 librarytarget.cpp

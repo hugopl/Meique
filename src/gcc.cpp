@@ -19,13 +19,14 @@
 #include "gcc.h"
 #include "logger.h"
 #include "os.h"
+#include "compileroptions.h"
 
 bool Gcc::isAvailable() const
 {
     return true;
 }
 
-bool Gcc::compile(const std::string& fileName, const std::string& output) const
+bool Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
     // TODO: Identify what to use, g++ or gcc
     StringList args;
@@ -33,6 +34,12 @@ bool Gcc::compile(const std::string& fileName, const std::string& output) const
     args.push_back(fileName);
     args.push_back("-o");
     args.push_back(output);
+    StringList flags = options->customFlags();
+    std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+    StringList paths = options->includePaths();
+    std::copy(paths.begin(), paths.end(), std::back_inserter(args));
+    StringList defines = options->defines();
+    std::copy(defines.begin(), defines.end(), std::back_inserter(args));
     return !OS::exec("g++", args);
 }
 

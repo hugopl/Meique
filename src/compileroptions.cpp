@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,17 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef GCC_H
-#define GCC_H
-#include "compiler.h"
+#include "compileroptions.h"
 
-class Gcc : public Compiler
+void CompilerOptions::addIncludePath(const std::string& includePath)
 {
-public:
-    const char* name() const { return "Gcc"; }
-    bool isAvailable() const;
-    bool compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
-    void link(const std::string& output, const StringList& objects) const;
-};
+    m_includePaths.push_back(includePath);
+}
 
-#endif
+void CompilerOptions::addDefine(const std::string& define)
+{
+    m_defines.push_back(define);
+}
+
+void CompilerOptions::addFlag(const std::string& customFlag)
+{
+    m_customFlags.push_back(customFlag);
+}
+
