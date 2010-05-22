@@ -29,7 +29,7 @@ private:
     bool m_dependenciesCached;
 
     Target(const Target&);
-//     Target operator=(const Target&);
+    Target operator=(const Target&);
 };
 
 #endif
