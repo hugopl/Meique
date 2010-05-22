@@ -21,6 +21,7 @@
 
 #include <iostream>
 #include <list>
+#include <map>
 
 #ifndef NOCOLOR
     #define COLOR_END "\033[0m"
@@ -63,6 +64,20 @@ inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
             out << ", " << *it;
     }
     out << ']';
+    return out;
+}
+
+template<typename K, typename V>
+inline std::ostream& operator<<(std::ostream& out, const std::map<K, V>& map)
+{
+    out << '{';
+    if (map.size()) {
+        out << map.begin()->first << " -> " << map.begin()->second;
+        typename std::map<K, V>::const_iterator it = ++map.begin();
+        for (; it != map.end(); ++it)
+            out << ", " << it->first << " -> " << it->second;
+    }
+    out << '}';
     return out;
 }
 
