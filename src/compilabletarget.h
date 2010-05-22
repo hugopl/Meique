@@ -3,6 +3,7 @@
 
 #include "target.h"
 
+class LinkerOptions;
 class CompilerOptions;
 
 class CompilableTarget : public Target
@@ -14,7 +15,8 @@ protected:
     void doRun(Compiler* compiler);
 private:
     CompilerOptions* m_compilerOptions;
-    void fillCompilerOptions();
+    LinkerOptions* m_linkerOptions;
+    void fillCompilerAndLinkerOptions();
 };
 
 #endif

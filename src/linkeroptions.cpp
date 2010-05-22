@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,17 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef GCC_H
-#define GCC_H
-#include "compiler.h"
+#include "linkeroptions.h"
 
-class Gcc : public Compiler
+void LinkerOptions::addCustomFlag(const std::string& customFlag)
 {
-public:
-    const char* name() const { return "Gcc"; }
-    bool isAvailable() const;
-    bool compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
-    void link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
-};
+    m_customFlags.push_back(customFlag);
+}
 
-#endif
+void LinkerOptions::addLibrary(const std::string& library)
+{
+    m_libraries.push_back(library);
+}
+
+void LinkerOptions::addLibraryPath(const std::string& libraryPath)
+{
+    m_libraryPaths.push_back(libraryPath);
+}

@@ -12,6 +12,7 @@ stdstringsux.cpp
 compilerfactory.cpp
 gcc.cpp
 compileroptions.cpp
+linkeroptions.cpp
 target.cpp
 compilabletarget.cpp
 librarytarget.cpp

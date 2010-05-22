@@ -20,6 +20,7 @@
 #include "logger.h"
 #include "os.h"
 #include "compileroptions.h"
+#include "linkeroptions.h"
 
 bool Gcc::isAvailable() const
 {
@@ -43,11 +44,17 @@ bool Gcc::compile(const std::string& fileName, const std::string& output, const 
     return !OS::exec("g++", args);
 }
 
-void Gcc::link(const std::string& output, const StringList& objects) const
+void Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
     args.push_back("-o");
     args.push_back(output);
+    StringList flags = options->customFlags();
+    std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+    StringList paths = options->libraryPath();
+    std::copy(paths.begin(), paths.end(), std::back_inserter(args));
+    StringList libraries = options->libraries();
+    std::copy(libraries.begin(), libraries.end(), std::back_inserter(args));
     OS::exec("g++", args);
 }
 

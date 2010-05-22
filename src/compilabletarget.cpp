@@ -6,15 +6,17 @@
 #include "os.h"
 #include "filehash.h"
 #include "compileroptions.h"
+#include "linkeroptions.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
-    : Target(targetName, script), m_compilerOptions(0)
+    : Target(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
 {
 }
 
 CompilableTarget::~CompilableTarget()
 {
     delete m_compilerOptions;
+    delete m_linkerOptions;
 }
 
 void CompilableTarget::doRun(Compiler* compiler)
@@ -28,7 +30,7 @@ void CompilableTarget::doRun(Compiler* compiler)
         Error() << "Compilable target '" << name() << "' has no files!";
 
     if (!m_compilerOptions)
-        fillCompilerOptions();
+        fillCompilerAndLinkerOptions();
 
     std::string sourceDir = config().sourceRoot() + directory();
 
@@ -50,13 +52,14 @@ void CompilableTarget::doRun(Compiler* compiler)
     }
 
     if (needLink)
-        compiler->link(name(), objects);
+        compiler->link(name(), objects, m_linkerOptions);
     // send them to the compiler
 }
 
-void CompilableTarget::fillCompilerOptions()
+void CompilableTarget::fillCompilerAndLinkerOptions()
 {
     m_compilerOptions = new CompilerOptions;
+    m_linkerOptions = new LinkerOptions;
     getLuaField("_packages");
     lua_State* L = luaState();
     // loop on all used packages
@@ -68,10 +71,10 @@ void CompilableTarget::fillCompilerOptions()
         readLuaTable<StringMap>(L, lua_gettop(L), map);
 
         m_compilerOptions->addIncludePath(map["includePaths"]);
-        m_compilerOptions->addFlag(map["cflags"]);
+        m_compilerOptions->addCustomFlag(map["cflags"]);
+        m_linkerOptions->addCustomFlag(map["linkerFlags"]);
+        m_linkerOptions->addLibraryPath(map["libraryPaths"]);
+        m_linkerOptions->addLibrary(map["linkLibraries"]);
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
-
-
 }
-

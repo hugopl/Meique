@@ -29,7 +29,7 @@ public:
     StringList includePaths() const { return m_includePaths; }
     void addDefine(const std::string& define);
     StringList defines() const { return m_defines; }
-    void addFlag(const std::string& customFlag);
+    void addCustomFlag(const std::string& customFlag);
     StringList customFlags() const { return m_customFlags; }
 private:
     StringList m_includePaths;

@@ -16,20 +16,28 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "compileroptions.h"
+#ifndef LINKEROPTIONS_H
+#define LINKEROPTIONS_H
+#include "basictypes.h"
 
-void CompilerOptions::addIncludePath(const std::string& includePath)
+class LinkerOptions
 {
-    m_includePaths.push_back(includePath);
-}
+public:
+    LinkerOptions() {}
+    void addLibrary(const std::string& library);
+    StringList libraries() const { return m_libraries; }
+    void addLibraryPath(const std::string& libraryPath);
+    StringList libraryPath() const { return m_libraryPaths; }
+    void addCustomFlag(const std::string& customFlag);
+    StringList customFlags() const { return m_customFlags; }
+private:
 
-void CompilerOptions::addDefine(const std::string& define)
-{
-    m_defines.push_back(define);
-}
+    StringList m_libraries;
+    StringList m_libraryPaths;
+    StringList m_customFlags;
 
-void CompilerOptions::addCustomFlag(const std::string& customFlag)
-{
-    m_customFlags.push_back(customFlag);
-}
+    LinkerOptions(const LinkerOptions&);
+    LinkerOptions& operator=(const LinkerOptions&);
+};
 
+#endif // LINKEROPTIONS_H
