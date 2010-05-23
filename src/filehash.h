@@ -23,8 +23,8 @@
 
 /**
 *   Returns the hash of a file, this functions cache the results for faster access later.
+*   \note This function isn't thread safe.
 */
-
 std::string getFileHash(const std::string& fileName);
 
 #endif // FILEHASH_H

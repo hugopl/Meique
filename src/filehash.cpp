@@ -21,12 +21,19 @@
 #include <fstream>
 #include <sstream>
 #include <cstring>
+#include "basictypes.h"
 
 static std::string computeMd5(const std::string& fileName);
 
 std::string getFileHash(const std::string& fileName)
 {
-    return computeMd5(fileName);
+    static StringMap computedHashes;
+    StringMap::const_iterator it = computedHashes.find(fileName);
+    if (it != computedHashes.end())
+        return it->second;
+    std::string hash = computeMd5(fileName);
+    computedHashes[fileName] = hash;
+    return hash;
 }
 
 /*
