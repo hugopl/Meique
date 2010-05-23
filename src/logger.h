@@ -37,6 +37,8 @@
     #define COLOR_RED ""
 #endif
 
+extern bool verboseMode;
+
 class BaseLogger
 {
 public:
@@ -48,7 +50,7 @@ public:
     std::ostream& operator()() { return m_stream; };
     template <typename T>
     std::ostream& operator<<(const T& t) { return m_stream << m_tag << " :: " << t; }
-private:
+protected:
     std::ostream& m_stream;
     const char* m_tag;
 };
@@ -108,6 +110,33 @@ class Notice : public BaseLogger
 {
 public:
     Notice() : BaseLogger(std::cout, COLOR_GREEN "NOTICE" COLOR_END) {}
+};
+
+class Debug : public BaseLogger
+{
+public:
+    Debug() : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END) {}
+
+    template <typename T>
+    std::ostream& operator<<(const T& t)
+    {
+        if (verboseMode)
+            return BaseLogger::operator<<(t);
+        else
+            return m_devNull;
+    }
+
+private:
+    class DevNull : public std::ostream
+    {
+        template <typename T>
+        std::ostream& operator<<(const T&)
+        {
+            return *this;
+        }
+    };
+
+    DevNull m_devNull;
 };
 
 #endif // LOGGER_H

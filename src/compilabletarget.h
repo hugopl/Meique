@@ -34,7 +34,11 @@ protected:
 private:
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
+
+    bool hasRecompilationNeeds(const std::string& source, const std::string& output);
     void fillCompilerAndLinkerOptions();
+    StringSet getFileDependence(const std::string& source);
+    void preprocessFile(const std::string& source, StringSet* deps);
 };
 
 #endif

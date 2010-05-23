@@ -30,6 +30,8 @@ extern "C" {
 
 #include "os.h"
 
+bool verboseMode = true;
+
 Config::Config(int argc, char** argv)
 {
     detectMode();

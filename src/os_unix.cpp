@@ -37,11 +37,10 @@ int exec(const std::string& cmd, const StringList& args, std::string* output)
         cmdline += *it;
     }
 
-    Notice() << cmdline;
-
+    int exitCode;
     if (!output) {
         // keep it simple, stupid!
-        return system(cmdline.c_str());
+        exitCode = system(cmdline.c_str());
     } else {
         FILE* pipeFp = popen(cmdline.c_str(), "r");
         if (!pipeFp)
@@ -49,12 +48,15 @@ int exec(const std::string& cmd, const StringList& args, std::string* output)
         char buffer[512];
         while(std::fgets(buffer, sizeof(buffer), pipeFp))
             *output += buffer;
-        return pclose(pipeFp);
+        exitCode = pclose(pipeFp);
     }
+    Debug() << "[exit code: " << exitCode << "] " << cmdline;
+    return exitCode;
 }
 
 void cd(const std::string& dir)
 {
+    Debug() << "cd " << dir;
     if (::chdir(dir.c_str()) == -1)
         Error() << "Error changing to directory " << dir << '.';
 }

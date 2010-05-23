@@ -24,31 +24,9 @@
 
 static std::string computeMd5(const std::string& fileName);
 
-FileHash::FileHash(const std::string& fileName)
+std::string getFileHash(const std::string& fileName)
 {
-    m_hash = computeMd5(fileName);
-}
-
-bool FileHash::operator==(const FileHash& other) const
-{
-    return m_hash == other.m_hash;
-}
-
-bool FileHash::operator!=(const FileHash& other) const
-{
-    return m_hash != other.m_hash;
-}
-
-std::string FileHash::toString() const
-{
-    return m_hash;
-}
-
-FileHash FileHash::fromString(const std::string& hash)
-{
-    FileHash fileHash;
-    fileHash.m_hash = hash;
-    return fileHash;
+    return computeMd5(fileName);
 }
 
 /*

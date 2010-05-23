@@ -25,6 +25,8 @@
 #include "filehash.h"
 #include "compileroptions.h"
 #include "linkeroptions.h"
+#include "stdstringsux.h"
+#include <fstream>
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
     : Target(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
@@ -59,19 +61,91 @@ void CompilableTarget::doRun(Compiler* compiler)
         std::string source = sourceDir + *it;
         std::string output = *it + ".o";
 
-        std::string hash = FileHash(source).toString();
-        if (!OS::fileExists(output) || hash != config().fileHash(source)) {
+        if (hasRecompilationNeeds(source, output)) {
             if (!compiler->compile(source, output, m_compilerOptions))
                 Error() << "Compilation fail!";
             needLink = true;
         }
-        config().setFileHash(source, hash);
+        config().setFileHash(source, getFileHash(source));
         objects.push_back(output);
     }
 
     if (needLink)
         compiler->link(name(), objects, m_linkerOptions);
-    // send them to the compiler
+}
+
+bool CompilableTarget::hasRecompilationNeeds(const std::string& source, const std::string& output)
+{
+    if (!OS::fileExists(output))
+        return true;
+
+    if (getFileHash(source) != config().fileHash(source))
+        return true;
+
+    // Check if any include files has changed
+    StringSet checkedFiles;
+    checkedFiles.insert(source);
+    StringSet dependents = getFileDependence(source);
+    StringSet::const_iterator it = dependents.begin();
+    for (; it != dependents.end(); ++it) {
+        if (checkedFiles.find(*it) != checkedFiles.end())
+            continue;
+        if (getFileHash(*it) != config().fileHash(*it))
+            return true;
+        checkedFiles.insert(*it);
+    }
+    return false;
+}
+
+void CompilableTarget::preprocessFile(const std::string& source, StringSet* deps)
+{
+    std::pair<StringSet::iterator, bool> p = deps->insert(source);
+    if (!p.second)
+        return;
+
+    std::ifstream fp(source.c_str());
+    if (!fp) {
+        Debug() << "Include file not found: " << source;
+        return;
+    }
+
+    std::string buffer1;
+    std::string buffer2;
+
+    while (!fp.eof()) {
+        std::getline( fp, buffer1 );
+        trim( buffer1 );
+
+        if ( buffer1[ 0 ] != '#' )
+            continue;
+        buffer1.erase( 0, 1 );
+
+        while ( buffer1[ buffer1.size() - 1 ] == '\\' ) {
+            if ( fp.eof() )
+                return ;
+            std::getline( fp, buffer2 );
+            buffer1.erase( buffer1.size() - 1, 1 );
+            buffer1 += buffer2;
+            trim( buffer1 );
+        }
+
+        if ( buffer1.compare( 0, 7, "include" ) != 0 )
+            continue;
+        buffer1.erase( 0, 7 );
+        trim( buffer1 );
+        if ( buffer1[ 0 ] == '"' ) {
+            std::string includedFile = buffer1.substr(1, buffer1.size()-2);
+            preprocessFile(includedFile, deps);
+        }
+    }
+}
+
+StringSet CompilableTarget::getFileDependence(const std::string& source)
+{
+    OS::ChangeWorkingDirectory dirChanger(config().sourceRoot() + directory());
+    StringSet dependents;
+    preprocessFile(source, &dependents);
+    return dependents;
 }
 
 void CompilableTarget::fillCompilerAndLinkerOptions()

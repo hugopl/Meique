@@ -20,11 +20,13 @@
 #define BASICTYPES_H
 
 #include <map>
+#include <set>
 #include <list>
 #include <string>
 
 class Target;
 
+typedef std::set<std::string> StringSet;
 typedef std::map<std::string, std::string> StringMap;
 typedef std::map<int, std::string> IntStrMap;
 typedef std::list<std::string> StringList;

@@ -22,21 +22,9 @@
 #include <string>
 
 /**
-*   A file hash, it does not need to be unique, but capable of detect changes
-*   between different files.
+*   Returns the hash of a file, this functions cache the results for faster access later.
 */
-class FileHash
-{
-public:
-    explicit FileHash(const std::string& fileName);
-    static FileHash fromString(const std::string& hash);
-    bool operator==(const FileHash& other) const;
-    bool operator!=(const FileHash& other) const;
-    std::string toString() const;
-private:
-    std::string m_hash;
 
-    FileHash() {}
-};
+std::string getFileHash(const std::string& fileName);
 
 #endif // FILEHASH_H
