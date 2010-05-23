@@ -172,3 +172,14 @@ void CompilableTarget::fillCompilerAndLinkerOptions()
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 }
+
+void CompilableTarget::clean()
+{
+    // get sources
+    getLuaField("_files");
+    StringList files;
+    readLuaList(luaState(), lua_gettop(luaState()), files);
+    StringList::const_iterator it = files.begin();
+    for (; it != files.end(); ++it)
+        OS::rm(directory() + *it + ".o");
+}

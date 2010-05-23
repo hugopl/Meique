@@ -32,6 +32,8 @@ namespace OS
     void mkdir(const std::string& dir);
     /// Returns true if \p fileName exists.
     bool fileExists(const std::string& fileName);
+    /// Removes a file from file system, returns true on success.
+    bool rm(const std::string& fileName);
 
     class ChangeWorkingDirectory
     {

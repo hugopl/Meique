@@ -29,6 +29,7 @@ class CompilableTarget : public Target
 public:
     CompilableTarget(const std::string& targetName, MeiqueScript* script);
     ~CompilableTarget();
+    void clean();
 protected:
     void doRun(Compiler* compiler);
 private:

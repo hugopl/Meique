@@ -36,6 +36,7 @@ public:
     Config& config();
     const std::string& name() const { return m_name; }
     const std::string& directory();
+    virtual void clean() {}
 protected:
     virtual void doRun(Compiler* compiler);
     void getLuaField(const char* field);

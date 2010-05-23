@@ -102,4 +102,10 @@ bool fileExists(const std::string& fileName)
     return S_ISREG(fileAtt.st_mode);
 }
 
+bool rm(const std::string& fileName)
+{
+    Debug() << "rm " << fileName;
+    return !::unlink(fileName.c_str());
+}
+
 }

@@ -58,9 +58,16 @@ void Meique::exec()
     } else {
         m_compiler = CompilerFactory::createCompiler(m_config.compiler());
         std::string target = m_config.mainArgument();
-        if (target.empty())
-            target = "all";
-        script.getTarget(target)->run(m_compiler);
+        if (target == "clean") {
+            TargetList list = script.targets();
+            TargetList::iterator it = list.begin();
+            for (; it != list.end(); ++it)
+                (*it)->clean();
+        } else {
+            if (target.empty())
+                target = "all";
+            script.getTarget(target)->run(m_compiler);
+        }
     }
     m_config.saveCache();
 }
