@@ -69,6 +69,7 @@ const char meiqueApi[] = "\n"
 "    setmetatable(o, Target)\n"
 "    Target.__index = Target\n"
 "    if type(name) ~= \"table\" then\n"
+"        abortIf(name == 'all' or name == 'clean' or name == 'install', '\"all\", \"clean\" and \"install\" are reserved target names!')\n"
 "        o._files = {}\n"
 "        o._dir = table.concat(_meiqueCurrentDir, '/')\n"
 "        _meiqueAllTargets[tostring(name)] = o\n"
@@ -289,8 +290,6 @@ void MeiqueScript::extractTargets()
         m_targets[targetName] = target;
     }
     // Create special "all" target.
-    if (m_targets["all"])
-        Error() << "You can't define a target with the name \"all\"! It's a reserved target name.";
      m_targets["all"] = new Target("all", this);
 }
 
