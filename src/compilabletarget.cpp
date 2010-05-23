@@ -144,6 +144,8 @@ StringSet CompilableTarget::getFileDependence(const std::string& source)
 {
     OS::ChangeWorkingDirectory dirChanger(config().sourceRoot() + directory());
     StringSet dependents;
+    // FIXME: There is a large room for improviments here, we need to cache some results
+    //        to avoid doing a lot of things twice.
     preprocessFile(source, &dependents);
     return dependents;
 }
