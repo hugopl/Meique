@@ -22,6 +22,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include "os.h"
 
 #ifndef NOCOLOR
     #define COLOR_END "\033[0m"
@@ -37,22 +38,31 @@
     #define COLOR_RED ""
 #endif
 
-extern bool verboseMode;
+// definied in config.cpp
+extern int verboseMode;
 
 class BaseLogger
 {
 public:
-    BaseLogger(std::ostream& output, const char* tag) : m_stream(output), m_tag(tag) {}
+    BaseLogger(std::ostream& output, const char* tag, bool showPid = false) : m_stream(output), m_tag(tag), m_showPid(showPid) {}
     ~BaseLogger()
     {
         m_stream << std::endl;
     }
     std::ostream& operator()() { return m_stream; };
     template <typename T>
-    std::ostream& operator<<(const T& t) { return m_stream << m_tag << " :: " << t; }
+    std::ostream& operator<<(const T& t)
+    {
+        m_stream << m_tag;
+        if (m_showPid)
+            m_stream << " [" << OS::getPid() << "]";
+        return m_stream << " :: " << t;
+    }
+
 protected:
     std::ostream& m_stream;
     const char* m_tag;
+    bool m_showPid;
 };
 
 template<typename T>
@@ -115,12 +125,12 @@ public:
 class Debug : public BaseLogger
 {
 public:
-    Debug() : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END) {}
+    Debug(int level = 1) : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END, true), m_level(level) {}
 
     template <typename T>
     std::ostream& operator<<(const T& t)
     {
-        if (verboseMode)
+        if (verboseMode >= m_level)
             return BaseLogger::operator<<(t);
         else
             return m_devNull;
@@ -137,6 +147,7 @@ private:
     };
 
     DevNull m_devNull;
+    int m_level;
 };
 
 #endif // LOGGER_H

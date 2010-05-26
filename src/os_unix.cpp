@@ -87,7 +87,7 @@ static void meiqueMkdir(const std::string& dir)
 void mkdir(const std::string& dir)
 {
     if (dir.empty())
-        Error() << "Can't create an empty directory!";
+        return;
     else if (*(--dir.end()) == '/')
         meiqueMkdir(dir.substr(0, dir.size() - 1));
     else
@@ -106,6 +106,11 @@ bool rm(const std::string& fileName)
 {
     Debug() << "rm " << fileName;
     return !::unlink(fileName.c_str());
+}
+
+unsigned long getPid()
+{
+    return ::getpid();
 }
 
 }

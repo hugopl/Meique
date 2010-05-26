@@ -34,6 +34,8 @@ namespace OS
     bool fileExists(const std::string& fileName);
     /// Removes a file from file system, returns true on success.
     bool rm(const std::string& fileName);
+    /// Returns the current process id
+    unsigned long getPid();
 
     class ChangeWorkingDirectory
     {
