@@ -35,6 +35,7 @@ extern "C" {
 #include "customtarget.h"
 #include "os.h"
 #include "stdstringsux.h"
+#include "maintarget.h"
 
 enum TargetTypes {
     COMPILABLE_TARGET = 1,
@@ -290,7 +291,8 @@ void MeiqueScript::extractTargets()
         m_targets[targetName] = target;
     }
     // Create special "all" target.
-     m_targets["all"] = new Target("all", this);
+    Target* mainTarget = new MainTarget(this);
+    m_targets[mainTarget->name()] = mainTarget;
 }
 
 Target* MeiqueScript::getTarget(const std::string& name)

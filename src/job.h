@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,28 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef JOB_H
+#define JOB_H
+#include "basictypes.h"
 
-class JobManager;
-class Compiler;
-class Meique
+class Job
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-    void showVersion();
-    void showHelp(const OptionsMap& options = OptionsMap());
+    Job(const std::string& command, const StringList& args);
+    void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
+    std::string workingDirectory();
+    void run();
 private:
-    Config m_config;
-    Compiler* m_compiler;
-    JobManager* m_jobManager;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-    void getTargetJobQueues(Target* target);
+    std::string m_command;
+    StringList m_args;
+    std::string m_workingDir;
 };
 
-#endif
+#endif // JOB_H

@@ -14,11 +14,16 @@ gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp
 target.cpp
+luatarget.cpp
 compilabletarget.cpp
 librarytarget.cpp
 customtarget.cpp
+maintarget.cpp
 os_unix.cpp
 filehash.cpp
+job.cpp
+jobqueue.cpp
+jobmanager.cpp
 )
 
 add_definitions("-Wall")

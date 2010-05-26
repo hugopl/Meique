@@ -26,10 +26,12 @@
 #include "compileroptions.h"
 #include "linkeroptions.h"
 #include "stdstringsux.h"
+#include "jobqueue.h"
 #include <fstream>
+#include "job.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
-    : Target(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
+    : LuaTarget(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
 {
 }
 
@@ -39,7 +41,7 @@ CompilableTarget::~CompilableTarget()
     delete m_linkerOptions;
 }
 
-void CompilableTarget::doRun(Compiler* compiler)
+JobQueue* CompilableTarget::doRun(Compiler* compiler)
 {
     // get sources
     getLuaField("_files");
@@ -52,7 +54,9 @@ void CompilableTarget::doRun(Compiler* compiler)
     if (!m_compilerOptions)
         fillCompilerAndLinkerOptions();
 
+    JobQueue* queue = new JobQueue;
     std::string sourceDir = config().sourceRoot() + directory();
+    std::string buildDir = OS::pwd();
 
     bool needLink = false;
     StringList objects;
@@ -62,16 +66,21 @@ void CompilableTarget::doRun(Compiler* compiler)
         std::string output = *it + ".o";
 
         if (hasRecompilationNeeds(source, output)) {
-            if (!compiler->compile(source, output, m_compilerOptions))
-                Error() << "Compilation fail!";
+            Job* job = compiler->compile(source, output, m_compilerOptions);
+            job->setWorkingDirectory(buildDir);
+            queue->addJob(job);
             needLink = true;
         }
         config().setFileHash(source, getFileHash(source));
         objects.push_back(output);
     }
 
-    if (needLink)
-        compiler->link(name(), objects, m_linkerOptions);
+    if (needLink) {
+        Job* job = compiler->link(name(), objects, m_linkerOptions);
+        job->setWorkingDirectory(buildDir);
+        queue->addJob(job);
+    }
+    return queue;
 }
 
 bool CompilableTarget::hasRecompilationNeeds(const std::string& source, const std::string& output)

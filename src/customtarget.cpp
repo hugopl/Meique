@@ -17,7 +17,9 @@
 */
 
 #include "customtarget.h"
+#include "jobqueue.h"
 
-void CustomTarget::doRun(Compiler* compiler)
+JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
+    return new JobQueue;
 }

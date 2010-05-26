@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,28 +16,26 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef JOBQUEUE_H
+#define JOBQUEUE_H
 
-class JobManager;
-class Compiler;
-class Meique
+#include <list>
+
+class Job;
+
+class JobQueue
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-    void showVersion();
-    void showHelp(const OptionsMap& options = OptionsMap());
+    JobQueue();
+    ~JobQueue();
+    void addJob(Job* job);
+    Job* takeJob();
+    bool isEmpty() const { return m_jobs.empty(); }
 private:
-    Config m_config;
-    Compiler* m_compiler;
-    JobManager* m_jobManager;
+    std::list<Job*> m_jobs;
 
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-    void getTargetJobQueues(Target* target);
+    JobQueue(const JobQueue&);
+    JobQueue& operator=(const JobQueue&);
 };
 
-#endif
+#endif // JOBQUEUE_H

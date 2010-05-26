@@ -17,17 +17,16 @@
 */
 
 #include "gcc.h"
-#include "logger.h"
-#include "os.h"
 #include "compileroptions.h"
 #include "linkeroptions.h"
+#include "job.h"
 
 bool Gcc::isAvailable() const
 {
     return true;
 }
 
-bool Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
+Job* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
     // TODO: Identify what to use, g++ or gcc
     StringList args;
@@ -41,10 +40,10 @@ bool Gcc::compile(const std::string& fileName, const std::string& output, const 
     std::copy(paths.begin(), paths.end(), std::back_inserter(args));
     StringList defines = options->defines();
     std::copy(defines.begin(), defines.end(), std::back_inserter(args));
-    return !OS::exec("g++", args);
+    return new Job("g++", args);
 }
 
-void Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
+Job* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
     args.push_back("-o");
@@ -55,6 +54,6 @@ void Gcc::link(const std::string& output, const StringList& objects, const Linke
     std::copy(paths.begin(), paths.end(), std::back_inserter(args));
     StringList libraries = options->libraries();
     std::copy(libraries.begin(), libraries.end(), std::back_inserter(args));
-    OS::exec("g++", args);
+    return new Job("g++", args);
 }
 

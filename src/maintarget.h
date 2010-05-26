@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,28 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef MAINTARGET_H
+#define MAINTARGET_H
 
-class JobManager;
-class Compiler;
-class Meique
+#include "target.h"
+
+class MeiqueScript;
+
+class MainTarget : public Target
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-    void showVersion();
-    void showHelp(const OptionsMap& options = OptionsMap());
+    MainTarget(MeiqueScript* script);
+    TargetList dependencies();
+    const std::string directory();
 private:
-    Config m_config;
-    Compiler* m_compiler;
-    JobManager* m_jobManager;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-    void getTargetJobQueues(Target* target);
+    MeiqueScript* m_script;
 };
 
-#endif
+#endif // MAINTARGET_H

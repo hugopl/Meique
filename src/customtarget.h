@@ -18,14 +18,15 @@
 
 #ifndef CUSTOMTARGET_H
 #define CUSTOMTARGET_H
-#include "target.h"
 
-class CustomTarget : public Target
+#include "luatarget.h"
+
+class CustomTarget : public LuaTarget
 {
 public:
-    CustomTarget(const std::string& targetName, MeiqueScript* script) : Target(targetName, script) {}
+    CustomTarget(const std::string& targetName, MeiqueScript* script) : LuaTarget(targetName, script) {}
 protected:
-    virtual void doRun(Compiler* compiler);
+    JobQueue* doRun(Compiler* compiler);
 };
 
 #endif

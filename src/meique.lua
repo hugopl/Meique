@@ -1,6 +1,7 @@
 meique = Executable:new("meique")
 meique:usePackage(lua)
-meique:addFiles([[main.cpp
+meique:addFiles([[
+main.cpp
 meique.cpp
 logger.cpp
 meiquescript.cpp
@@ -12,8 +13,14 @@ gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp
 target.cpp
+luatarget.cpp
 compilabletarget.cpp
 librarytarget.cpp
 customtarget.cpp
+maintarget.cpp
 os_unix.cpp
-filehash.cpp]])
+filehash.cpp
+job.cpp
+jobqueue.cpp
+jobmanager.cpp
+]])

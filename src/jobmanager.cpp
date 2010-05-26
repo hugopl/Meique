@@ -16,28 +16,37 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "target.h"
+#include "jobmanager.h"
 #include "logger.h"
-#include "os.h"
 #include "jobqueue.h"
+#include "job.h"
 
-Target::Target(const std::string& name) : m_name(name)
+JobManager::~JobManager()
 {
+    std::list<JobQueue*>::iterator it = m_queues.begin();
+    for (; it != m_queues.end(); ++it)
+        delete *it;
 }
 
-Target::~Target()
+void JobManager::addJobQueue(JobQueue* queue)
 {
+    m_queues.push_back(queue);
 }
 
-JobQueue* Target::run(Compiler* compiler)
+void JobManager::processJobs(int n)
 {
-    Notice() << "Running target \"" << m_name << '"';
-    OS::mkdir(directory());
-    OS::ChangeWorkingDirectory dirChanger(directory());
-    return doRun(compiler);
+    Debug() << "process jobs, n: " << n;
+    // For now, just run the jobs...
+    while (!m_queues.empty()) {
+        Debug() << "queues size: " << m_queues.size();
+        JobQueue* queue = m_queues.front();
+        while (!queue->isEmpty()) {
+            Job* job = queue->takeJob();
+            job->run();
+            delete job;
+        }
+        delete queue;
+        m_queues.pop_front();
+    }
 }
 
-JobQueue* Target::doRun(Compiler*)
-{
-    return new JobQueue;
-}

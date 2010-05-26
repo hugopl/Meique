@@ -19,19 +19,19 @@
 #ifndef COMPILABLETARGET_H
 #define COMPILABLETARGET_H
 
-#include "target.h"
+#include "luatarget.h"
 
 class LinkerOptions;
 class CompilerOptions;
 
-class CompilableTarget : public Target
+class CompilableTarget : public LuaTarget
 {
 public:
     CompilableTarget(const std::string& targetName, MeiqueScript* script);
     ~CompilableTarget();
     void clean();
 protected:
-    void doRun(Compiler* compiler);
+    JobQueue* doRun(Compiler* compiler);
 private:
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;

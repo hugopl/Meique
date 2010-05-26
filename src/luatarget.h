@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,28 +16,32 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef MEIQUE_H
-#define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#ifndef LUATARGET_H
+#define LUATARGET_H
 
-class JobManager;
-class Compiler;
-class Meique
+#include "target.h"
+
+class Config;
+struct lua_State;
+class MeiqueScript;
+
+class LuaTarget : public Target
 {
 public:
-    Meique(int argc, char** argv);
-    ~Meique();
-    void exec();
-    void showVersion();
-    void showHelp(const OptionsMap& options = OptionsMap());
+    LuaTarget(const std::string& name, MeiqueScript* script);
+    TargetList dependencies();
+    const std::string directory();
+    lua_State* luaState();
+    Config& config();
+protected:
+    void getLuaField(const char* field);
+    JobQueue* doRun(Compiler* compiler);
 private:
-    Config m_config;
-    Compiler* m_compiler;
-    JobManager* m_jobManager;
-
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-    void getTargetJobQueues(Target* target);
+    std::string m_name;
+    MeiqueScript* m_script;
+    std::string m_directory;
+    TargetList m_dependencies;
+    bool m_dependenciesCached;
 };
 
-#endif
+#endif // LUATARGET_H

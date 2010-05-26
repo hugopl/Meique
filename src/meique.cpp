@@ -22,10 +22,11 @@
 #include "compiler.h"
 #include "compilerfactory.h"
 #include "target.h"
+#include "jobmanager.h"
 // TODO: Integrate the version number on build system
 #define MEIQUE_VERSION "0.1"
 
-Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0)
+Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0), m_jobManager(new JobManager)
 {
 }
 
@@ -66,7 +67,8 @@ void Meique::exec()
         } else {
             if (target.empty())
                 target = "all";
-            script.getTarget(target)->run(m_compiler);
+            getTargetJobQueues(script.getTarget(target));
+            m_jobManager->processJobs();
         }
     }
     m_config.saveCache();
@@ -117,4 +119,14 @@ void Meique::showHelp(const OptionsMap& options)
     }
     std::cout << "Build mode options:\n";
     std::cout << " -jN                                Allow N jobs at once.\n";
+}
+
+void Meique::getTargetJobQueues(Target* target)
+{
+    TargetList deps = target->dependencies();
+    TargetList::iterator it = deps.begin();
+    for (; it != deps.end(); ++it)
+        getTargetJobQueues(*it);
+
+    m_jobManager->addJobQueue(target->run(m_compiler));
 }

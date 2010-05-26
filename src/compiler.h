@@ -23,6 +23,7 @@
 
 class LinkerOptions;
 class CompilerOptions;
+class Job;
 
 /**
 *   Interface for all compiler implementations.
@@ -33,8 +34,8 @@ public:
     virtual ~Compiler() {}
     virtual const char* name() const = 0;
     virtual bool isAvailable() const = 0;
-    virtual bool compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
-    virtual void link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
+    virtual Job* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
+    virtual Job* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
 };
 
 #endif

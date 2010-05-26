@@ -25,8 +25,8 @@ class Gcc : public Compiler
 public:
     const char* name() const { return "Gcc"; }
     bool isAvailable() const;
-    bool compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
-    void link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
+    Job* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
+    Job* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
 };
 
 #endif
