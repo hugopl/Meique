@@ -22,6 +22,7 @@
 #include "luacpputil.h"
 #include "stdstringsux.h"
 #include <fstream>
+#include <sstream>
 
 extern "C" {
 #include <lualib.h>
@@ -30,12 +31,15 @@ extern "C" {
 
 #include "os.h"
 
-int verboseMode = 99;
+int verboseMode = 0;
 
 Config::Config(int argc, char** argv)
 {
     detectMode();
     parseArguments(argc, argv);
+    std::string verboseValue = OS::getEnv("VERBOSE");
+    std::istringstream s(verboseValue);
+    s >> verboseMode;
 }
 
 void Config::parseArguments(int argc, char** argv)

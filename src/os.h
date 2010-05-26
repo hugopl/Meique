@@ -36,6 +36,8 @@ namespace OS
     bool rm(const std::string& fileName);
     /// Returns the current process id
     unsigned long getPid();
+    /// Returns the value of an environment variable.
+    std::string getEnv(const std::string& variable);
 
     class ChangeWorkingDirectory
     {

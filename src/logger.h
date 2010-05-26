@@ -41,20 +41,31 @@
 // definied in config.cpp
 extern int verboseMode;
 
-class BaseLogger
+class BaseLogger : public std::ostream
 {
 public:
-    BaseLogger(std::ostream& output, const char* tag, bool showPid = false) : m_stream(output), m_tag(tag), m_showPid(showPid) {}
+    enum Options
+    {
+        None = 0,
+        ShowPid = 1,
+        Quiet = 2
+    };
+
+    BaseLogger(std::ostream& output, const char* tag, Options options = None) : m_stream(output), m_tag(tag), m_options(options) {}
     ~BaseLogger()
     {
+        if (m_options & Quiet)
+            return;
         m_stream << std::endl;
     }
     std::ostream& operator()() { return m_stream; };
     template <typename T>
     std::ostream& operator<<(const T& t)
     {
+        if (m_options & Quiet)
+            return *this;
         m_stream << m_tag;
-        if (m_showPid)
+        if (m_options & ShowPid)
             m_stream << " [" << OS::getPid() << "]";
         return m_stream << " :: " << t;
     }
@@ -62,7 +73,7 @@ public:
 protected:
     std::ostream& m_stream;
     const char* m_tag;
-    bool m_showPid;
+    unsigned int m_options;
 };
 
 template<typename T>
@@ -125,29 +136,11 @@ public:
 class Debug : public BaseLogger
 {
 public:
-    Debug(int level = 1) : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END, true), m_level(level) {}
-
-    template <typename T>
-    std::ostream& operator<<(const T& t)
+    Debug(int level = 1) : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END, ShowPid)
     {
-        if (verboseMode >= m_level)
-            return BaseLogger::operator<<(t);
-        else
-            return m_devNull;
+        if (level > verboseMode)
+            m_options |= Quiet;
     }
-
-private:
-    class DevNull : public std::ostream
-    {
-        template <typename T>
-        std::ostream& operator<<(const T&)
-        {
-            return *this;
-        }
-    };
-
-    DevNull m_devNull;
-    int m_level;
 };
 
 #endif // LOGGER_H

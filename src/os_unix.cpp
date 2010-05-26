@@ -113,4 +113,10 @@ unsigned long getPid()
     return ::getpid();
 }
 
+std::string getEnv(const std::string& variable)
+{
+    char* value = ::getenv(variable.c_str());
+    return value ? std::string(value) : std::string();
+}
+
 }
