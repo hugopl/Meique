@@ -33,4 +33,12 @@ typedef std::list<std::string> StringList;
 typedef std::map<std::string, Target*> TargetsMap;
 typedef std::list<Target*> TargetList;
 
+template <typename T>
+void deleteAll(T& t)
+{
+    typename T::iterator it = t.begin();
+    for (; it != t.end(); ++it)
+        delete *it;
+}
+
 #endif
