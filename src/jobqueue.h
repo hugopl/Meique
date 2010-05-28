@@ -29,10 +29,15 @@ public:
     JobQueue();
     ~JobQueue();
     void addJob(Job* job);
-    Job* takeJob();
-    bool isEmpty() const { return m_jobs.empty(); }
+    Job* getNextJob();
+    bool isEmpty() const;
+    int jobCount() const { return m_jobs.size(); }
+    std::list<Job*> idleJobs() const { return m_jobs; }
+    bool hasShowStoppers() const;
 private:
     std::list<Job*> m_jobs;
+    std::list<Job*>::iterator m_nextJob;
+    std::list<JobQueue*> m_dependencies;
 
     JobQueue(const JobQueue&);
     JobQueue& operator=(const JobQueue&);

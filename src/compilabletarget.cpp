@@ -68,6 +68,7 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
         if (hasRecompilationNeeds(source, output)) {
             Job* job = compiler->compile(source, output, m_compilerOptions);
             job->setWorkingDirectory(buildDir);
+            job->setDescription("Compiling " + *it);
             queue->addJob(job);
             needLink = true;
         }
@@ -78,6 +79,8 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
     if (needLink) {
         Job* job = compiler->link(name(), objects, m_linkerOptions);
         job->setWorkingDirectory(buildDir);
+        job->setDescription("Linking " + name());
+        job->setDependencies(queue->idleJobs());
         queue->addJob(job);
     }
     return queue;

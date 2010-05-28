@@ -18,18 +18,68 @@
 
 #include "job.h"
 #include "os.h"
+#include "jobqueue.h"
+#include "joblistenner.h"
 
-Job::Job(const std::string& command, const StringList& args) : m_command(command), m_args(args)
+Job::Job(const std::string& command, const StringList& args) : m_command(command), m_args(args), m_status(Idle)
 {
+    pthread_mutex_init(&m_statusMutex, 0);
+}
+
+void* initJobThread(void* ptr)
+{
+    Job* job = reinterpret_cast<Job*>(ptr);
+    job->doRun();
+    return 0;
 }
 
 void Job::run()
 {
+    pthread_create(&m_thread, 0, initJobThread, this);
+}
+
+void Job::doRun()
+{
+    pthread_mutex_lock(&m_statusMutex);
+    m_status = Running;
+    pthread_mutex_unlock(&m_statusMutex);
+
     OS::ChangeWorkingDirectory dirChanger(m_workingDir);
     OS::exec(m_command, m_args);
+
+    pthread_mutex_lock(&m_statusMutex);
+    m_status = Finished;
+    pthread_mutex_unlock(&m_statusMutex);
+
+    std::list<JobListenner*>::iterator it = m_listenners.begin();
+    for (; it != m_listenners.end(); ++it)
+        (*it)->jobFinished(this);
 }
 
 std::string Job::workingDirectory()
 {
     return m_workingDir;
+}
+
+Job::Status Job::status() const
+{
+    pthread_mutex_lock(&m_statusMutex);
+    Status s = m_status;
+    pthread_mutex_unlock(&m_statusMutex);
+    return s;
+}
+
+bool Job::hasShowStoppers() const
+{
+    std::list<Job*>::const_iterator it = m_dependencies.begin();
+    for (; it != m_dependencies.end(); ++it) {
+        if ((*it)->status() != Finished || (*it)->hasShowStoppers())
+            return true;
+    }
+    return false;
+}
+
+void Job::addJobListenner(JobListenner* listenner)
+{
+    m_listenners.push_back(listenner);
 }

@@ -21,6 +21,12 @@
 #include "jobqueue.h"
 #include "job.h"
 
+JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0)
+{
+    pthread_mutex_init(&m_jobsRunningMutex, 0);
+    pthread_cond_init(&m_jobsRunningCond, 0);
+}
+
 JobManager::~JobManager()
 {
     std::list<JobQueue*>::iterator it = m_queues.begin();
@@ -33,20 +39,44 @@ void JobManager::addJobQueue(JobQueue* queue)
     m_queues.push_back(queue);
 }
 
-void JobManager::processJobs(int n)
+void JobManager::processJobs()
 {
-    Debug() << "process jobs, n: " << n;
-    // For now, just run the jobs...
-    while (!m_queues.empty()) {
-        Debug() << "queues size: " << m_queues.size();
-        JobQueue* queue = m_queues.front();
-        while (!queue->isEmpty()) {
-            Job* job = queue->takeJob();
-            job->run();
-            delete job;
+    m_jobCount = 0;
+    std::list<JobQueue*>::const_iterator it = m_queues.begin();
+    for (; it != m_queues.end(); ++it)
+        m_jobCount += (*it)->jobCount();
+
+    m_jobsProcessed = 0;
+    while (m_jobsProcessed < m_jobCount) {
+        // Select a valid queue
+        std::list<JobQueue*>::iterator queueIt = m_queues.begin();
+        JobQueue* queue = *queueIt;
+        while (queue->hasShowStoppers() || queue->isEmpty()) {
+            queue = *(++queueIt);
+            if (queueIt == m_queues.end())
+                return;
         }
-        delete queue;
-        m_queues.pop_front();
+
+        pthread_mutex_lock(&m_jobsRunningMutex);
+        if (m_jobsRunning >= m_maxJobsRunning)
+            pthread_cond_wait(&m_jobsRunningCond, &m_jobsRunningMutex);
+        // Now select a valid job
+        if (Job* job = queue->getNextJob()) {
+            job->addJobListenner(this);
+            job->run();
+            m_jobsRunning++;
+            Notice() << job->description();
+        }
+        pthread_mutex_unlock(&m_jobsRunningMutex);
     }
 }
 
+void JobManager::jobFinished(Job* job)
+{
+    pthread_mutex_lock(&m_jobsRunningMutex);
+    m_jobsRunning--;
+    m_jobsProcessed++;
+    if (m_jobsRunning < m_maxJobsRunning)
+        pthread_cond_signal(&m_jobsRunningCond);
+    pthread_mutex_unlock(&m_jobsRunningMutex);
+}

@@ -21,24 +21,40 @@
 
 JobQueue::JobQueue()
 {
+    m_nextJob = m_jobs.end();
 }
 
 JobQueue::~JobQueue()
 {
-    std::list<Job*>::iterator it = m_jobs.begin();
-    for (; it != m_jobs.end(); ++it)
-        delete *it;
+    deleteAll(m_jobs);
 }
 
 void JobQueue::addJob(Job* job)
 {
+    bool resetIterator = m_jobs.empty();
     m_jobs.push_back(job);
+    if (resetIterator)
+        m_nextJob = m_jobs.begin();
 }
 
-Job* JobQueue::takeJob()
+Job* JobQueue::getNextJob()
 {
-    Job* job = m_jobs.front();
-    m_jobs.pop_front();
+    if (m_nextJob == m_jobs.end())
+        return 0;
+    Job* job = *m_nextJob;
+    if (job->hasShowStoppers())
+        return 0;
+
+    ++m_nextJob;
     return job;
 }
 
+bool JobQueue::hasShowStoppers() const
+{
+    return false;
+}
+
+bool JobQueue::isEmpty() const
+{
+    return m_jobs.empty() || m_jobs.back()->status() == Job::Finished;
+}

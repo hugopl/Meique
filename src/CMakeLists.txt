@@ -30,5 +30,5 @@ add_definitions("-Wall")
 
 include_directories(${LUA_INCLUDE_DIR})
 add_executable(meique ${meique_SRC})
-target_link_libraries(meique ${LUA_LIBRARIES})
+target_link_libraries(meique ${LUA_LIBRARIES} -lpthread)
 install(TARGETS meique DESTINATION bin)

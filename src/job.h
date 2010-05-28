@@ -19,18 +19,48 @@
 #ifndef JOB_H
 #define JOB_H
 #include "basictypes.h"
+#include <pthread.h>
+
+class JobListenner;
 
 class Job
 {
 public:
+    enum Status {
+        Idle,
+        Scheduled,
+        Running,
+        Finished
+    };
+
     Job(const std::string& command, const StringList& args);
     void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
     std::string workingDirectory();
     void run();
+    void setDescription(const std::string& description) { m_description = description; }
+    std::string description() const { return m_description; }
+    Status status() const;
+    void setDependencies(const std::list<Job*>& jobList) { m_dependencies = jobList; }
+    bool hasShowStoppers() const;
+    void addJobListenner(JobListenner* listenner);
+
+protected:
+    void doRun();
 private:
     std::string m_command;
     StringList m_args;
     std::string m_workingDir;
+    std::string m_description;
+    std::list<Job*> m_dependencies;
+    Status m_status;
+    mutable pthread_mutex_t m_statusMutex;
+    pthread_t m_thread;
+    std::list<JobListenner*> m_listenners;
+
+    Job(const Job&);
+    Job& operator=(const Job&);
+
+    friend void* initJobThread(void*);
 };
 
 #endif // JOB_H

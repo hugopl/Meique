@@ -16,37 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef JOBMANAGER_H
-#define JOBMANAGER_H
-#include <list>
-#include <pthread.h>
-#include <map>
-#include "joblistenner.h"
+#ifndef JOBLISTENNER_H
+#define JOBLISTENNER_H
 
 class Job;
-class JobQueue;
-
-class JobManager : public JobListenner
+class JobListenner
 {
 public:
-    JobManager();
-    ~JobManager();
-    void setJobCountLimit(int n) { m_maxJobsRunning = n; }
-    void addJobQueue(JobQueue* queue);
-    void processJobs();
-
-    void jobFinished(Job* job);
-private:
-    std::list<JobQueue*> m_queues;
-    int m_maxJobsRunning;
-    int m_jobsRunning;
-    int m_jobsProcessed;
-    int m_jobCount;
-    pthread_mutex_t m_jobsRunningMutex;
-    pthread_cond_t m_jobsRunningCond;
-
-    JobManager(const JobManager&);
-    JobManager& operator=(const JobManager&);
+    virtual ~JobListenner() {}
+    virtual void jobFinished(Job* job) = 0;
 };
 
-#endif // JOBMANAGER_H
+#endif // JOBLISTENNER_H

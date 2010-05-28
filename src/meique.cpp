@@ -28,6 +28,7 @@
 
 Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0), m_jobManager(new JobManager)
 {
+    m_jobManager->setJobCountLimit(m_config.jobsAtOnce());
 }
 
 Meique::~Meique()
