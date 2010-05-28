@@ -56,7 +56,6 @@ int exec(const std::string& cmd, const StringList& args, std::string* output)
 
 void cd(const std::string& dir)
 {
-    Debug() << "cd " << dir;
     if (::chdir(dir.c_str()) == -1)
         Error() << "Error changing to directory " << dir << '.';
 }
