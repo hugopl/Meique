@@ -46,8 +46,13 @@ void Config::parseArguments(int argc, char** argv)
 {
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
-        // non-option, must be the source directory
-        if (arg.find("--") != 0) {
+        if (arg.find("-j") == 0) {
+            arg.erase(0, 2);
+            std::istringstream s(arg);
+            s >> m_jobsAtOnce;
+            if (m_jobsAtOnce < 1)
+                Error() << "You must use a number greater than 1 with -j option.";
+        } else if (arg.find("--") != 0) { // non-option, must be the source directory
             if (m_mainArgument.size()) {
                 // TODO: A better error message
                 Error() << "The main argument was already specified [main argument: " << m_mainArgument << "].";

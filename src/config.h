@@ -49,7 +49,9 @@ public:
     bool hasArgument(const std::string& arg) const;
     void setFileHash(const std::string& fileName, const std::string& hash);
     std::string fileHash(const std::string& fileName) const;
+    int jobsAtOnce() const { return m_jobsAtOnce; }
 private:
+    int m_jobsAtOnce;
     std::string m_mainArgument;
     StringMap m_meiqueConfig;
     Mode m_mode;
