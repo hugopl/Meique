@@ -58,6 +58,7 @@ private:
     StringMap m_args;
     StringMap m_userOptions;
     StringMap m_fileHashes;
+    pthread_mutex_t m_configMutex;
 
     // disable copy
     Config(const Config&);

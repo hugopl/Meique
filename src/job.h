@@ -43,7 +43,7 @@ public:
     void setDependencies(const std::list<Job*>& jobList) { m_dependencies = jobList; }
     bool hasShowStoppers() const;
     void addJobListenner(JobListenner* listenner);
-
+    int result() const { return m_result; }
 protected:
     void doRun();
 private:
@@ -56,6 +56,7 @@ private:
     mutable pthread_mutex_t m_statusMutex;
     pthread_t m_thread;
     std::list<JobListenner*> m_listenners;
+    int m_result;
 
     Job(const Job&);
     Job& operator=(const Job&);

@@ -21,7 +21,7 @@
 #include "jobqueue.h"
 #include "joblistenner.h"
 
-Job::Job(const std::string& command, const StringList& args) : m_command(command), m_args(args), m_status(Idle)
+Job::Job(const std::string& command, const StringList& args) : m_command(command), m_args(args), m_status(Idle), m_result(0)
 {
     pthread_mutex_init(&m_statusMutex, 0);
 }
@@ -44,7 +44,7 @@ void Job::doRun()
     m_status = Running;
     pthread_mutex_unlock(&m_statusMutex);
 
-    OS::exec(m_command, m_args, 0, m_workingDir);
+    m_result = OS::exec(m_command, m_args, 0, m_workingDir);
 
     pthread_mutex_lock(&m_statusMutex);
     m_status = Finished;

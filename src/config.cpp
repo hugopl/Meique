@@ -30,11 +30,13 @@ extern "C" {
 }
 
 #include "os.h"
+#include "mutexlocker.h"
 
 int verboseMode = 0;
 
-Config::Config(int argc, char** argv)
+Config::Config(int argc, char** argv) : m_jobsAtOnce(1)
 {
+    pthread_mutex_init(&m_configMutex, 0);
     detectMode();
     parseArguments(argc, argv);
     std::string verboseValue = OS::getEnv("VERBOSE");
@@ -193,6 +195,7 @@ int Config::readFileHash(lua_State* L)
 
 void Config::setFileHash(const std::string& fileName, const std::string& hash)
 {
+    MutexLocker locker(&m_configMutex);
     if (!fileName.empty() && !hash.empty())
         m_fileHashes[fileName] = hash;
 }

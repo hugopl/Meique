@@ -20,21 +20,24 @@
 #define COMPILABLETARGET_H
 
 #include "luatarget.h"
+#include "joblistenner.h"
 
 class LinkerOptions;
 class CompilerOptions;
 
-class CompilableTarget : public LuaTarget
+class CompilableTarget : public LuaTarget, public JobListenner
 {
 public:
     CompilableTarget(const std::string& targetName, MeiqueScript* script);
     ~CompilableTarget();
     void clean();
+    void jobFinished(Job* job);
 protected:
     JobQueue* doRun(Compiler* compiler);
 private:
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
+    std::map<Job*, std::string> m_job2Sources;
 
     bool hasRecompilationNeeds(const std::string& source, const std::string& output);
     void fillCompilerAndLinkerOptions();

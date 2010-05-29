@@ -67,16 +67,17 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
 
         if (hasRecompilationNeeds(source, output)) {
             Job* job = compiler->compile(source, output, m_compilerOptions);
+            job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
             job->setDescription("Compiling " + *it);
             queue->addJob(job);
+            m_job2Sources[job] = source;
             needLink = true;
         }
-        config().setFileHash(source, getFileHash(source));
         objects.push_back(output);
     }
 
-    if (needLink) {
+    if (needLink || !OS::fileExists(name())) {
         Job* job = compiler->link(name(), objects, m_linkerOptions);
         job->setWorkingDirectory(buildDir);
         job->setDescription("Linking " + name());
@@ -84,6 +85,13 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
         queue->addJob(job);
     }
     return queue;
+}
+void CompilableTarget::jobFinished(Job* job)
+{
+    if (!job->result()) {
+        std::string source = m_job2Sources[job];
+        config().setFileHash(source, getFileHash(source));
+    }
 }
 
 bool CompilableTarget::hasRecompilationNeeds(const std::string& source, const std::string& output)
