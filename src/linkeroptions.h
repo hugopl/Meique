@@ -25,6 +25,7 @@ class LinkerOptions
 public:
     LinkerOptions() {}
     void addLibrary(const std::string& library);
+    void addLibraries(const StringList& libraries);
     StringList libraries() const { return m_libraries; }
     void addLibraryPath(const std::string& libraryPath);
     StringList libraryPath() const { return m_libraryPaths; }

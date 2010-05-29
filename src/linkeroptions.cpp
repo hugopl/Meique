@@ -28,6 +28,13 @@ void LinkerOptions::addLibrary(const std::string& library)
     m_libraries.push_back(library);
 }
 
+void LinkerOptions::addLibraries(const StringList& libraries)
+{
+    std::list<std::string>::const_iterator it = libraries.begin();
+    for (; it != libraries.end(); ++it)
+        m_libraries.push_back(*it);
+}
+
 void LinkerOptions::addLibraryPath(const std::string& libraryPath)
 {
     m_libraryPaths.push_back(libraryPath);

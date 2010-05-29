@@ -53,7 +53,9 @@ Job* Gcc::link(const std::string& output, const StringList& objects, const Linke
     StringList paths = options->libraryPath();
     std::copy(paths.begin(), paths.end(), std::back_inserter(args));
     StringList libraries = options->libraries();
-    std::copy(libraries.begin(), libraries.end(), std::back_inserter(args));
+    StringList::iterator it = libraries.begin();
+    for (; it != libraries.end(); ++it)
+        args.push_back("-l" + *it);
     return new Job("g++", args);
 }
 

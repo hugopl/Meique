@@ -188,9 +188,14 @@ void CompilableTarget::fillCompilerAndLinkerOptions()
         m_compilerOptions->addCustomFlag(map["cflags"]);
         m_linkerOptions->addCustomFlag(map["linkerFlags"]);
         m_linkerOptions->addLibraryPath(map["libraryPaths"]);
-        m_linkerOptions->addLibrary(map["linkLibraries"]);
+        m_linkerOptions->addLibraries(split(map["linkLibraries"]));
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
+
+    getLuaField("_linkLibraries");
+    StringList list;
+    readLuaList(L, lua_gettop(L), list);
+    m_linkerOptions->addLibraries(list);
 }
 
 void CompilableTarget::clean()

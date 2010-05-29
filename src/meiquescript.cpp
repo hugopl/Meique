@@ -125,7 +125,7 @@ const char meiqueApi[] = "\n"
 "\n"
 "function CompilableTarget:addLinkLibraries(...)\n"
 "    for i,file in ipairs(arg) do\n"
-"        table.insert(self._linkLibraries, file)\n"
+"        string.gsub(file, '([^%s]+)', function(f) table.insert(self._linkLibraries, f) end)\n"
 "    end\n"
 "end\n"
 "\n"
@@ -312,6 +312,27 @@ TargetList MeiqueScript::targets() const
     return list;
 }
 
+static void filterPkgConfigLinkLibraries(std::string& str)
+{
+    std::istringstream s(str);
+    std::string token;
+    std::string result;
+    while (s) {
+        s >> token;
+        if (!s)
+            break;
+        if (token.find("-l") == 0) {
+            token.erase(0, 2);
+            result += ' ';
+            result += token;
+        } else {
+            Debug() << "Discarding \"" << token << "\" from pkg-config link libraries.";
+        }
+    }
+    trim(result);
+    str = result;
+}
+
 int MeiqueScript::findPackage(lua_State* L)
 {
     const char PKGCONFIG[] = "pkg-config";
@@ -346,6 +367,14 @@ int MeiqueScript::findPackage(lua_State* L)
                            "cflags",
                            "version"
                           };
+    void (*filterFunc[])(std::string&) = {
+                            0,
+                            filterPkgConfigLinkLibraries,
+                            0,
+                            0,
+                            0,
+                            0,
+                          };
     const int N = sizeof(pkgConfigCmds)/sizeof(const char*);
     lua_settop(L, 0);
     lua_createtable(L, 0, N);
@@ -356,6 +385,8 @@ int MeiqueScript::findPackage(lua_State* L)
         OS::exec("pkg-config", args, &output);
         args.pop_back();
         trim(output);
+        if (filterFunc[i])
+            filterFunc[i](output);
         lua_pushstring(L, output.c_str());
         lua_setfield(L, -2, names[i]);
     }
