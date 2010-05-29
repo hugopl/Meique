@@ -91,6 +91,11 @@ void Config::detectMode()
         file.close();
         m_mode = BuildMode;
         loadCache();
+        // check if the key attributes are present
+        const char* attrs[] = { CFG_SOURCE_ROOT, CFG_COMPILER, 0 };
+        for (int i = 0; attrs[i]; ++i)
+            if (m_meiqueConfig.find(attrs[i]) == m_meiqueConfig.end())
+                Error() << "meiquecache.lua is probably corrupted, value for key \"" << attrs[i] << "\" was not found!";
     } else {
         m_mode = ConfigureMode;
     }
