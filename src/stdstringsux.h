@@ -20,6 +20,7 @@
 #define STDSTRINGSUX_H
 
 #include <string>
+#include "basictypes.h"
 
 void stringReplace(std::string& str, const std::string& substr, const std::string& replace);
 /**
@@ -28,4 +29,5 @@ void stringReplace(std::string& str, const std::string& substr, const std::strin
 */
 void trim(std::string& str);
 
+StringList split(const std::string& str);
 #endif

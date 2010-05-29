@@ -17,6 +17,7 @@
 */
 
 #include "stdstringsux.h"
+#include <sstream>
 
 void stringReplace(std::string& str, const std::string& substr, const std::string& replace) {
     size_t n = 0;
@@ -42,5 +43,19 @@ void trim(std::string& str)
     size_t e = str.find_last_not_of(" \t\r\n");
     if (e != std::string::npos)
         str.erase(e + 1);
+}
+
+StringList split(const std::string& str)
+{
+    std::istringstream s(str);
+    std::string token;
+    StringList result;
+    while (s) {
+        s >> token;
+        if (!s)
+            break;
+        result.push_back(token);
+    }
+    return result;
 }
 
