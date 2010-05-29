@@ -44,8 +44,7 @@ void Job::doRun()
     m_status = Running;
     pthread_mutex_unlock(&m_statusMutex);
 
-    OS::ChangeWorkingDirectory dirChanger(m_workingDir);
-    OS::exec(m_command, m_args);
+    OS::exec(m_command, m_args, 0, m_workingDir);
 
     pthread_mutex_lock(&m_statusMutex);
     m_status = Finished;

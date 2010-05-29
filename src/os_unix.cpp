@@ -28,7 +28,7 @@
 namespace OS
 {
 
-int exec(const std::string& cmd, const StringList& args, std::string* output)
+int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir)
 {
     std::string cmdline = cmd;
     StringList::const_iterator it = args.begin();
@@ -37,21 +37,43 @@ int exec(const std::string& cmd, const StringList& args, std::string* output)
         cmdline += *it;
     }
 
-    int exitCode;
-    if (!output) {
-        // keep it simple, stupid!
-        exitCode = system(cmdline.c_str());
-    } else {
-        FILE* pipeFp = popen(cmdline.c_str(), "r");
-        if (!pipeFp)
-            Error() << "Error running command: " << cmdline;
-        char buffer[512];
-        while(std::fgets(buffer, sizeof(buffer), pipeFp))
-            *output += buffer;
-        exitCode = pclose(pipeFp);
+    Debug() << cmdline;
+    int status;
+    int out2me[2];  // pipe from external program stdout to meique
+//     int err2me[2];  // pipe from external program stderr to meique
+    if (output) {
+        if (pipe(out2me)/* || pipe(err2me)*/)
+            Error() << "Unable to create unix pipes!";
     }
-    Debug() << "[exit code: " << exitCode << "] " << cmdline;
-    return exitCode;
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        Error() << "Error running command: " << cmdline;
+    } else if (!pid) {
+        if (!workingDir.empty())
+            OS::cd(workingDir);
+        if (output) {
+            close(out2me[0]);
+//             close(err2me[0]);
+            dup2(out2me[1], 1);
+//             dup2(err2me[1], 2);
+        }
+        execl("/bin/sh", "sh", "-c", cmdline.c_str(), (char*)0);
+        Error() << "Fatal error: shell not found!";
+    }
+
+    if (output) {
+        close(out2me[1]);
+//         close(err2me[1]);
+        char buffer[512];
+        int bytes;
+        while((bytes = read(out2me[0], buffer, sizeof(buffer))) > 0) {
+            buffer[bytes] = 0;
+            *output += buffer;
+        }
+    }
+    waitpid(pid, &status, 0);
+    return status;
 }
 
 void cd(const std::string& dir)
