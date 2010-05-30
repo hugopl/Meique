@@ -48,3 +48,8 @@ std::ostream& operator<<(std::ostream& out, const magenta&)
 {
     return out << COLOR_MAGENTA;
 }
+
+std::ostream& operator<<(std::ostream& out, const white&)
+{
+    return out << COLOR_WHITE;
+}

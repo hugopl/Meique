@@ -47,6 +47,7 @@ struct green {};
 struct red {};
 struct yellow {};
 struct magenta {};
+struct white {};
 struct nocolor {};
 
 std::ostream& operator<<(std::ostream& out, const green&);
@@ -54,6 +55,7 @@ std::ostream& operator<<(std::ostream& out, const red&);
 std::ostream& operator<<(std::ostream& out, const yellow&);
 std::ostream& operator<<(std::ostream& out, const nocolor&);
 std::ostream& operator<<(std::ostream& out, const magenta&);
+std::ostream& operator<<(std::ostream& out, const white&);
 
 class BaseLogger : public std::ostream
 {
@@ -91,12 +93,28 @@ inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
 {
     out << '[';
     if (list.size()) {
-        out << list.front();
-        typename std::list<T>::const_iterator it = ++list.begin();
+        typename std::list<T>::const_iterator it = list.begin();
+        out << *it;
+        ++it;
         for (; it != list.end(); ++it)
             out << ", " << *it;
     }
     out << ']';
+    return out;
+}
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::set<T>& set)
+{
+    out << '{';
+    if (set.size()) {
+        typename std::set<T>::const_iterator it = set.begin();
+        out << *it;
+        ++it;
+        for (; it != set.end(); ++it)
+            out << ", " << *it;
+    }
+    out << '}';
     return out;
 }
 
@@ -156,6 +174,8 @@ public:
     {
         if (level > verboseMode)
             m_options |= Quiet;
+        else
+            m_stream << white() << "> " << nocolor();
     }
 };
 
