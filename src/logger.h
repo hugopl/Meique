@@ -30,16 +30,30 @@
     #define COLOR_YELLOW "\033[1;33m"
     #define COLOR_GREEN "\033[0;32m"
     #define COLOR_RED "\033[0;31m"
+    #define COLOR_MAGENTA "\033[1;35m"
 #else
     #define COLOR_END ""
     #define COLOR_WHITE ""
     #define COLOR_YELLOW ""
     #define COLOR_GREEN ""
     #define COLOR_RED ""
+    #define COLOR_MAGENTA ""
 #endif
 
 // definied in config.cpp
 extern int verboseMode;
+
+struct green {};
+struct red {};
+struct yellow {};
+struct magenta {};
+struct nocolor {};
+
+std::ostream& operator<<(std::ostream& out, const green&);
+std::ostream& operator<<(std::ostream& out, const red&);
+std::ostream& operator<<(std::ostream& out, const yellow&);
+std::ostream& operator<<(std::ostream& out, const nocolor&);
+std::ostream& operator<<(std::ostream& out, const magenta&);
 
 class BaseLogger : public std::ostream
 {
@@ -51,12 +65,12 @@ public:
         Quiet = 2
     };
 
-    BaseLogger(std::ostream& output, const char* tag, Options options = None) : m_stream(output), m_tag(tag), m_options(options) {}
+    BaseLogger(std::ostream& output, Options options = None) : m_stream(output), m_options(options) {}
     ~BaseLogger()
     {
         if (m_options & Quiet)
             return;
-        m_stream << std::endl;
+        m_stream << nocolor() << std::endl;
     }
     std::ostream& operator()() { return m_stream; };
     template <typename T>
@@ -64,15 +78,11 @@ public:
     {
         if (m_options & Quiet)
             return *this;
-        m_stream << m_tag;
-        if (m_options & ShowPid)
-            m_stream << " [" << OS::getPid() << "]";
-        return m_stream << " :: " << t;
+        return m_stream << t;
     }
 
 protected:
     std::ostream& m_stream;
-    const char* m_tag;
     unsigned int m_options;
 };
 
@@ -107,7 +117,10 @@ inline std::ostream& operator<<(std::ostream& out, const std::map<K, V>& map)
 class Warn : public BaseLogger
 {
 public:
-    Warn() : BaseLogger(std::cout, COLOR_YELLOW "WARNING" COLOR_END) {}
+    Warn() : BaseLogger(std::cout)
+    {
+        m_stream << COLOR_YELLOW "WARNING" COLOR_END " :: ";
+    }
 };
 
 struct MeiqueError
@@ -119,7 +132,10 @@ struct MeiqueError
 class Error : public BaseLogger
 {
 public:
-    Error() : BaseLogger(std::cerr, COLOR_RED "ERROR" COLOR_END) {}
+    Error() : BaseLogger(std::cerr)
+    {
+        m_stream << COLOR_RED "ERROR" COLOR_END " :: ";
+    }
     ~Error()
     {
         if (!MeiqueError::errorAlreadyset)
@@ -130,13 +146,13 @@ public:
 class Notice : public BaseLogger
 {
 public:
-    Notice() : BaseLogger(std::cout, COLOR_GREEN "NOTICE" COLOR_END) {}
+    Notice() : BaseLogger(std::cout) {}
 };
 
 class Debug : public BaseLogger
 {
 public:
-    Debug(int level = 1) : BaseLogger(std::cout, COLOR_WHITE "DEBUG" COLOR_END, ShowPid)
+    Debug(int level = 1) : BaseLogger(std::cout)
     {
         if (level > verboseMode)
             m_options |= Quiet;

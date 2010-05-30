@@ -20,6 +20,7 @@
 #include "logger.h"
 #include "jobqueue.h"
 #include "job.h"
+#include <iomanip>
 
 JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0)
 {
@@ -42,6 +43,7 @@ void JobManager::addJobQueue(JobQueue* queue)
 void JobManager::processJobs()
 {
     m_jobCount = 0;
+    m_jobsNotIdle = 0;
     std::list<JobQueue*>::const_iterator it = m_queues.begin();
     for (; it != m_queues.end(); ++it)
         m_jobCount += (*it)->jobCount();
@@ -65,7 +67,8 @@ void JobManager::processJobs()
             job->addJobListenner(this);
             job->run();
             m_jobsRunning++;
-            Notice() << job->description();
+            m_jobsNotIdle++;
+            Notice() << '[' << std::setw(3) << int(100*m_jobsNotIdle/m_jobCount) << "%] " << green() << job->description();
         }
         pthread_mutex_unlock(&m_jobsRunningMutex);
     }

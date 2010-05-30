@@ -42,6 +42,7 @@ private:
     int m_jobsRunning;
     int m_jobsProcessed;
     int m_jobCount;
+    int m_jobsNotIdle;
     pthread_mutex_t m_jobsRunningMutex;
     pthread_cond_t m_jobsRunningCond;
 

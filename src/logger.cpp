@@ -25,3 +25,26 @@ MeiqueError::MeiqueError()
     errorAlreadyset = true;
 }
 
+std::ostream& operator<<(std::ostream& out, const green&)
+{
+    return out << COLOR_GREEN;
+}
+
+std::ostream& operator<<(std::ostream& out, const red&)
+{
+    return out << COLOR_RED;
+}
+std::ostream& operator<<(std::ostream& out, const yellow&)
+{
+    return out << COLOR_YELLOW;
+}
+
+std::ostream& operator<<(std::ostream& out, const nocolor&)
+{
+    return out << COLOR_END;
+}
+
+std::ostream& operator<<(std::ostream& out, const magenta&)
+{
+    return out << COLOR_MAGENTA;
+}

@@ -31,10 +31,15 @@ Target::~Target()
 
 JobQueue* Target::run(Compiler* compiler)
 {
-    Notice() << "Running target \"" << m_name << '"';
+    bool isAllTarget = m_name == "all";
+    if (!isAllTarget)
+        Notice() << magenta() << "Getting jobs for target " << m_name;
     OS::mkdir(directory());
     OS::ChangeWorkingDirectory dirChanger(directory());
-    return doRun(compiler);
+    JobQueue* queue = doRun(compiler);
+    if (!isAllTarget && queue->isEmpty())
+        Notice() << "Nothing to do for " << m_name;
+    return queue;
 }
 
 JobQueue* Target::doRun(Compiler*)
