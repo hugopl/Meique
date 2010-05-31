@@ -20,9 +20,20 @@
 #include "compileroptions.h"
 #include "linkeroptions.h"
 #include "job.h"
+#include "os.h"
+#include "logger.h"
 
 bool Gcc::isAvailable() const
 {
+    StringList args;
+    args.push_back("--version");
+    std::string output;
+    int retval = OS::exec("g++", args, &output);
+    if (retval)
+        return false;
+    size_t it = output.find('\n');
+    output = output.substr(0, it);
+    Notice() << "-- Found " << output;
     return true;
 }
 

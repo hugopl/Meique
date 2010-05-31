@@ -53,7 +53,7 @@ void Meique::exec()
     if (m_config.hasArgument("help")) {
         showHelp(script.options());
     } else if (m_config.isInConfigureMode()) {
-        Notice() << "Configuring project...";
+        Notice() << magenta() << "Configuring project...";
         checkOptionsAgainstArguments(script.options());
         m_compiler = CompilerFactory::findCompiler();
         m_config.setCompiler(m_compiler->name());
