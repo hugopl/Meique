@@ -31,6 +31,7 @@ extern "C" {
 
 #include "os.h"
 #include "mutexlocker.h"
+#include "filehash.h"
 
 int verboseMode = 0;
 
@@ -155,15 +156,33 @@ void Config::saveCache()
     }
     file << "}\n\n";
 
-    it = m_fileHashes.begin();
-    for (; it != m_fileHashes.end(); ++it) {
-        std::string name(it->first);
+    std::map<std::string, StringMap>::iterator hashesIt = m_fileHashes.begin();
+    for (; hashesIt != m_fileHashes.end(); ++hashesIt) {
+        if (hashesIt->second.empty())
+            continue;
+
+        file << "fileHash {\n";
+        // Write the key first!
+        std::string name(hashesIt->first);
         stringReplace(name, "\"", "\\\"");
-        std::string value(it->second);
-        file << "fileHash {\n"
-                "    file = \"" << name << "\",\n"
-                "    hash = \"" << value << "\"\n"
-                "}\n\n";
+        file << "    \"" << name << "\",\n";
+        file << "    \"" << hashesIt->second[name] << "\",\n";
+
+        // Write other files hashes
+        StringMap::const_iterator it = hashesIt->second.begin();
+        for (; it != hashesIt->second.end(); ++it) {
+            // Skip the file hash if it's the key file!
+            if (it->first == hashesIt->first)
+                continue;
+
+            name = it->first;
+            stringReplace(name, "\"", "\\\"");
+            file << "    \"" << name << "\",\n";
+
+            std::string value(it->second);
+            file << "    \"" << value << "\",\n";
+        }
+        file << "}\n\n";
     }
 }
 
@@ -192,25 +211,48 @@ int Config::readMeiqueConfig(lua_State* L)
 int Config::readFileHash(lua_State* L)
 {
     Config* self = getSelf(L);
-    std::string name = getField<std::string>(L, "file");
-    std::string value = getField<std::string>(L, "hash");
-    self->m_fileHashes[name] = value;
+    StringList list;
+    readLuaList(L, 1, list);
+
+    if (list.empty() || list.size() % 2)
+        LuaError(L) << "File hash database corrupted!";
+
+    StringList::const_iterator it = list.begin();
+    StringMap& map = self->m_fileHashes[*it];
+    for (; it != list.end(); ++it) {
+        std::string name = *it;
+        std::string value = *(++it);
+        map[name] = value;
+    }
     return 0;
 }
 
-void Config::setFileHash(const std::string& fileName, const std::string& hash)
+bool Config::isHashGroupOutdated(const StringList& files)
 {
     MutexLocker locker(&m_configMutex);
-    if (!fileName.empty() && !hash.empty())
-        m_fileHashes[fileName] = hash;
+    if (files.empty())
+        return false;
+    StringList::const_iterator it = files.begin();
+    StringMap& map = m_fileHashes[files.front()];
+    if (map.empty())
+        return true;
+    for (; it != files.end(); ++it) {
+        if (getFileHash(*it) != map[*it])
+            return true;
+    }
+    return false;
 }
 
-std::string Config::fileHash(const std::string& fileName) const
+void Config::updateHashGroup(const StringList& files)
 {
-    StringMap::const_iterator it = m_fileHashes.find(fileName);
-    if (it != m_fileHashes.end())
-        return it->second;
-    return std::string();
+    MutexLocker locker(&m_configMutex);
+    if (files.empty())
+        return;
+
+    StringList::const_iterator it = files.begin();
+    StringMap& map = m_fileHashes[files.front()];
+    for (; it != files.end(); ++it)
+        map[*it] = getFileHash(*it);
 }
 
 void Config::setUserOptions(const StringMap& userOptions)

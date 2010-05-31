@@ -17,6 +17,9 @@
 */
 
 #include "compilabletarget.h"
+#include <fstream>
+#include <algorithm>
+
 #include "luacpputil.h"
 #include "compiler.h"
 #include "logger.h"
@@ -27,7 +30,6 @@
 #include "linkeroptions.h"
 #include "stdstringsux.h"
 #include "jobqueue.h"
-#include <fstream>
 #include "job.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
@@ -65,13 +67,18 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
         std::string source = sourceDir + *it;
         std::string output = *it + ".o";
 
-        if (hasRecompilationNeeds(source, output)) {
+        bool compileIt = !OS::fileExists(output);
+        StringList dependents = getFileDependencies(source);
+        if (!compileIt)
+            compileIt = config().isHashGroupOutdated(dependents);
+
+        if (compileIt) {
             Job* job = compiler->compile(source, output, m_compilerOptions);
             job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
             job->setDescription("Compiling " + *it);
             queue->addJob(job);
-            m_job2Sources[job] = source;
+            m_job2Sources[job] = dependents;
             needLink = true;
         }
         objects.push_back(output);
@@ -88,44 +95,24 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
 }
 void CompilableTarget::jobFinished(Job* job)
 {
-    if (!job->result()) {
-        std::string source = m_job2Sources[job];
-        config().setFileHash(source, getFileHash(source));
-    }
+    if (!job->result())
+        config().updateHashGroup(m_job2Sources[job]);
 }
 
-bool CompilableTarget::hasRecompilationNeeds(const std::string& source, const std::string& output)
+void CompilableTarget::preprocessFile(const std::string& source, const std::string& baseDir, StringList* deps)
 {
-    if (!OS::fileExists(output))
-        return true;
-
-    if (getFileHash(source) != config().fileHash(source))
-        return true;
-
-    // Check if any include files has changed
-    StringSet checkedFiles;
-    checkedFiles.insert(source);
-    StringSet dependents = getFileDependence(source);
-    StringSet::const_iterator it = dependents.begin();
-    for (; it != dependents.end(); ++it) {
-        if (checkedFiles.find(*it) != checkedFiles.end())
-            continue;
-        if (getFileHash(*it) != config().fileHash(*it))
-            return true;
-        checkedFiles.insert(*it);
-    }
-    return false;
-}
-
-void CompilableTarget::preprocessFile(const std::string& source, StringSet* deps)
-{
-    std::pair<StringSet::iterator, bool> p = deps->insert(source);
-    if (!p.second)
+    std::string absSource(source);
+    if (absSource.empty())
         return;
+    if (absSource[0] != '/')
+        absSource.insert(0, baseDir);
+    if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
+        return;
+    deps->push_back(absSource);
 
-    std::ifstream fp(source.c_str());
+    std::ifstream fp(absSource.c_str());
     if (!fp) {
-        Debug() << "Include file not found: " << source;
+        Debug() << "Include file not found: " << absSource;
         return;
     }
 
@@ -133,40 +120,40 @@ void CompilableTarget::preprocessFile(const std::string& source, StringSet* deps
     std::string buffer2;
 
     while (!fp.eof()) {
-        std::getline( fp, buffer1 );
-        trim( buffer1 );
+        std::getline(fp, buffer1);
+        trim(buffer1);
 
-        if ( buffer1[ 0 ] != '#' )
+        if (buffer1[0] != '#')
             continue;
-        buffer1.erase( 0, 1 );
+        buffer1.erase(0, 1);
 
-        while ( buffer1[ buffer1.size() - 1 ] == '\\' ) {
-            if ( fp.eof() )
-                return ;
-            std::getline( fp, buffer2 );
-            buffer1.erase( buffer1.size() - 1, 1 );
+        while (buffer1[buffer1.size() - 1] == '\\') {
+            if (fp.eof())
+                return;
+            std::getline(fp, buffer2);
+            buffer1.erase(buffer1.size() - 1, 1);
             buffer1 += buffer2;
-            trim( buffer1 );
+            trim(buffer1);
         }
 
-        if ( buffer1.compare( 0, 7, "include" ) != 0 )
+        if (buffer1.compare(0, 7, "include") != 0)
             continue;
-        buffer1.erase( 0, 7 );
-        trim( buffer1 );
-        if ( buffer1[ 0 ] == '"' ) {
+        buffer1.erase(0, 7);
+        trim(buffer1);
+        if (buffer1[ 0 ] == '"') {
             std::string includedFile = buffer1.substr(1, buffer1.size()-2);
-            preprocessFile(includedFile, deps);
+            preprocessFile(includedFile, baseDir, deps);
         }
     }
 }
 
-StringSet CompilableTarget::getFileDependence(const std::string& source)
+StringList CompilableTarget::getFileDependencies(const std::string& source)
 {
-    OS::ChangeWorkingDirectory dirChanger(config().sourceRoot() + directory());
-    StringSet dependents;
+    std::string baseDir = config().sourceRoot() + directory();
+    StringList dependents;
     // FIXME: There is a large room for improviments here, we need to cache some results
     //        to avoid doing a lot of things twice.
-    preprocessFile(source, &dependents);
+    preprocessFile(source, baseDir, &dependents);
     return dependents;
 }
 

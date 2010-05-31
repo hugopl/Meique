@@ -37,12 +37,11 @@ protected:
 private:
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
-    std::map<Job*, std::string> m_job2Sources;
+    std::map<Job*, StringList> m_job2Sources;
 
-    bool hasRecompilationNeeds(const std::string& source, const std::string& output);
     void fillCompilerAndLinkerOptions();
-    StringSet getFileDependence(const std::string& source);
-    void preprocessFile(const std::string& source, StringSet* deps);
+    StringList getFileDependencies(const std::string& source);
+    void preprocessFile(const std::string& source, const std::string& baseDir, StringList* deps);
 };
 
 #endif

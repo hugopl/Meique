@@ -47,9 +47,10 @@ public:
     void setUserOptions(const StringMap& userOptions);
     void saveCache();
     bool hasArgument(const std::string& arg) const;
-    void setFileHash(const std::string& fileName, const std::string& hash);
-    std::string fileHash(const std::string& fileName) const;
     int jobsAtOnce() const { return m_jobsAtOnce; }
+
+    bool isHashGroupOutdated(const StringList& files);
+    void updateHashGroup(const StringList& files);
 private:
     int m_jobsAtOnce;
     std::string m_mainArgument;
@@ -57,7 +58,7 @@ private:
     Mode m_mode;
     StringMap m_args;
     StringMap m_userOptions;
-    StringMap m_fileHashes;
+    std::map<std::string, StringMap> m_fileHashes;
     pthread_mutex_t m_configMutex;
 
     // disable copy
