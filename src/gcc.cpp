@@ -47,12 +47,22 @@ Job* Gcc::compile(const std::string& fileName, const std::string& output, const 
     args.push_back(output);
     if (options->compileForLibrary())
         args.push_back("-fpic"); // FIXME: Check if the user added -fPIC on custom flags
+
+    // custom flags
     StringList flags = options->customFlags();
     std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+
+    // include paths
     StringList paths = options->includePaths();
-    std::copy(paths.begin(), paths.end(), std::back_inserter(args));
+    StringList::iterator it = paths.begin();
+    for (; it != paths.end(); ++it)
+        args.push_back("-I\"" + *it + '"');
+
+    // defines
     StringList defines = options->defines();
-    std::copy(defines.begin(), defines.end(), std::back_inserter(args));
+    it = defines.begin();
+    for (; it != defines.end(); ++it)
+        args.push_back("-D" + *it);
 
     Language lang = identifyLanguage(fileName);
     std::string compiler;
@@ -89,14 +99,26 @@ Job* Gcc::link(const std::string& output, const StringList& objects, const Linke
         }
         args.push_back("-o");
         args.push_back(output);
+
+        // custom flags
         StringList flags = options->customFlags();
         std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+
+        // library paths
         StringList paths = options->libraryPath();
-        std::copy(paths.begin(), paths.end(), std::back_inserter(args));
+        StringList::iterator it = paths.begin();
+        for (; it != paths.end(); ++it)
+            args.push_back("-L\"" + *it + '"');
+
+        // libraries
         StringList libraries = options->libraries();
-        StringList::iterator it = libraries.begin();
+        it = libraries.begin();
         for (; it != libraries.end(); ++it)
             args.push_back("-l" + *it);
+
+        // static libraries
+        StringList staticLibs = options->staticLibraries();
+        std::copy(staticLibs.begin(), staticLibs.end(), std::back_inserter(args));
     }
 
     return new Job(linker, args);

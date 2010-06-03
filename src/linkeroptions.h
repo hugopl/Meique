@@ -32,6 +32,8 @@ public:
         StaticLibrary
     };
 
+    void addStaticLibrary(const std::string& library);
+    StringList staticLibraries() const { return m_staticLibraries; }
     void addLibrary(const std::string& library);
     void addLibraries(const StringList& libraries);
     StringList libraries() const { return m_libraries; }
@@ -46,6 +48,7 @@ public:
     Language language() const { return m_language; };
 private:
     StringList m_libraries;
+    StringList m_staticLibraries;
     StringList m_libraryPaths;
     StringList m_customFlags;
     LinkType m_linkType;

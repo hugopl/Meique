@@ -31,6 +31,7 @@
 #include "stdstringsux.h"
 #include "jobqueue.h"
 #include "job.h"
+#include "meiquescript.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
     : LuaTarget(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
@@ -164,7 +165,7 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     while (lua_next(L, tableIndex) != 0) {
 
         StringMap map;
-        readLuaTable<StringMap>(L, lua_gettop(L), map);
+        readLuaTable(L, lua_gettop(L), map);
 
         compilerOptions->addIncludePath(map["includePaths"]);
         compilerOptions->addCustomFlag(map["cflags"]);
@@ -198,6 +199,15 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     lua_pop(L, 1);
 
     // other targets
+    list.clear();
+    getLuaField("_targets");
+    readLuaList(L, lua_gettop(L), list);
+    StringList::iterator it = list.begin();
+    for (; it != list.end(); ++it) {
+        CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(*it));
+        if (target)
+            target->useIn(this, compilerOptions, linkerOptions);
+    }
 }
 
 void CompilableTarget::clean()

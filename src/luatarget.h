@@ -33,6 +33,7 @@ public:
     const std::string directory();
     lua_State* luaState();
     Config& config();
+    const MeiqueScript* script() const { return m_script; }
 protected:
     void getLuaField(const char* field);
     JobQueue* doRun(Compiler* compiler);

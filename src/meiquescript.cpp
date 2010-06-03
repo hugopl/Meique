@@ -69,6 +69,7 @@ const char meiqueApi[] = "\n"
 "    Target.__index = Target\n"
 "    if type(name) ~= \"table\" then\n"
 "        abortIf(name == 'all' or name == 'clean' or name == 'install', '\"all\", \"clean\" and \"install\" are reserved target names!')\n"
+"        o._name = name\n"
 "        o._files = {}\n"
 "        o._dir = table.concat(_meiqueCurrentDir, '/')\n"
 "        _meiqueAllTargets[tostring(name)] = o\n"
@@ -105,6 +106,7 @@ const char meiqueApi[] = "\n"
 "    o._libDirs = {}\n"
 "    o._linkLibraries = {}\n"
 "    o._packages = {}\n"
+"    o._targets = {}\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -128,6 +130,11 @@ const char meiqueApi[] = "\n"
 "\n"
 "function CompilableTarget:usePackage(package)\n"
 "    table.insert(self._packages, package)\n"
+"end\n"
+"\n"
+"function CompilableTarget:useTarget(target)\n"
+"    abortIf(type(target) ~= 'table' or target._type ~= 2, 'You can only use library targets on other targets.')\n"
+"    table.insert(self._targets, target._name)\n"
 "end\n"
 "\n"
 "-- Executable\n"
@@ -299,7 +306,7 @@ void MeiqueScript::extractTargets()
     m_targets[mainTarget->name()] = mainTarget;
 }
 
-Target* MeiqueScript::getTarget(const std::string& name)
+Target* MeiqueScript::getTarget(const std::string& name) const
 {
     TargetsMap::const_iterator it = m_targets.find(name);
     if (it == m_targets.end())

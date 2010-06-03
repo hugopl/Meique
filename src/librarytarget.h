@@ -20,14 +20,18 @@
 #define LIBRARYTARGET_H
 
 #include "compilabletarget.h"
+#include "linkeroptions.h"
 
 class LibraryTarget : public CompilableTarget
 {
 public:
     LibraryTarget(const std::string& targetName, MeiqueScript* script);
+    void useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions);
 protected:
     JobQueue* doRun(Compiler* compiler);
     void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
+private:
+    LinkerOptions::LinkType m_linkType;
 };
 
 #endif

@@ -30,9 +30,10 @@ ExecutableTarget::ExecutableTarget(const std::string& targetName, MeiqueScript* 
 
 JobQueue* ExecutableTarget::doRun(Compiler* compiler)
 {
+    setOutputFileName(compiler->nameForExecutable(name()));
     StringList objects;
     JobQueue* queue = createCompilationJobs(compiler, &objects);
-    if (!queue->isEmpty() || !OS::fileExists(compiler->nameForExecutable(name()))) {
+    if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {
         std::string buildDir = OS::pwd();
         std::string exeName = compiler->nameForExecutable(name());
         Job* job = compiler->link(exeName, objects, linkerOptions());

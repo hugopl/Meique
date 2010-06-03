@@ -34,13 +34,17 @@ public:
     void jobFinished(Job* job);
     const CompilerOptions* compilerOptions() const { return m_compilerOptions; }
     const LinkerOptions* linkerOptions() const { return m_linkerOptions; }
+    void setOutputFileName(const std::string& fileName) { m_outputFileName = fileName; }
+    std::string outputFileName() const { return m_outputFileName; }
 protected:
     JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
+    virtual void useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions) = 0;
 private:
     std::map<Job*, StringList> m_job2Sources;
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
+    std::string m_outputFileName;
 
     StringList getFileDependencies(const std::string& source);
     void preprocessFile(const std::string& source, const std::string& baseDir, StringList* deps);

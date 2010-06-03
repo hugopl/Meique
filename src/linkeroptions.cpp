@@ -24,6 +24,11 @@ void LinkerOptions::addCustomFlag(const std::string& customFlag)
     m_customFlags.push_back(customFlag);
 }
 
+void LinkerOptions::addStaticLibrary(const std::string& library)
+{
+    m_staticLibraries.push_back(library);
+}
+
 void LinkerOptions::addLibrary(const std::string& library)
 {
     m_libraries.push_back(library);

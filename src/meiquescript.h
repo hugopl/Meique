@@ -45,7 +45,7 @@ public:
     void exec();
     OptionsMap options();
     Config& config() { return m_config; }
-    Target* getTarget(const std::string& name);
+    Target* getTarget(const std::string& name) const;
     TargetList targets() const;
     lua_State* luaState() { return m_L; }
 private:

@@ -1,5 +1,5 @@
 meique = Executable:new("meique")
-meique:usePackage(lua)
+meique:useTarget(lua)
 meique:addLinkLibraries("pthread")
 meique:addFiles([[
 main.cpp
