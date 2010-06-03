@@ -40,6 +40,9 @@ Config::Config(int argc, char** argv) : m_jobsAtOnce(1)
     std::string verboseValue = OS::getEnv("VERBOSE");
     std::istringstream s(verboseValue);
     s >> verboseMode;
+
+    if (mode() == BuildMode)
+        m_buildRoot = OS::pwd();
 }
 
 void Config::parseArguments(int argc, char** argv)

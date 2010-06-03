@@ -40,6 +40,7 @@ public:
     std::string mainArgument() const { return m_mainArgument; }
     StringMap arguments() const { return m_args; }
     std::string sourceRoot() const { return m_meiqueConfig.at(CFG_SOURCE_ROOT); }
+    std::string buildRoot() const { return m_buildRoot; }
     std::string compiler() const { return m_meiqueConfig.at(CFG_COMPILER); }
     void setCompiler(const std::string& name) { m_meiqueConfig[CFG_COMPILER] = name; }
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
@@ -55,6 +56,7 @@ private:
     int m_jobsAtOnce;
     std::string m_mainArgument;
     StringMap m_meiqueConfig;
+    std::string m_buildRoot;
     Mode m_mode;
     StringMap m_args;
     StringMap m_userOptions;
