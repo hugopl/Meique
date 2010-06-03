@@ -62,7 +62,12 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
     std::string buildDir = OS::pwd();
 
     StringList::const_iterator it = files.begin();
+    Language lang = identifyLanguage(*it);
+    m_linkerOptions->setLanguage(lang);
     for (; it != files.end(); ++it) {
+        if (lang != identifyLanguage(*it))
+            Error() << "You can't mix two programming languages in the same target!";
+
         std::string source = sourceDir + *it;
         std::string output = *it + ".o";
 

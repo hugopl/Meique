@@ -10,6 +10,7 @@ config.cpp
 luastate.cpp
 stdstringsux.cpp
 compilerfactory.cpp
+compiler.cpp
 gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp

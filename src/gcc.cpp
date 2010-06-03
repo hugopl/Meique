@@ -53,7 +53,16 @@ Job* Gcc::compile(const std::string& fileName, const std::string& output, const 
     std::copy(paths.begin(), paths.end(), std::back_inserter(args));
     StringList defines = options->defines();
     std::copy(defines.begin(), defines.end(), std::back_inserter(args));
-    return new Job("g++", args);
+
+    Language lang = identifyLanguage(fileName);
+    std::string compiler;
+    if (lang == CLanguage)
+        compiler = "gcc";
+    else if (lang == CPlusPlusLanguage)
+        compiler = "g++";
+    else
+        Error() << "Unknown programming language used for " << fileName;
+    return new Job(compiler, args);
 }
 
 Job* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
@@ -66,7 +75,13 @@ Job* Gcc::link(const std::string& output, const StringList& objects, const Linke
         args.push_front(output);
         args.push_front("-rcs");
     } else {
-        linker = "g++";
+        if (options->language() == CPlusPlusLanguage)
+            linker = "g++";
+        else if (options->language() == CLanguage)
+            linker = "gcc";
+        else
+            Error() << "Unsupported programming language sent to the linker!";
+
         if (options->linkType() == LinkerOptions::SharedLibrary) {
             args.push_front("-fpic");
             args.push_front("-shared");

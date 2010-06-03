@@ -25,6 +25,18 @@ class LinkerOptions;
 class CompilerOptions;
 class Job;
 
+/// Languages supported by meique, except the UnsupportedLanguage value ;-)
+enum Language {
+    CLanguage,
+    CPlusPlusLanguage,
+    UnsupportedLanguage
+};
+
+/**
+* Try to identify the language of a file by its extension using case insensitive string comparison.
+*/
+Language identifyLanguage(const std::string& fileName);
+
 /**
 *   Interface for all compiler implementations.
 */

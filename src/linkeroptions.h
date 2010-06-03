@@ -19,11 +19,12 @@
 #ifndef LINKEROPTIONS_H
 #define LINKEROPTIONS_H
 #include "basictypes.h"
+#include "compiler.h"
 
 class LinkerOptions
 {
 public:
-    LinkerOptions() : m_linkType(Executable) {}
+    LinkerOptions() : m_linkType(Executable), m_language(UnsupportedLanguage) {}
 
     enum LinkType {
         Executable,
@@ -40,12 +41,14 @@ public:
     StringList customFlags() const { return m_customFlags; }
     void setLinkType(LinkType linkType) { m_linkType = linkType; }
     LinkType linkType() const { return m_linkType; }
+    void setLanguage(Language lang) { m_language = lang; }
+    Language language() const { return m_language; };
 private:
-
     StringList m_libraries;
     StringList m_libraryPaths;
     StringList m_customFlags;
     LinkType m_linkType;
+    Language m_language;
 
     LinkerOptions(const LinkerOptions&);
     LinkerOptions& operator=(const LinkerOptions&);
