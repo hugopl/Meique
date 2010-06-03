@@ -36,9 +36,10 @@ extern "C" {
 #include "os.h"
 #include "stdstringsux.h"
 #include "maintarget.h"
+#include "executabletarget.h"
 
 enum TargetTypes {
-    COMPILABLE_TARGET = 1,
+    EXECUTABLE_TARGET = 1,
     LIBRARY_TARGET,
     CUSTOM_TARGET
 };
@@ -107,7 +108,6 @@ const char meiqueApi[] = "\n"
 "    o._libDirs = {}\n"
 "    o._linkLibraries = {}\n"
 "    o._packages = {}\n"
-"    o._type = 1\n"
 "    return o\n"
 "end\n"
 "\n"
@@ -135,16 +135,23 @@ const char meiqueApi[] = "\n"
 "\n"
 "-- Executable\n"
 "Executable = CompilableTarget:new(Target)\n"
+"function Executable:new(name)\n"
+"    o = CompilableTarget:new(name)\n"
+"    setmetatable(o, self)\n"
+"    self.__index = self\n"
+"    o._type = 1\n"
+"    return o\n"
+"end\n"
 "\n"
 "SHARED = 1\n"
 "STATIC = 2\n"
 "-- Library\n"
 "Library = CompilableTarget:new(Target)\n"
-"function Library:new(name, flags)\n"
+"function Library:new(name, libType)\n"
 "    o = CompilableTarget:new(name)\n"
 "    setmetatable(o, self)\n"
 "    self.__index = self\n"
-"    o._flags = flags\n"
+"    o._libType = libType or SHARED\n"
 "    o._type = 2\n"
 "    return o\n"
 "end\n"
@@ -272,8 +279,8 @@ void MeiqueScript::extractTargets()
 
         Target* target = 0;
         switch (targetType) {
-            case COMPILABLE_TARGET:
-                target = new CompilableTarget(targetName, this);
+            case EXECUTABLE_TARGET:
+                target = new ExecutableTarget(targetName, this);
                 break;
             case LIBRARY_TARGET:
                 target = new LibraryTarget(targetName, this);

@@ -16,18 +16,17 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LIBRARYTARGET_H
-#define LIBRARYTARGET_H
-
+#ifndef EXECUTABLETARGET_H
+#define EXECUTABLETARGET_H
 #include "compilabletarget.h"
 
-class LibraryTarget : public CompilableTarget
+class ExecutableTarget : public CompilableTarget
 {
 public:
-    LibraryTarget(const std::string& targetName, MeiqueScript* script);
+    ExecutableTarget(const std::string& targetName, MeiqueScript* script);
 protected:
     JobQueue* doRun(Compiler* compiler);
     void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
 };
 
-#endif
+#endif // EXECUTABLETARGET_H

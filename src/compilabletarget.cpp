@@ -35,6 +35,8 @@
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
     : LuaTarget(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
 {
+    m_compilerOptions = new CompilerOptions;
+    m_linkerOptions = new LinkerOptions;
 }
 
 CompilableTarget::~CompilableTarget()
@@ -43,7 +45,7 @@ CompilableTarget::~CompilableTarget()
     delete m_linkerOptions;
 }
 
-JobQueue* CompilableTarget::doRun(Compiler* compiler)
+JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList* objects)
 {
     // get sources
     getLuaField("_files");
@@ -53,15 +55,12 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
     if (files.empty())
         Error() << "Compilable target '" << name() << "' has no files!";
 
-    if (!m_compilerOptions)
-        fillCompilerAndLinkerOptions();
+    fillCompilerAndLinkerOptions(m_compilerOptions, m_linkerOptions);
 
     JobQueue* queue = new JobQueue;
     std::string sourceDir = config().sourceRoot() + directory();
     std::string buildDir = OS::pwd();
 
-    bool needLink = false;
-    StringList objects;
     StringList::const_iterator it = files.begin();
     for (; it != files.end(); ++it) {
         std::string source = sourceDir + *it;
@@ -79,18 +78,10 @@ JobQueue* CompilableTarget::doRun(Compiler* compiler)
             job->setDescription("Compiling " + *it);
             queue->addJob(job);
             m_job2Sources[job] = dependents;
-            needLink = true;
         }
-        objects.push_back(output);
+        objects->push_back(output);
     }
 
-    if (needLink || !OS::fileExists(name())) {
-        Job* job = compiler->link(name(), objects, m_linkerOptions);
-        job->setWorkingDirectory(buildDir);
-        job->setDescription("Linking " + name());
-        job->setDependencies(queue->idleJobs());
-        queue->addJob(job);
-    }
     return queue;
 }
 void CompilableTarget::jobFinished(Job* job)
@@ -157,10 +148,8 @@ StringList CompilableTarget::getFileDependencies(const std::string& source)
     return dependents;
 }
 
-void CompilableTarget::fillCompilerAndLinkerOptions()
+void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
-    m_compilerOptions = new CompilerOptions;
-    m_linkerOptions = new LinkerOptions;
     getLuaField("_packages");
     lua_State* L = luaState();
     // loop on all used packages
@@ -171,18 +160,18 @@ void CompilableTarget::fillCompilerAndLinkerOptions()
         StringMap map;
         readLuaTable<StringMap>(L, lua_gettop(L), map);
 
-        m_compilerOptions->addIncludePath(map["includePaths"]);
-        m_compilerOptions->addCustomFlag(map["cflags"]);
-        m_linkerOptions->addCustomFlag(map["linkerFlags"]);
-        m_linkerOptions->addLibraryPath(map["libraryPaths"]);
-        m_linkerOptions->addLibraries(split(map["linkLibraries"]));
+        compilerOptions->addIncludePath(map["includePaths"]);
+        compilerOptions->addCustomFlag(map["cflags"]);
+        linkerOptions->addCustomFlag(map["linkerFlags"]);
+        linkerOptions->addLibraryPath(map["libraryPaths"]);
+        linkerOptions->addLibraries(split(map["linkLibraries"]));
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 
     getLuaField("_linkLibraries");
     StringList list;
     readLuaList(L, lua_gettop(L), list);
-    m_linkerOptions->addLibraries(list);
+    linkerOptions->addLibraries(list);
 }
 
 void CompilableTarget::clean()

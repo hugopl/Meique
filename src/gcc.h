@@ -27,6 +27,9 @@ public:
     bool isAvailable() const;
     Job* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
     Job* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
+    std::string nameForExecutable(const std::string& name) const;
+    std::string nameForStaticLibrary(const std::string& name) const;
+    std::string nameForSharedLibrary(const std::string& name) const;
 };
 
 #endif

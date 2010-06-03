@@ -45,6 +45,8 @@ Job* Gcc::compile(const std::string& fileName, const std::string& output, const 
     args.push_back(fileName);
     args.push_back("-o");
     args.push_back(output);
+    if (options->compileForLibrary())
+        args.push_back("-fpic"); // FIXME: Check if the user added -fPIC on custom flags
     StringList flags = options->customFlags();
     std::copy(flags.begin(), flags.end(), std::back_inserter(args));
     StringList paths = options->includePaths();
@@ -57,16 +59,45 @@ Job* Gcc::compile(const std::string& fileName, const std::string& output, const 
 Job* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
-    args.push_back("-o");
-    args.push_back(output);
-    StringList flags = options->customFlags();
-    std::copy(flags.begin(), flags.end(), std::back_inserter(args));
-    StringList paths = options->libraryPath();
-    std::copy(paths.begin(), paths.end(), std::back_inserter(args));
-    StringList libraries = options->libraries();
-    StringList::iterator it = libraries.begin();
-    for (; it != libraries.end(); ++it)
-        args.push_back("-l" + *it);
-    return new Job("g++", args);
+    std::string linker;
+
+    if (options->linkType() == LinkerOptions::StaticLibrary) {
+        linker = "ar";
+        args.push_front(output);
+        args.push_front("-rcs");
+    } else {
+        linker = "g++";
+        if (options->linkType() == LinkerOptions::SharedLibrary) {
+            args.push_front("-fpic");
+            args.push_front("-shared");
+            args.push_front("-Wl,-soname=" + output);
+        }
+        args.push_back("-o");
+        args.push_back(output);
+        StringList flags = options->customFlags();
+        std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+        StringList paths = options->libraryPath();
+        std::copy(paths.begin(), paths.end(), std::back_inserter(args));
+        StringList libraries = options->libraries();
+        StringList::iterator it = libraries.begin();
+        for (; it != libraries.end(); ++it)
+            args.push_back("-l" + *it);
+    }
+
+    return new Job(linker, args);
 }
 
+std::string Gcc::nameForExecutable(const std::string& name) const
+{
+    return name;
+}
+
+std::string Gcc::nameForStaticLibrary(const std::string& name) const
+{
+    return "lib" + name + ".a";
+}
+
+std::string Gcc::nameForSharedLibrary(const std::string& name) const
+{
+    return "lib" + name + ".so";
+}

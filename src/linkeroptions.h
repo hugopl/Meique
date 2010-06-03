@@ -23,7 +23,14 @@
 class LinkerOptions
 {
 public:
-    LinkerOptions() {}
+    LinkerOptions() : m_linkType(Executable) {}
+
+    enum LinkType {
+        Executable,
+        SharedLibrary,
+        StaticLibrary
+    };
+
     void addLibrary(const std::string& library);
     void addLibraries(const StringList& libraries);
     StringList libraries() const { return m_libraries; }
@@ -31,11 +38,14 @@ public:
     StringList libraryPath() const { return m_libraryPaths; }
     void addCustomFlag(const std::string& customFlag);
     StringList customFlags() const { return m_customFlags; }
+    void setLinkType(LinkType linkType) { m_linkType = linkType; }
+    LinkType linkType() const { return m_linkType; }
 private:
 
     StringList m_libraries;
     StringList m_libraryPaths;
     StringList m_customFlags;
+    LinkType m_linkType;
 
     LinkerOptions(const LinkerOptions&);
     LinkerOptions& operator=(const LinkerOptions&);

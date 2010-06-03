@@ -31,10 +31,13 @@ public:
     StringList defines() const { return m_defines; }
     void addCustomFlag(const std::string& customFlag);
     StringList customFlags() const { return m_customFlags; }
+    void setCompileForLibrary(bool value) { m_compileForLibrary = value; }
+    bool compileForLibrary() const { return m_compileForLibrary; }
 private:
     StringList m_includePaths;
     StringList m_defines;
     StringList m_customFlags;
+    bool m_compileForLibrary;
 
     CompilerOptions(const CompilerOptions&);
 };

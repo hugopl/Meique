@@ -16,6 +16,7 @@ linkeroptions.cpp
 target.cpp
 luatarget.cpp
 compilabletarget.cpp
+executabletarget.cpp
 librarytarget.cpp
 customtarget.cpp
 maintarget.cpp

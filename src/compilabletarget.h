@@ -32,14 +32,16 @@ public:
     ~CompilableTarget();
     void clean();
     void jobFinished(Job* job);
+    const CompilerOptions* compilerOptions() const { return m_compilerOptions; }
+    const LinkerOptions* linkerOptions() const { return m_linkerOptions; }
 protected:
-    JobQueue* doRun(Compiler* compiler);
+    JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
+    virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
 private:
+    std::map<Job*, StringList> m_job2Sources;
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
-    std::map<Job*, StringList> m_job2Sources;
 
-    void fillCompilerAndLinkerOptions();
     StringList getFileDependencies(const std::string& source);
     void preprocessFile(const std::string& source, const std::string& baseDir, StringList* deps);
 };

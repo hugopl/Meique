@@ -17,4 +17,56 @@
 */
 
 #include "librarytarget.h"
+#include "os.h"
+#include "jobqueue.h"
+#include "compiler.h"
+#include "job.h"
+#include "linkeroptions.h"
+#include "luacpputil.h"
+#include "logger.h"
+#include "compileroptions.h"
 
+LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script): CompilableTarget(targetName, script)
+{
+}
+
+JobQueue* LibraryTarget::doRun(Compiler* compiler)
+{
+    StringList objects;
+    JobQueue* queue = createCompilationJobs(compiler, &objects);
+    std::string libName;
+    if (linkerOptions()->linkType() == LinkerOptions::SharedLibrary)
+        libName = compiler->nameForSharedLibrary(name());
+    else
+        libName = compiler->nameForStaticLibrary(name());
+
+    if (!queue->isEmpty() || !OS::fileExists(libName)) {
+
+        std::string buildDir = OS::pwd();
+        Job* job = compiler->link(libName, objects, linkerOptions());
+        job->setWorkingDirectory(buildDir);
+        job->setDescription("Linking library " + libName);
+        job->setDependencies(queue->idleJobs());
+        queue->addJob(job);
+    }
+    return queue;
+}
+
+void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
+{
+    CompilableTarget::fillCompilerAndLinkerOptions(compilerOptions, linkerOptions);
+    compilerOptions->setCompileForLibrary(true);
+    getLuaField("_libType");
+    int libType = lua_tocpp<int>(luaState(), -1);
+    lua_pop(luaState(), 1);
+    switch (libType) {
+        case 1:
+            linkerOptions->setLinkType(LinkerOptions::SharedLibrary);
+            break;
+        case 2:
+            linkerOptions->setLinkType(LinkerOptions::StaticLibrary);
+            break;
+        default:
+            Error() << "Unknown library type! " << libType;
+    }
+}
