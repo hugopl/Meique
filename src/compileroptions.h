@@ -26,6 +26,7 @@ class CompilerOptions
 public:
     CompilerOptions() {}
     void addIncludePath(const std::string& includePath);
+    void addIncludePaths(const StringList& includePaths);
     StringList includePaths() const { return m_includePaths; }
     void addDefine(const std::string& define);
     StringList defines() const { return m_defines; }

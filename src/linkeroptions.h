@@ -36,6 +36,7 @@ public:
     void addLibraries(const StringList& libraries);
     StringList libraries() const { return m_libraries; }
     void addLibraryPath(const std::string& libraryPath);
+    void addLibraryPaths(const StringList& libraryPaths);
     StringList libraryPath() const { return m_libraryPaths; }
     void addCustomFlag(const std::string& customFlag);
     StringList customFlags() const { return m_customFlags; }

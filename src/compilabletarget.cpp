@@ -155,6 +155,7 @@ StringList CompilableTarget::getFileDependencies(const std::string& source)
 
 void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
+    // Get the package info
     getLuaField("_packages");
     lua_State* L = luaState();
     // loop on all used packages
@@ -172,11 +173,31 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
         linkerOptions->addLibraries(split(map["linkLibraries"]));
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
+    lua_pop(L, 1);
 
-    getLuaField("_linkLibraries");
     StringList list;
+    // explicit include directories
+    getLuaField("_incDirs");
+    list.clear();
+    readLuaList(L, lua_gettop(L), list);
+    compilerOptions->addIncludePaths(list);
+    lua_pop(L, 1);
+
+    // explicit link libraries
+    getLuaField("_linkLibraries");
+    list.clear();
     readLuaList(L, lua_gettop(L), list);
     linkerOptions->addLibraries(list);
+    lua_pop(L, 1);
+
+    // explicit library include dirs
+    getLuaField("_libDirs");
+    list.clear();
+    readLuaList(L, lua_gettop(L), list);
+    linkerOptions->addLibraryPaths(list);
+    lua_pop(L, 1);
+
+    // other targets
 }
 
 void CompilableTarget::clean()

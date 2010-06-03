@@ -17,10 +17,16 @@
 */
 
 #include "compileroptions.h"
+#include <algorithm>
 
 void CompilerOptions::addIncludePath(const std::string& includePath)
 {
     m_includePaths.push_back(includePath);
+}
+
+void CompilerOptions::addIncludePaths(const StringList& includePaths)
+{
+    std::copy(includePaths.begin(), includePaths.end(), std::back_inserter(m_includePaths));
 }
 
 void CompilerOptions::addDefine(const std::string& define)

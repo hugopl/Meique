@@ -17,6 +17,7 @@
 */
 
 #include "linkeroptions.h"
+#include <algorithm>
 
 void LinkerOptions::addCustomFlag(const std::string& customFlag)
 {
@@ -30,12 +31,15 @@ void LinkerOptions::addLibrary(const std::string& library)
 
 void LinkerOptions::addLibraries(const StringList& libraries)
 {
-    std::list<std::string>::const_iterator it = libraries.begin();
-    for (; it != libraries.end(); ++it)
-        m_libraries.push_back(*it);
+    std::copy(libraries.begin(), libraries.end(), std::back_inserter(m_libraries));
 }
 
 void LinkerOptions::addLibraryPath(const std::string& libraryPath)
 {
     m_libraryPaths.push_back(libraryPath);
+}
+
+void LinkerOptions::addLibraryPaths(const StringList& libraryPaths)
+{
+    std::copy(libraryPaths.begin(), libraryPaths.end(), std::back_inserter(m_libraryPaths));
 }
