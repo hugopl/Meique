@@ -24,10 +24,7 @@
 #include <fstream>
 #include <sstream>
 
-extern "C" {
-#include <lualib.h>
-#include <lauxlib.h>
-}
+#include "lauxlib.h"
 
 #include "os.h"
 #include "mutexlocker.h"

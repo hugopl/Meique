@@ -23,12 +23,9 @@
 #include <string>
 #include <cstring>
 #include <cassert>
-
-extern "C" {
-#include <lauxlib.h>
-#include <lualib.h>
-#include <lua.h>
-}
+#include "lauxlib.h"
+#include "lualib.h"
+#include "lua.h"
 #include "target.h"
 #include "compilabletarget.h"
 #include "librarytarget.h"

@@ -1,6 +1,4 @@
 
-find_package(Lua51 REQUIRED)
-
 set(meique_SRC
 main.cpp
 meique.cpp
@@ -30,7 +28,7 @@ jobmanager.cpp
 
 add_definitions("-Wall")
 
-include_directories(${LUA_INCLUDE_DIR})
+include_directories(${lua_SOURCE_DIR})
 add_executable(meique ${meique_SRC})
-target_link_libraries(meique ${LUA_LIBRARIES} -lpthread)
+target_link_libraries(meique lua -lpthread)
 install(TARGETS meique DESTINATION bin)

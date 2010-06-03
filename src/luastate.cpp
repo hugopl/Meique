@@ -18,9 +18,7 @@
 
 #include "luastate.h"
 #include "logger.h"
-extern "C" {
-#include <lauxlib.h>
-}
+#include "lauxlib.h"
 
 LuaState::LuaState()
 {

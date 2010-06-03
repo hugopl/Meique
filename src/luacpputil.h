@@ -23,9 +23,7 @@
 #include <sstream>
 #include <list>
 #include <cassert>
-extern "C" {
-#include <lua.h>
-}
+#include "lua.h"
 
 /// Convert a lua type at index \p index to the C++ type \p T.
 template<typename T>

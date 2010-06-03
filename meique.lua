@@ -1,2 +1,2 @@
-lua = findPackage("lua")
+addSubDirectory("ext")
 addSubDirectory("src")

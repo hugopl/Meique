@@ -18,9 +18,7 @@
 
 #include "luatarget.h"
 #include "luacpputil.h"
-extern "C" {
-    #include <lua.h>
-}
+#include "lua.h"
 #include "logger.h"
 #include "meiquescript.h"
 
