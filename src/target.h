@@ -23,9 +23,13 @@
 class JobQueue;
 class Compiler;
 
+/**
+*   Base class for all meique targets.
+*/
 class Target
 {
 public:
+    /// Constructs a new target with the name \p name.
     Target(const std::string& name);
     virtual ~Target();
     /// Returns a list with all target dependencies
@@ -39,6 +43,7 @@ public:
     /// Clean this target
     virtual void clean() {}
 protected:
+    /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
 private:
     std::string m_name;
