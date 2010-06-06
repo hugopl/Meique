@@ -28,8 +28,17 @@ LuaTarget::LuaTarget(const std::string& name, MeiqueScript* script) : Target(nam
 
 TargetList LuaTarget::dependencies()
 {
-    // TODO Calculate target dependencies!
     if (!m_dependenciesCached) {
+        getLuaField("_deps");
+        StringList list;
+        readLuaList(luaState(), lua_gettop(luaState()), list);
+        lua_pop(luaState(), 1);
+        StringList::iterator it = list.begin();
+        for (; it != list.end(); ++it) {
+            Target* target = script()->getTarget(*it);
+            m_dependencies.push_back(target);
+        }
+        m_dependenciesCached = true;
     }
     return m_dependencies;
 }
