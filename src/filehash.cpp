@@ -22,12 +22,18 @@
 #include <sstream>
 #include <cstring>
 #include "basictypes.h"
+#include "mutexlocker.h"
 
 static std::string computeMd5(const std::string& fileName);
 
 std::string getFileHash(const std::string& fileName)
 {
     static StringMap computedHashes;
+    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+    if (fileName.empty())
+        return fileName;
+
+    MutexLocker locker(&mutex);
     StringMap::const_iterator it = computedHashes.find(fileName);
     if (it != computedHashes.end())
         return it->second;
