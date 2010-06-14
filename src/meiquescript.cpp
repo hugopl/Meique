@@ -17,12 +17,15 @@
 */
 
 #include "meiquescript.h"
-#include "config.h"
-#include "logger.h"
-#include "luacpputil.h"
+
 #include <string>
 #include <cstring>
 #include <cassert>
+#include <algorithm>
+
+#include "config.h"
+#include "logger.h"
+#include "luacpputil.h"
 #include "lauxlib.h"
 #include "lualib.h"
 #include "lua.h"
@@ -264,6 +267,17 @@ void MeiqueScript::exportApi()
     assert(!sanityCheck);
     lua_register(m_L, "findPackage", &findPackage);
     lua_settop(m_L, 0);
+    // export user options as variables
+    const StringMap& userOptions = config().userOptions();
+    StringMap::const_iterator it = userOptions.begin();
+    for (; it != userOptions.end(); ++it) {
+        std::string varName = it->first;
+        trim(varName);
+        std::transform(varName.begin(), varName.end(), varName.begin(), ::toupper);
+        stringReplace(varName, "-", "_");
+        lua_pushstring(m_L, it->second.c_str());
+        lua_setglobal(m_L, varName.c_str());
+    }
 }
 
 template<>

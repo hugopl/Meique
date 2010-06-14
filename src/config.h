@@ -46,6 +46,7 @@ public:
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
     bool isInBuildMode() const { return m_mode == BuildMode; }
     void setUserOptions(const StringMap& userOptions);
+    const StringMap& userOptions() const { return m_userOptions; }
     void saveCache();
     bool hasArgument(const std::string& arg) const;
     int jobsAtOnce() const { return m_jobsAtOnce; }
