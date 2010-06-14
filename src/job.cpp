@@ -35,6 +35,9 @@ void* initJobThread(void* ptr)
 
 void Job::run()
 {
+    pthread_mutex_lock(&m_statusMutex);
+    m_status = Scheduled;
+    pthread_mutex_unlock(&m_statusMutex);
     pthread_create(&m_thread, 0, initJobThread, this);
 }
 
