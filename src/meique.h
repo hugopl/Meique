@@ -37,7 +37,7 @@ private:
     JobManager* m_jobManager;
 
     void checkOptionsAgainstArguments(const OptionsMap& options);
-    void getTargetJobQueues(Target* target);
+    void executeJobQueues(const MeiqueScript& script, const std::string& targetName);
 };
 
 #endif

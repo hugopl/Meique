@@ -34,6 +34,7 @@ public:
     int jobCount() const { return m_jobs.size(); }
     std::list<Job*> idleJobs() const { return m_jobs; }
     bool hasShowStoppers() const;
+    void addDependency(JobQueue* queue);
 private:
     std::list<Job*> m_jobs;
     std::list<Job*>::iterator m_nextJob;

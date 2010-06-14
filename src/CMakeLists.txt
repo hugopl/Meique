@@ -24,6 +24,7 @@ filehash.cpp
 job.cpp
 jobqueue.cpp
 jobmanager.cpp
+graph.cpp
 )
 
 add_definitions("-Wall")

@@ -51,7 +51,16 @@ Job* JobQueue::getNextJob()
 
 bool JobQueue::hasShowStoppers() const
 {
+    std::list<JobQueue*>::const_iterator it = m_dependencies.begin();
+    for (; it != m_dependencies.end(); ++it)
+        if ((*it)->hasShowStoppers())
+            return true;
     return false;
+}
+
+void JobQueue::addDependency(JobQueue* queue)
+{
+    m_dependencies.push_back(queue);
 }
 
 bool JobQueue::isEmpty() const

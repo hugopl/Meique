@@ -25,6 +25,9 @@
 #include "jobmanager.h"
 // TODO: Integrate the version number on build system
 #define MEIQUE_VERSION "0.1"
+#include "jobqueue.h"
+#include "graph.h"
+#include <vector>
 
 Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0), m_jobManager(new JobManager)
 {
@@ -68,8 +71,7 @@ void Meique::exec()
         } else {
             if (target.empty())
                 target = "all";
-            getTargetJobQueues(script.getTarget(target));
-            m_jobManager->processJobs();
+            executeJobQueues(script, target);
         }
     }
     m_config.saveCache();
@@ -122,12 +124,54 @@ void Meique::showHelp(const OptionsMap& options)
     std::cout << " -jN                                Allow N jobs at once.\n";
 }
 
-void Meique::getTargetJobQueues(Target* target)
+void Meique::executeJobQueues(const MeiqueScript& script, const std::string& targetName)
 {
-    TargetList deps = target->dependencies();
-    TargetList::iterator it = deps.begin();
-    for (; it != deps.end(); ++it)
-        getTargetJobQueues(*it);
+    TargetList aux = script.targets();
+    std::vector<Target*> targets;
+    std::copy(aux.begin(), aux.end(), std::back_inserter(targets));
 
-    m_jobManager->addJobQueue(target->run(m_compiler));
+    // Create and fill some collections to help with the graph manipulation
+    std::map<Target*, int> nodeMap;
+    std::map<int, std::string> revMap;
+    for (size_t i = 0; i < targets.size(); ++i) {
+        Target* target = targets[i];
+        nodeMap[target] = i;
+        revMap[i] = target->name();
+    }
+
+    // Create the dependency graph
+    Graph graph(targets.size());
+    for (size_t i = 0; i < targets.size(); ++i) {
+        Target* target = targets[i];
+        TargetList deps = target->dependencies();
+        TargetList::const_iterator it = deps.begin();
+        for (; it != deps.end(); ++it)
+            graph.addEdge(i, nodeMap[*it]);
+    }
+
+    // Try to find cyclic dependences
+    std::list<int> sortedNodes = graph.topologicalSort();
+    if (sortedNodes.empty()) {
+        graph.dumpDot(revMap, "cyclicDeps.dot");
+        Error() << "Cyclic dependency found in your targets! You can check the dot graph at ./cyclicDeps.dot.";
+    }
+
+    // get all job queues
+    std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[script.getTarget(targetName)]);
+    std::vector<JobQueue*> queues(targets.size());
+    for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
+        JobQueue* queue = targets[*it]->run(m_compiler);
+        queues[*it] = queue;
+        m_jobManager->addJobQueue(queue);
+    }
+
+    // add dependency info to job queues
+    for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
+        TargetList deps = targets[*it]->dependencies();
+        TargetList::const_iterator it2 = deps.begin();
+        for (; it2 != deps.end(); ++it2)
+            queues[*it]->addDependency(queues[nodeMap[*it2]]);
+    }
+
+    m_jobManager->processJobs();
 }
