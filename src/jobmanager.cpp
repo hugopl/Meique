@@ -21,6 +21,7 @@
 #include "jobqueue.h"
 #include "job.h"
 #include <iomanip>
+#include "mutexlocker.h"
 
 JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0)
 {
@@ -59,7 +60,7 @@ void JobManager::processJobs()
                 return;
         }
 
-        pthread_mutex_lock(&m_jobsRunningMutex);
+        MutexLocker locker(&m_jobsRunningMutex);
         if (m_jobsRunning >= m_maxJobsRunning)
             pthread_cond_wait(&m_jobsRunningCond, &m_jobsRunningMutex);
         // Now select a valid job
@@ -70,16 +71,14 @@ void JobManager::processJobs()
             m_jobsNotIdle++;
             Notice() << '[' << std::setw(3) << int(100*m_jobsNotIdle/m_jobCount) << "%] " << green() << job->description();
         }
-        pthread_mutex_unlock(&m_jobsRunningMutex);
     }
 }
 
 void JobManager::jobFinished(Job* job)
 {
-    pthread_mutex_lock(&m_jobsRunningMutex);
+    MutexLocker locker(&m_jobsRunningMutex);
     m_jobsRunning--;
     m_jobsProcessed++;
     if (m_jobsRunning < m_maxJobsRunning)
         pthread_cond_signal(&m_jobsRunningCond);
-    pthread_mutex_unlock(&m_jobsRunningMutex);
 }
