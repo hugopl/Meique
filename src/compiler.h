@@ -21,9 +21,9 @@
 
 #include "basictypes.h"
 
+class OSCommandJob;
 class LinkerOptions;
 class CompilerOptions;
-class Job;
 
 /// Languages supported by meique, except the UnsupportedLanguage value ;-)
 enum Language {
@@ -46,8 +46,8 @@ public:
     virtual ~Compiler() {}
     virtual const char* name() const = 0;
     virtual bool isAvailable() const = 0;
-    virtual Job* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
-    virtual Job* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
+    virtual OSCommandJob* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
+    virtual OSCommandJob* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
     virtual std::string nameForExecutable(const std::string& name) const = 0;
     virtual std::string nameForStaticLibrary(const std::string& name) const = 0;
     virtual std::string nameForSharedLibrary(const std::string& name) const = 0;

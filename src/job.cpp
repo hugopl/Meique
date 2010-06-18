@@ -17,11 +17,10 @@
 */
 
 #include "job.h"
-#include "os.h"
-#include "jobqueue.h"
 #include "joblistenner.h"
+#include "mutexlocker.h"
 
-Job::Job(const std::string& command, const StringList& args) : m_command(command), m_args(args), m_status(Idle), m_result(0)
+Job::Job() : m_status(Idle), m_result(0)
 {
     pthread_mutex_init(&m_statusMutex, 0);
 }
@@ -29,7 +28,21 @@ Job::Job(const std::string& command, const StringList& args) : m_command(command
 void* initJobThread(void* ptr)
 {
     Job* job = reinterpret_cast<Job*>(ptr);
-    job->doRun();
+
+    pthread_mutex_lock(&job->m_statusMutex);
+    job->m_status = Job::Running;
+    pthread_mutex_unlock(&job->m_statusMutex);
+
+    job->m_result = job->doRun();
+
+    pthread_mutex_lock(&job->m_statusMutex);
+    job->m_status = Job::Finished;
+    pthread_mutex_unlock(&job->m_statusMutex);
+
+    std::list<JobListenner*>::iterator it = job->m_listenners.begin();
+    for (; it != job->m_listenners.end(); ++it)
+        (*it)->jobFinished(job);
+
     return 0;
 }
 
@@ -41,33 +54,10 @@ void Job::run()
     pthread_create(&m_thread, 0, initJobThread, this);
 }
 
-void Job::doRun()
-{
-    pthread_mutex_lock(&m_statusMutex);
-    m_status = Running;
-    pthread_mutex_unlock(&m_statusMutex);
-
-    m_result = OS::exec(m_command, m_args, 0, m_workingDir);
-
-    pthread_mutex_lock(&m_statusMutex);
-    m_status = Finished;
-    pthread_mutex_unlock(&m_statusMutex);
-
-    std::list<JobListenner*>::iterator it = m_listenners.begin();
-    for (; it != m_listenners.end(); ++it)
-        (*it)->jobFinished(this);
-}
-
-std::string Job::workingDirectory()
-{
-    return m_workingDir;
-}
-
 Job::Status Job::status() const
 {
-    pthread_mutex_lock(&m_statusMutex);
+    MutexLocker locker(&m_statusMutex);
     Status s = m_status;
-    pthread_mutex_unlock(&m_statusMutex);
     return s;
 }
 

@@ -20,7 +20,7 @@
 #include "os.h"
 #include "jobqueue.h"
 #include "compiler.h"
-#include "job.h"
+#include "oscommandjob.h"
 #include "linkeroptions.h"
 #include "luacpputil.h"
 #include "logger.h"
@@ -56,7 +56,7 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
 
     if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {
         std::string buildDir = OS::pwd();
-        Job* job = compiler->link(outputFileName(), objects, linkerOptions());
+        OSCommandJob* job = compiler->link(outputFileName(), objects, linkerOptions());
         job->setWorkingDirectory(buildDir);
         job->setDescription("Linking library " + outputFileName());
         job->setDependencies(queue->idleJobs());

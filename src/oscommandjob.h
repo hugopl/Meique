@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,20 +16,25 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef GCC_H
-#define GCC_H
-#include "compiler.h"
+#ifndef OSCOMMANDJOB_H
+#define OSCOMMANDJOB_H
 
-class Gcc : public Compiler
+#include "job.h"
+
+
+class OSCommandJob : public Job
 {
 public:
-    const char* name() const { return "Gcc"; }
-    bool isAvailable() const;
-    OSCommandJob* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
-    OSCommandJob* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
-    std::string nameForExecutable(const std::string& name) const;
-    std::string nameForStaticLibrary(const std::string& name) const;
-    std::string nameForSharedLibrary(const std::string& name) const;
+    OSCommandJob(const std::string& command, const StringList& args);
+    void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
+    std::string workingDirectory() { return m_workingDir; }
+
+protected:
+    virtual int doRun();
+private:
+    std::string m_command;
+    StringList m_args;
+    std::string m_workingDir;
 };
 
-#endif
+#endif // OSCOMMANDJOB_H

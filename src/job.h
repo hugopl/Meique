@@ -33,9 +33,8 @@ public:
         Finished
     };
 
-    Job(const std::string& command, const StringList& args);
-    void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
-    std::string workingDirectory();
+    Job();
+    virtual ~Job() {}
     void run();
     void setDescription(const std::string& description) { m_description = description; }
     std::string description() const { return m_description; }
@@ -45,11 +44,8 @@ public:
     void addJobListenner(JobListenner* listenner);
     int result() const { return m_result; }
 protected:
-    void doRun();
+    virtual int doRun() = 0;
 private:
-    std::string m_command;
-    StringList m_args;
-    std::string m_workingDir;
     std::string m_description;
     std::list<Job*> m_dependencies;
     Status m_status;

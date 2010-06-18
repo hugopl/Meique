@@ -19,7 +19,7 @@
 #include "gcc.h"
 #include "compileroptions.h"
 #include "linkeroptions.h"
-#include "job.h"
+#include "oscommandjob.h"
 #include "os.h"
 #include "logger.h"
 
@@ -37,7 +37,7 @@ bool Gcc::isAvailable() const
     return true;
 }
 
-Job* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
+OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
     // TODO: Identify what to use, g++ or gcc
     StringList args;
@@ -72,10 +72,10 @@ Job* Gcc::compile(const std::string& fileName, const std::string& output, const 
         compiler = "g++";
     else
         Error() << "Unknown programming language used for " << fileName;
-    return new Job(compiler, args);
+    return new OSCommandJob(compiler, args);
 }
 
-Job* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
+OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
     std::string linker;
@@ -121,7 +121,7 @@ Job* Gcc::link(const std::string& output, const StringList& objects, const Linke
         std::copy(staticLibs.begin(), staticLibs.end(), std::back_inserter(args));
     }
 
-    return new Job(linker, args);
+    return new OSCommandJob(linker, args);
 }
 
 std::string Gcc::nameForExecutable(const std::string& name) const

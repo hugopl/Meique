@@ -30,7 +30,7 @@
 #include "linkeroptions.h"
 #include "stdstringsux.h"
 #include "jobqueue.h"
-#include "job.h"
+#include "oscommandjob.h"
 #include "meiquescript.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
@@ -78,7 +78,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             compileIt = config().isHashGroupOutdated(dependents);
 
         if (compileIt) {
-            Job* job = compiler->compile(source, output, m_compilerOptions);
+            OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
             job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
             job->setDescription("Compiling " + *it);

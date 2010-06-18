@@ -20,7 +20,7 @@
 #include "jobqueue.h"
 #include "os.h"
 #include "compiler.h"
-#include "job.h"
+#include "oscommandjob.h"
 #include "logger.h"
 #include "linkeroptions.h"
 
@@ -36,7 +36,7 @@ JobQueue* ExecutableTarget::doRun(Compiler* compiler)
     if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {
         std::string buildDir = OS::pwd();
         std::string exeName = compiler->nameForExecutable(name());
-        Job* job = compiler->link(exeName, objects, linkerOptions());
+        OSCommandJob* job = compiler->link(exeName, objects, linkerOptions());
         job->setWorkingDirectory(buildDir);
         job->setDescription("Linking executable " + exeName);
         job->setDependencies(queue->idleJobs());
