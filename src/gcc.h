@@ -23,13 +23,21 @@
 class Gcc : public Compiler
 {
 public:
+    Gcc();
     const char* name() const { return "Gcc"; }
-    bool isAvailable() const;
+    std::string fullName() const { return m_fullName; }
+    bool isAvailable() const { return m_isAvailable; }
     OSCommandJob* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
     OSCommandJob* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;
+    StringList defaultIncludeDirs() const { return m_defaultIncludeDirs; }
+private:
+    bool m_isAvailable;
+    std::string m_fullName;
+    std::string m_version;
+    StringList m_defaultIncludeDirs;
 };
 
 #endif

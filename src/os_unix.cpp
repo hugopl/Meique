@@ -24,6 +24,7 @@
 #include "logger.h"
 #include <stdlib.h>
 #include <cstdio>
+#include "stdstringsux.h"
 
 namespace OS
 {
@@ -71,6 +72,7 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
             buffer[bytes] = 0;
             *output += buffer;
         }
+        trim(*output);
     }
     waitpid(pid, &status, 0);
     return status;
@@ -138,6 +140,12 @@ std::string getEnv(const std::string& variable)
 {
     char* value = ::getenv(variable.c_str());
     return value ? std::string(value) : std::string();
+}
+
+std::string dirName(const std::string& path)
+{
+    size_t idx = path.find_last_of('/');
+    return idx == std::string::npos ? "/" : path.substr(0, idx + 1);
 }
 
 }

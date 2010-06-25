@@ -39,8 +39,10 @@ Compiler* CompilerFactory::findCompiler()
     const char** compilers = availableCompilers();
     for (int i = 0; compilers[i]; ++i) {
         Compiler* compiler = createCompiler(compilers[i]);
-        if (compiler->isAvailable())
+        if (compiler->isAvailable()) {
+            Notice() << "-- Found " << compiler->fullName();
             return compiler;
+        }
         delete compiler;
     }
     Error() << "No usable compilers were found!";

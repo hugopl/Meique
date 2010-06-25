@@ -45,12 +45,14 @@ class Compiler
 public:
     virtual ~Compiler() {}
     virtual const char* name() const = 0;
+    virtual std::string fullName() const = 0;
     virtual bool isAvailable() const = 0;
     virtual OSCommandJob* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
     virtual OSCommandJob* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
     virtual std::string nameForExecutable(const std::string& name) const = 0;
     virtual std::string nameForStaticLibrary(const std::string& name) const = 0;
     virtual std::string nameForSharedLibrary(const std::string& name) const = 0;
+    virtual StringList defaultIncludeDirs() const = 0;
 };
 
 #endif

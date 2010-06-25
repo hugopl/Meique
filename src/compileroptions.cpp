@@ -21,12 +21,19 @@
 
 void CompilerOptions::addIncludePath(const std::string& includePath)
 {
-    m_includePaths.push_back(includePath);
+    if (includePath.empty())
+        return;
+    if (*includePath.rbegin() != '/')
+        m_includePaths.push_back(includePath + '/');
+    else
+        m_includePaths.push_back(includePath);
 }
 
 void CompilerOptions::addIncludePaths(const StringList& includePaths)
 {
-    std::copy(includePaths.begin(), includePaths.end(), std::back_inserter(m_includePaths));
+    StringList::const_iterator it = includePaths.begin();
+    for (; it != includePaths.begin(); ++it)
+        addIncludePath(*it);
 }
 
 void CompilerOptions::addDefine(const std::string& define)

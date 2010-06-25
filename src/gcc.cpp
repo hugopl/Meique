@@ -22,19 +22,28 @@
 #include "oscommandjob.h"
 #include "os.h"
 #include "logger.h"
+#include "stdstringsux.h"
 
-bool Gcc::isAvailable() const
+Gcc::Gcc() : m_isAvailable(false)
 {
-    StringList args;
-    args.push_back("--version");
     std::string output;
-    int retval = OS::exec("g++", args, &output);
-    if (retval)
-        return false;
-    size_t it = output.find('\n');
-    output = output.substr(0, it);
-    Notice() << "-- Found " << output;
-    return true;
+    int retval = OS::exec("g++", "--version", &output);
+    if (!retval) {
+        size_t it = output.find('\n');
+        m_fullName = output.substr(0, it);
+
+        OS::exec("g++", "-dumpversion", &m_version);
+        std::string machine;
+        OS::exec("g++", "-dumpmachine", &machine);
+
+        m_defaultIncludeDirs.push_back("/usr/local/include/");
+        m_defaultIncludeDirs.push_back("/usr/include/");
+        m_defaultIncludeDirs.push_back("/usr/include/c++/" + m_version + '/');
+        m_defaultIncludeDirs.push_back("/usr/include/c++/" + m_version + '/' + machine + '/');
+        m_defaultIncludeDirs.push_back("/usr/lib/gcc/" + machine +'/' + m_version + "/include/");
+
+        m_isAvailable = true;
+    }
 }
 
 OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const

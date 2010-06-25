@@ -24,6 +24,12 @@
 namespace OS
 {
     int exec(const std::string& cmd, const StringList& args, std::string* output = 0, const std::string& workingDir = std::string());
+    inline int exec(const std::string& cmd, const std::string& arg, std::string* output = 0, const std::string& workingDir = std::string())
+    {
+        StringList args;
+        args.push_back(arg);
+        return exec(cmd, args, output, workingDir);
+    }
     /// Like cd command.
     void cd(const std::string& dir);
     /// Like pwd command.
@@ -38,6 +44,8 @@ namespace OS
     unsigned long getPid();
     /// Returns the value of an environment variable.
     std::string getEnv(const std::string& variable);
+
+    std::string dirName(const std::string& path);
 
     class ChangeWorkingDirectory
     {

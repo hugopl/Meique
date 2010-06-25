@@ -73,7 +73,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         std::string output = *it + ".o";
 
         bool compileIt = !OS::fileExists(output);
-        StringList dependents = getFileDependencies(source);
+        StringList dependents = getFileDependencies(source, compiler->defaultIncludeDirs());
         if (!compileIt)
             compileIt = config().isHashGroupOutdated(dependents);
 
@@ -96,20 +96,51 @@ void CompilableTarget::jobFinished(Job* job)
         config().updateHashGroup(m_job2Sources[job]);
 }
 
-void CompilableTarget::preprocessFile(const std::string& source, const std::string& baseDir, StringList* deps)
+void CompilableTarget::preprocessFile(const std::string& source,
+                                      StringList& userIncludeDirs,
+                                      const StringList& systemIncludeDirs,
+                                      bool isSystemHeader,
+                                      StringList* deps)
 {
-    std::string absSource(source);
-    if (absSource.empty())
+    if (source.empty())
         return;
-    if (absSource[0] != '/')
-        absSource.insert(0, baseDir);
-    if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
-        return;
-    deps->push_back(absSource);
 
-    std::ifstream fp(absSource.c_str());
-    if (!fp) {
-        Debug() << "Include file not found: " << absSource;
+    std::string absSource;
+    std::ifstream fp;
+
+    if (source[0] == '/') {
+        absSource = source;
+        fp.open(source.c_str());
+    } else {
+        // It's a system header
+        if (isSystemHeader) {
+            StringList::const_iterator it = systemIncludeDirs.begin();
+            for (; it != systemIncludeDirs.end(); ++it) {
+                absSource = *it + source;
+                fp.open(absSource.c_str());
+                if (fp)
+                    break;
+            }
+        }
+        // It's a normal file or a system header not found in the system directories
+        if (!fp && source[0] != '/') {
+            StringList::const_iterator it = systemIncludeDirs.begin();
+            for (; it != systemIncludeDirs.end(); ++it) {
+                absSource = *it + source;
+                fp.open(absSource.c_str());
+                if (fp)
+                    break;
+            }
+        }
+    }
+
+    if (fp) {
+        if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
+            return;
+        deps->push_back(absSource);
+    } else {
+        if (!isSystemHeader)
+            Debug() << "Include file not found: " << source << " - " << userIncludeDirs.front();
         return;
     }
 
@@ -137,20 +168,26 @@ void CompilableTarget::preprocessFile(const std::string& source, const std::stri
             continue;
         buffer1.erase(0, 7);
         trim(buffer1);
-        if (buffer1[ 0 ] == '"') {
-            std::string includedFile = buffer1.substr(1, buffer1.size()-2);
-            preprocessFile(includedFile, baseDir, deps);
+        bool isSystemInclude = buffer1[ 0 ] == '<' || buffer1[ 0 ] == '>';
+        bool isLocalInclude = buffer1[ 0 ] == '"';
+        if (isSystemInclude || isLocalInclude) {
+            std::string includedFile = buffer1.substr(1, buffer1.find_first_of("\">") - 1);
+            userIncludeDirs.pop_front();
+            userIncludeDirs.push_front(OS::dirName(absSource));
+            preprocessFile(includedFile, userIncludeDirs, systemIncludeDirs, isSystemInclude, deps);
         }
     }
 }
 
-StringList CompilableTarget::getFileDependencies(const std::string& source)
+StringList CompilableTarget::getFileDependencies(const std::string& source, const StringList& systemIncludeDirs)
 {
     std::string baseDir = config().sourceRoot() + directory();
     StringList dependents;
     // FIXME: There is a large room for improviments here, we need to cache some results
     //        to avoid doing a lot of things twice.
-    preprocessFile(source, baseDir, &dependents);
+    StringList includePaths = m_compilerOptions->includePaths();
+    includePaths.push_front(baseDir);
+    preprocessFile(source, includePaths, systemIncludeDirs, false, &dependents);
     return dependents;
 }
 
