@@ -96,4 +96,8 @@ private:
     std::ostringstream m_stream;
 };
 
+/// Translate a lua error code into an C++ exception.
+void translateLuaError(lua_State* L, int code, const std::string& scriptName);
+void luaPCall(lua_State* L, const std::string& scriptName = std::string());
+
 #endif

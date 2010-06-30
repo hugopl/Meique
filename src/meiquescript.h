@@ -48,6 +48,7 @@ public:
     Target* getTarget(const std::string& name) const;
     TargetList targets() const;
     lua_State* luaState() { return m_L; }
+
 private:
     LuaState m_L;
     std::string m_scriptName;
@@ -59,7 +60,6 @@ private:
     MeiqueScript(const MeiqueScript&);
     MeiqueScript& operator=(const MeiqueScript&);
 
-    void translateLuaError(int code);
     void exportApi();
     void extractTargets();
 

@@ -195,7 +195,7 @@ MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
     m_scriptName = m_config.sourceRoot()+"meique.lua";
-    translateLuaError(luaL_loadfile(m_L, m_scriptName.c_str()));
+    translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
 }
 
 MeiqueScript::~MeiqueScript()
@@ -224,32 +224,10 @@ static int meiqueErrorHandler(lua_State* L)
 void MeiqueScript::exec()
 {
     OS::ChangeWorkingDirectory dirChanger(m_config.sourceRoot());
-    int errorIndex = lua_gettop(m_L);
-    lua_pushcfunction(m_L, meiqueErrorHandler);
-    lua_insert(m_L, errorIndex);
-    int errorCode = lua_pcall(m_L, 0, 0, 1);
-    translateLuaError(errorCode);
+    luaPCall(m_L, m_scriptName);
 
     if (m_config.isInBuildMode())
         extractTargets();
-}
-
-void MeiqueScript::translateLuaError(int code)
-{
-    switch (code) {
-    case 0:
-        return;
-    case LUA_ERRRUN:
-        Error() << "Runtime error: " << lua_tostring(m_L, -1);
-    case LUA_ERRFILE:
-        Error() << '"' << m_scriptName << "\" not found";
-    case LUA_ERRSYNTAX:
-        Error() << "Syntax error: " << lua_tostring(m_L, -1);
-    case LUA_ERRMEM:
-        Error() << "Lua memory allocation error.";
-    case LUA_ERRERR:
-        Error() << "Bizarre error: " << lua_tostring(m_L, -1);
-    };
 }
 
 void MeiqueScript::exportApi()
@@ -263,7 +241,7 @@ void MeiqueScript::exportApi()
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
     assert(!sanityCheck);
     sanityCheck = lua_pcall(m_L, 0, 0, 0);
-    translateLuaError(sanityCheck);
+    translateLuaError(m_L, sanityCheck, m_scriptName);
     assert(!sanityCheck);
     lua_register(m_L, "findPackage", &findPackage);
     lua_settop(m_L, 0);
