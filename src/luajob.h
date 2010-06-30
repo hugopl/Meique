@@ -16,15 +16,21 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "customtarget.h"
-#include "jobqueue.h"
-#include "lua.h"
-#include "luajob.h"
+#ifndef LUAJOB_H
+#define LUAJOB_H
+#include "job.h"
 
-JobQueue* CustomTarget::doRun(Compiler* compiler)
+struct lua_State;
+class LuaJob : public Job
 {
-    JobQueue* queue = new JobQueue;
-    LuaJob* job = new LuaJob(luaState(), this, "_func");
-    queue->addJob(job);
-    return queue;
-}
+public:
+    LuaJob(lua_State* L, void* luaRegisterKey, const std::string& variable);
+protected:
+    virtual int doRun();
+private:
+    lua_State* m_L;
+    void* m_registerKey;
+    std::string m_variable;
+};
+
+#endif // LUAJOB_H

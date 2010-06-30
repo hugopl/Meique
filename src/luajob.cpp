@@ -16,15 +16,34 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "customtarget.h"
-#include "jobqueue.h"
-#include "lua.h"
 #include "luajob.h"
+#include "lualocker.h"
+#include "lua.h"
+#include "luacpputil.h"
+#include "logger.h"
 
-JobQueue* CustomTarget::doRun(Compiler* compiler)
+LuaJob::LuaJob(lua_State* L, void* luaRegisterKey, const std::string& variable)
+    : m_L(L), m_registerKey(luaRegisterKey), m_variable(variable)
 {
-    JobQueue* queue = new JobQueue;
-    LuaJob* job = new LuaJob(luaState(), this, "_func");
-    queue->addJob(job);
-    return queue;
+}
+
+int LuaJob::doRun()
+{
+    LuaLocker locker(m_L);
+
+    // Get the lua function and put it on lua stack
+    lua_pushlightuserdata(m_L, m_registerKey);
+    lua_gettable(m_L, LUA_REGISTRYINDEX);
+    lua_getfield(m_L, -1, m_variable.c_str());
+    // remove table from stack
+    lua_insert(m_L, -2);
+    lua_pop(m_L, 1);
+
+    try {
+        luaPCall(m_L);
+    } catch (const MeiqueError&) {
+        MeiqueError::errorAlreadyset = false;
+        return 1;
+    }
+    return 0;
 }
