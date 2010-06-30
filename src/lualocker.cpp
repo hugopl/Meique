@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,25 +16,20 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LUASTATE_H
-#define LUASTATE_H
+#include "lualocker.h"
+#include "lua.h"
 
-#include <pthread.h>
+LuaLocker::LuaLocker(lua_State* L)
+{
+    // get mutex.
+    lua_pushlightuserdata(L, (void *)L);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    m_mutex = reinterpret_cast<pthread_mutex_t*>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    pthread_mutex_lock(m_mutex);
+}
 
-struct lua_State;
-
-/// RAII for lua state
-class LuaState {
-public:
-    LuaState();
-    ~LuaState();
-    operator lua_State*() { return m_L; }
-private:
-    lua_State* m_L;
-    pthread_mutex_t m_mutex;
-
-    LuaState(const LuaState&);
-    LuaState& operator=(const LuaState&);
-};
-
-#endif
+LuaLocker::~LuaLocker()
+{
+    pthread_mutex_unlock(m_mutex);
+}

@@ -26,6 +26,7 @@ oscommandjob.cpp
 jobqueue.cpp
 jobmanager.cpp
 graph.cpp
+lualocker.cpp
 )
 
 add_definitions("-Wall")

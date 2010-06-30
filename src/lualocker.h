@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,25 +16,19 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef LUASTATE_H
-#define LUASTATE_H
+#ifndef LUALOCKER_H
+#define LUALOCKER_H
 
 #include <pthread.h>
 
 struct lua_State;
-
-/// RAII for lua state
-class LuaState {
+class LuaLocker
+{
 public:
-    LuaState();
-    ~LuaState();
-    operator lua_State*() { return m_L; }
+    LuaLocker(lua_State* L);
+    ~LuaLocker();
 private:
-    lua_State* m_L;
-    pthread_mutex_t m_mutex;
-
-    LuaState(const LuaState&);
-    LuaState& operator=(const LuaState&);
+    pthread_mutex_t* m_mutex;
 };
 
-#endif
+#endif // LUALOCKER_H
