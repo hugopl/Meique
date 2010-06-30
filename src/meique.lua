@@ -24,7 +24,11 @@ maintarget.cpp
 os_unix.cpp
 filehash.cpp
 job.cpp
+oscommandjob.cpp
+luajob.cpp
 jobqueue.cpp
 jobmanager.cpp
 graph.cpp
+luacpputil.cpp
+lualocker.cpp
 ]])
