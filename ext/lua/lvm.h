@@ -22,6 +22,7 @@
 	(ttype(o1) == ttype(o2) && luaV_equalval(L, o1, o2))
 
 
+int l_isfalse(lua_State* L, const TValue* value);
 LUAI_FUNC int luaV_lessthan (lua_State *L, const TValue *l, const TValue *r);
 LUAI_FUNC int luaV_equalval (lua_State *L, const TValue *t1, const TValue *t2);
 LUAI_FUNC const TValue *luaV_tonumber (const TValue *obj, TValue *n);

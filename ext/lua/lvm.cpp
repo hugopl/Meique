@@ -192,7 +192,7 @@ static int call_orderTM (lua_State *L, const TValue *p1, const TValue *p2,
   if (!luaO_rawequalObj(tm1, tm2))  /* different metamethods? */
     return -1;
   callTMres(L, L->top, tm1, p1, p2);
-  return !l_isfalse(L->top);
+  return !l_isfalse(L, L->top);
 }
 
 
@@ -271,7 +271,7 @@ int luaV_equalval (lua_State *L, const TValue *t1, const TValue *t2) {
   }
   if (tm == NULL) return 0;  /* no TM? */
   callTMres(L, L->top, tm, t1, t2);  /* call TM */
-  return !l_isfalse(L->top);
+  return !l_isfalse(L, L->top);
 }
 
 
@@ -309,6 +309,20 @@ void luaV_concat (lua_State *L, int total, int last) {
   } while (total > 1);  /* repeat until only 1 result left */
 }
 
+int l_isfalse(lua_State* L, const TValue* value) {
+    if (ttistable(value) || ttisuserdata(value)) {
+        L->top++;
+        int ok = call_binTM(L, value, luaO_nilobject, L->top, TM_EVAL);
+        if (ok) {
+            int retval = l_isfalse(L, L->top);
+            L->top--;
+            return retval;
+        } else
+            return 0;
+    } else {
+        return ttisnil(value) || (ttisboolean(value) && bvalue(value) == 0);
+    }
+}
 
 static void Arith (lua_State *L, StkId ra, const TValue *rb,
                    const TValue *rc, TMS op) {
@@ -503,7 +517,7 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         continue;
       }
       case OP_NOT: {
-        int res = l_isfalse(RB(i));  /* next assignment may change this value */
+        int res = l_isfalse(L, RB(i));  /* next assignment may change this value */
         setbvalue(ra, res);
         continue;
       }
@@ -565,14 +579,14 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         continue;
       }
       case OP_TEST: {
-        if (l_isfalse(ra) != GETARG_C(i))
+        if (l_isfalse(L, ra) != GETARG_C(i))
           dojump(L, pc, GETARG_sBx(*pc));
         pc++;
         continue;
       }
       case OP_TESTSET: {
         TValue *rb = RB(i);
-        if (l_isfalse(rb) != GETARG_C(i)) {
+        if (l_isfalse(L, rb) != GETARG_C(i)) {
           setobjs2s(L, ra, rb);
           dojump(L, pc, GETARG_sBx(*pc));
         }
