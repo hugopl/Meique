@@ -634,6 +634,10 @@ static void funcargs (LexState *ls, expdesc *f) {
       luaX_next(ls);  /* must use `seminfo' before `next' */
       break;
     }
+    case ':': { /* meique modification: Foo:bar:foo() == Foo:bar():foo() */
+        args.k = VVOID;
+        break;
+    }
     default: {
       luaX_syntaxerror(ls, "function arguments expected");
       return;
