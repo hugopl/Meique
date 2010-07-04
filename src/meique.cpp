@@ -109,6 +109,8 @@ void Meique::showHelp(const OptionsMap& options)
     std::cout << " --version                          Print the version number of meique and exit.\n";
     if (options.size()) {
         std::cout << "Config mode options for this project:\n";
+        std::cout << " --debug                            Create a debug build.\n";
+        std::cout << " --release                          Create a release build.\n";
         OptionsMap::const_iterator it = options.begin();
         for (; it != options.end(); ++it) {
             std::cout << "  --" << std::left;

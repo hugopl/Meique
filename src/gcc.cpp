@@ -56,6 +56,8 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
     args.push_back(output);
     if (options->compileForLibrary())
         args.push_back("-fpic"); // FIXME: Check if the user added -fPIC on custom flags
+    if (options->debugInfoEnabled())
+        args.push_back("-ggdb");
 
     // custom flags
     StringList flags = options->customFlags();

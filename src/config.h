@@ -24,6 +24,7 @@
 #define MEIQUECACHE "meiquecache.lua"
 #define CFG_SOURCE_ROOT "sourceRoot"
 #define CFG_COMPILER "compiler"
+#define CFG_BUILD_TYPE "buildType"
 struct lua_State;
 
 class Config
@@ -32,6 +33,11 @@ public:
     enum Mode {
         ConfigureMode,
         BuildMode
+    };
+
+    enum BuildType {
+        Debug,
+        Release
     };
 
     Config(int argc, char** argv);
@@ -50,6 +56,8 @@ public:
     void saveCache();
     bool hasArgument(const std::string& arg) const;
     int jobsAtOnce() const { return m_jobsAtOnce; }
+
+    BuildType buildType() const;
 
     bool isHashGroupOutdated(const StringList& files);
     void updateHashGroup(const StringList& files);

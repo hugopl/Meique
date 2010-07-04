@@ -19,6 +19,10 @@
 #include "compileroptions.h"
 #include <algorithm>
 
+CompilerOptions::CompilerOptions() : m_compileForLibrary(false), m_debugInfoEnabled(false)
+{
+}
+
 void CompilerOptions::addIncludePath(const std::string& includePath)
 {
     if (includePath.empty())

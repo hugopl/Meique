@@ -70,6 +70,45 @@ const char meiqueApi[] = "\n"
 "_meiqueAllTargets = {}\n"
 "_meiqueCurrentDir = {}\n"
 "\n"
+"-- Object used for disabled scopes\n"
+"_meiqueNone = {}\n"
+"setmetatable(_meiqueNone, _meiqueNone)\n"
+"_meiqueNone.__call = function(func, ...)\n"
+"    return _meiqueNone\n"
+"end\n"
+"_meiqueNone.__index = _meiqueNone.__call\n"
+"_meiqueNone.__eval = function(table)\n"
+"    return false\n"
+"end\n"
+"\n"
+"-- Object used for enabled scopes\n"
+"_meiqueNotNone = {}\n"
+"setmetatable(_meiqueNotNone, _meiqueNotNone)\n"
+"_meiqueNotNone.__index = function(table, key)\n"
+"    return function() return _G[key] end\n"
+"end\n"
+"setmetatable(_meiqueNotNone, _meiqueNotNone)\n"
+"\n"
+"-- Scopes: build types\n"
+"DEBUG = _meiqueNone\n"
+"RELEASE = _meiqueNone\n"
+"\n"
+"-- Scopes: Platforms\n"
+"LINUX = _meiqueNone\n"
+"UNIX = _meiqueNone\n"
+"UNIX32 = _meiqueNone\n"
+"UNIX64 = _meiqueNone\n"
+"WIN = _meiqueNone\n"
+"WIN32 = _meiqueNone\n"
+"WIN64 = _meiqueNone\n"
+"MACOSX = _meiqueNone\n"
+"DEBUG = _meiqueNone\n"
+"\n"
+"-- Scopes: Compilers\n"
+"GCC = _meiqueNone\n"
+"MSVC = _meiqueNone\n"
+"MINGW = _meiqueNone\n"
+"\n"
 "function addSubDirectory(dir)\n"
 "    local strDir = tostring(dir)\n"
 "    table.insert(_meiqueCurrentDir, dir)\n"
@@ -227,6 +266,9 @@ void MeiqueScript::exportApi()
     sanityCheck = lua_pcall(m_L, 0, 0, 0);
     translateLuaError(m_L, sanityCheck, m_scriptName);
     assert(!sanityCheck);
+
+    enableScope(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
+
     lua_register(m_L, "findPackage", &findPackage);
     lua_settop(m_L, 0);
     // export user options as variables
@@ -402,3 +444,11 @@ int MeiqueScript::findPackage(lua_State* L)
 
     return 1;
 }
+
+void MeiqueScript::enableScope(const char* scopeName)
+{
+    lua_State* L = luaState();
+    lua_getglobal(L, "_meiqueNotNone");
+    lua_setglobal(L, scopeName);
+}
+

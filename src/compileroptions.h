@@ -24,7 +24,7 @@
 class CompilerOptions
 {
 public:
-    CompilerOptions() {}
+    CompilerOptions();
     void addIncludePath(const std::string& includePath);
     void addIncludePaths(const StringList& includePaths);
     StringList includePaths() const { return m_includePaths; }
@@ -34,11 +34,14 @@ public:
     StringList customFlags() const { return m_customFlags; }
     void setCompileForLibrary(bool value) { m_compileForLibrary = value; }
     bool compileForLibrary() const { return m_compileForLibrary; }
+    void enableDebugInfo() { m_debugInfoEnabled = true; }
+    bool debugInfoEnabled() const { return m_debugInfoEnabled; }
 private:
     StringList m_includePaths;
     StringList m_defines;
     StringList m_customFlags;
     bool m_compileForLibrary;
+    bool m_debugInfoEnabled;
 
     CompilerOptions(const CompilerOptions&);
 };

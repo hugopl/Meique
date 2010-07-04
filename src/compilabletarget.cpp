@@ -213,6 +213,11 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     }
     lua_pop(L, 1);
 
+    if (config().buildType() == Config::Debug)
+        compilerOptions->enableDebugInfo();
+    else
+        compilerOptions->addDefine("NDEBUG");
+
     StringList list;
     // explicit include directories
     getLuaField("_incDirs");

@@ -35,6 +35,7 @@ int verboseMode = 0;
 Config::Config(int argc, char** argv) : m_jobsAtOnce(1)
 {
     pthread_mutex_init(&m_configMutex, 0);
+    m_meiqueConfig[CFG_BUILD_TYPE] = "release"; // default value for build type is release.
     detectMode();
     parseArguments(argc, argv);
     std::string verboseValue = OS::getEnv("VERBOSE");
@@ -62,13 +63,21 @@ void Config::parseArguments(int argc, char** argv)
             } else {
                 m_mainArgument = arg;
             }
-        } else {
+        } else if (m_mode == BuildMode) {
+            Error() << "You can use option \"" << arg << "\" only when configuring the project.";
+        } else{
             arg.erase(0, 2);
-            size_t equalPos = arg.find("=");
-            if (equalPos == std::string::npos)
-                m_args[arg] = std::string();
-            else
-                m_args[arg.substr(0, equalPos)] = arg.substr(equalPos + 1, arg.size() - equalPos);
+            if (arg == "debug") {
+                m_meiqueConfig[CFG_BUILD_TYPE] = "debug";
+            } else if (arg == "release") {
+                m_meiqueConfig[CFG_BUILD_TYPE] = "release";
+            } else {
+                size_t equalPos = arg.find("=");
+                if (equalPos == std::string::npos)
+                    m_args[arg] = std::string();
+                else
+                    m_args[arg.substr(0, equalPos)] = arg.substr(equalPos + 1, arg.size() - equalPos);
+            }
         }
     }
 
@@ -258,4 +267,15 @@ void Config::updateHashGroup(const StringList& files)
 void Config::setUserOptions(const StringMap& userOptions)
 {
     m_userOptions = userOptions;
+}
+
+Config::BuildType Config::buildType() const
+{
+    const std::string& value = m_meiqueConfig.at(CFG_BUILD_TYPE);
+    if (value == "release")
+        return Release;
+    else if (value == "debug")
+        return Debug;
+    Warn() << "Unknown build type, using \"release\".";
+    return Release;
 }
