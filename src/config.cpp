@@ -181,7 +181,7 @@ void Config::saveCache()
         StringMap::const_iterator it = hashesIt->second.begin();
         for (; it != hashesIt->second.end(); ++it) {
             // Skip the file hash if it's the key file!
-            if (it->first == hashesIt->first)
+            if (it->first == hashesIt->first || it->first.empty())
                 continue;
 
             name = it->first;
