@@ -148,4 +148,18 @@ std::string dirName(const std::string& path)
     return idx == std::string::npos ? "/" : path.substr(0, idx + 1);
 }
 
+StringList getOSType()
+{
+    StringList retVal;
+    retVal.push_back("UNIX");
+    std::string osName;
+    OS::exec("uname", "-s", &osName);
+    bool isLinux = osName.find("Linux") != std::string::npos;
+
+    if (isLinux)
+        retVal.push_back("LINUX");
+
+    return retVal;
+}
+
 }

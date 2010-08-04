@@ -96,11 +96,7 @@ const char meiqueApi[] = "\n"
 "-- Scopes: Platforms\n"
 "LINUX = _meiqueNone\n"
 "UNIX = _meiqueNone\n"
-"UNIX32 = _meiqueNone\n"
-"UNIX64 = _meiqueNone\n"
-"WIN = _meiqueNone\n"
-"WIN32 = _meiqueNone\n"
-"WIN64 = _meiqueNone\n"
+"WINDOWS = _meiqueNone\n"
 "MACOSX = _meiqueNone\n"
 "\n"
 "-- Scopes: Compilers\n"
@@ -266,7 +262,16 @@ void MeiqueScript::exportApi()
     translateLuaError(m_L, sanityCheck, m_scriptName);
     assert(!sanityCheck);
 
+    // Enable debug/release scope
     enableScope(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
+    // Enable compiler scope
+    std::string compiler = m_config.compiler();
+    std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
+    enableScope(compiler.c_str());
+    // Enable OS scopes
+    StringList osVars = OS::getOSType();
+    for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
+        enableScope(it->c_str());
 
     lua_register(m_L, "findPackage", &findPackage);
     lua_settop(m_L, 0);

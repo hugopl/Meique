@@ -47,6 +47,8 @@ namespace OS
 
     std::string dirName(const std::string& path);
 
+    StringList getOSType();
+
     class ChangeWorkingDirectory
     {
     public:
