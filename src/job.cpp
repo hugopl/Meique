@@ -36,7 +36,7 @@ void* initJobThread(void* ptr)
     job->m_result = job->doRun();
 
     pthread_mutex_lock(&job->m_statusMutex);
-    job->m_status = Job::Finished;
+    job->m_status = job->m_result ? Job::FinishedButFailed : Job::FinishedWithSuccess;
     pthread_mutex_unlock(&job->m_statusMutex);
 
     std::list<JobListenner*>::iterator it = job->m_listenners.begin();
@@ -56,16 +56,14 @@ void Job::run()
 
 Job::Status Job::status() const
 {
-    MutexLocker locker(&m_statusMutex);
-    Status s = m_status;
-    return s;
+    return m_status;
 }
 
 bool Job::hasShowStoppers() const
 {
     std::list<Job*>::const_iterator it = m_dependencies.begin();
     for (; it != m_dependencies.end(); ++it) {
-        if ((*it)->status() != Finished || (*it)->hasShowStoppers())
+        if ((*it)->status() != FinishedWithSuccess || (*it)->hasShowStoppers())
             return true;
     }
     return false;

@@ -65,5 +65,6 @@ void JobQueue::addDependency(JobQueue* queue)
 
 bool JobQueue::isEmpty() const
 {
-    return m_jobs.empty() || m_jobs.back()->status() == Job::Finished;
+    Job::Status lastJobStatus = m_jobs.back()->status();
+    return m_jobs.empty() || lastJobStatus == Job::FinishedWithSuccess || lastJobStatus == Job::FinishedButFailed;
 }

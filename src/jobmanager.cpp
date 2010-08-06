@@ -23,10 +23,11 @@
 #include <iomanip>
 #include "mutexlocker.h"
 
-JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0)
+JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0), m_errorOccured(false)
 {
     pthread_mutex_init(&m_jobsRunningMutex, 0);
-    pthread_cond_init(&m_jobsRunningCond, 0);
+    pthread_cond_init(&m_needJobsCond, 0);
+    pthread_cond_init(&m_allDoneCond, 0);
 }
 
 JobManager::~JobManager()
@@ -50,7 +51,7 @@ void JobManager::processJobs()
         m_jobCount += (*it)->jobCount();
 
     m_jobsProcessed = 0;
-    while (m_jobsProcessed < m_jobCount) {
+    while (!m_errorOccured && m_jobsProcessed < m_jobCount) {
         // Select a valid queue
         std::list<JobQueue*>::iterator queueIt = m_queues.begin();
         JobQueue* queue = *queueIt;
@@ -62,7 +63,11 @@ void JobManager::processJobs()
 
         MutexLocker locker(&m_jobsRunningMutex);
         if (m_jobsRunning >= m_maxJobsRunning)
-            pthread_cond_wait(&m_jobsRunningCond, &m_jobsRunningMutex);
+            pthread_cond_wait(&m_needJobsCond, &m_jobsRunningMutex);
+
+        if (m_errorOccured)
+            break;
+
         // Now select a valid job
         if (Job* job = queue->getNextJob()) {
             job->addJobListenner(this);
@@ -72,6 +77,11 @@ void JobManager::processJobs()
             Notice() << '[' << std::setw(3) << int(100*m_jobsNotIdle/m_jobCount) << "%] " << green() << job->description();
         }
     }
+    MutexLocker locker(&m_jobsRunningMutex);
+    if (m_jobsRunning) {
+        Notice() << "Waiting for unfinished jobs...";
+        pthread_cond_wait(&m_allDoneCond, &m_jobsRunningMutex);
+    }
 }
 
 void JobManager::jobFinished(Job* job)
@@ -79,6 +89,10 @@ void JobManager::jobFinished(Job* job)
     MutexLocker locker(&m_jobsRunningMutex);
     m_jobsRunning--;
     m_jobsProcessed++;
+    if (job->result())
+        m_errorOccured = true;
     if (m_jobsRunning < m_maxJobsRunning)
-        pthread_cond_signal(&m_jobsRunningCond);
+        pthread_cond_signal(&m_needJobsCond);
+    if (m_jobsRunning == 0)
+        pthread_cond_signal(&m_allDoneCond);
 }

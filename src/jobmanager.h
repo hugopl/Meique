@@ -43,8 +43,10 @@ private:
     int m_jobsProcessed;
     int m_jobCount;
     int m_jobsNotIdle;
+    bool m_errorOccured;
     pthread_mutex_t m_jobsRunningMutex;
-    pthread_cond_t m_jobsRunningCond;
+    pthread_cond_t m_needJobsCond;
+    pthread_cond_t m_allDoneCond;
 
     JobManager(const JobManager&);
     JobManager& operator=(const JobManager&);

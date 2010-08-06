@@ -30,7 +30,8 @@ public:
         Idle,
         Scheduled,
         Running,
-        Finished
+        FinishedWithSuccess,
+        FinishedButFailed
     };
 
     Job();
