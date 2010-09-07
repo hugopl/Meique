@@ -22,7 +22,6 @@
 #include "meiquescript.h"
 
 class JobManager;
-class Compiler;
 class Meique
 {
 public:
@@ -33,7 +32,6 @@ public:
     void showHelp(const OptionsMap& options = OptionsMap());
 private:
     Config m_config;
-    Compiler* m_compiler;
     JobManager* m_jobManager;
 
     void checkOptionsAgainstArguments(const OptionsMap& options);

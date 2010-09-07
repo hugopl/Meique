@@ -25,7 +25,9 @@
 #define CFG_SOURCE_ROOT "sourceRoot"
 #define CFG_COMPILER "compiler"
 #define CFG_BUILD_TYPE "buildType"
+
 struct lua_State;
+class Compiler;
 
 class Config
 {
@@ -41,14 +43,14 @@ public:
     };
 
     Config(int argc, char** argv);
+    ~Config();
     Mode mode() const { return m_mode; }
 
     std::string mainArgument() const { return m_mainArgument; }
     StringMap arguments() const { return m_args; }
     std::string sourceRoot() const { return m_meiqueConfig.at(CFG_SOURCE_ROOT); }
     std::string buildRoot() const { return m_buildRoot; }
-    std::string compiler() const { return m_meiqueConfig.at(CFG_COMPILER); }
-    void setCompiler(const std::string& name) { m_meiqueConfig[CFG_COMPILER] = name; }
+    Compiler* compiler() const { return m_compiler; }
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
     bool isInBuildMode() const { return m_mode == BuildMode; }
     void setUserOptions(const StringMap& userOptions);
@@ -71,6 +73,7 @@ private:
     StringMap m_userOptions;
     std::map<std::string, StringMap> m_fileHashes;
     pthread_mutex_t m_configMutex;
+    Compiler* m_compiler;
 
     // disable copy
     Config(const Config&);

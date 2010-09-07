@@ -29,14 +29,13 @@
 #include "graph.h"
 #include <vector>
 
-Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_compiler(0), m_jobManager(new JobManager)
+Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_jobManager(new JobManager)
 {
     m_jobManager->setJobCountLimit(m_config.jobsAtOnce());
 }
 
 Meique::~Meique()
 {
-    delete m_compiler;
 }
 
 void Meique::exec()
@@ -58,10 +57,7 @@ void Meique::exec()
     } else if (m_config.isInConfigureMode()) {
         Notice() << magenta() << "Configuring project...";
         checkOptionsAgainstArguments(script.options());
-        m_compiler = CompilerFactory::findCompiler();
-        m_config.setCompiler(m_compiler->name());
     } else {
-        m_compiler = CompilerFactory::createCompiler(m_config.compiler());
         std::string target = m_config.mainArgument();
         if (target == "clean") {
             TargetList list = script.targets();
@@ -162,7 +158,7 @@ void Meique::executeJobQueues(const MeiqueScript& script, const std::string& tar
     std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[script.getTarget(targetName)]);
     std::vector<JobQueue*> queues(targets.size());
     for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
-        JobQueue* queue = targets[*it]->run(m_compiler);
+        JobQueue* queue = targets[*it]->run(m_config.compiler());
         queues[*it] = queue;
         m_jobManager->addJobQueue(queue);
     }

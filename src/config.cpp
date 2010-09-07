@@ -29,10 +29,12 @@
 #include "os.h"
 #include "mutexlocker.h"
 #include "filehash.h"
+#include "compilerfactory.h"
+#include "compiler.h"
 
 int verboseMode = 0;
 
-Config::Config(int argc, char** argv) : m_jobsAtOnce(1)
+Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_compiler(0)
 {
     pthread_mutex_init(&m_configMutex, 0);
     m_meiqueConfig[CFG_BUILD_TYPE] = "release"; // default value for build type is release.
@@ -42,8 +44,23 @@ Config::Config(int argc, char** argv) : m_jobsAtOnce(1)
     std::istringstream s(verboseValue);
     s >> verboseMode;
 
-    if (mode() == BuildMode)
+    if (mode() == BuildMode) {
         m_buildRoot = OS::pwd();
+        std::string compilerName = m_meiqueConfig[CFG_COMPILER];
+        if (compilerName.empty())
+            Error() << "Unable to find the compiler entry on your meiquecache.lua.";
+        m_compiler = CompilerFactory::createCompiler(compilerName);
+        if (!m_compiler)
+            Error() << "The compiler '" << compilerName << "' doesn't exists!";
+    } else {
+        m_compiler = CompilerFactory::findCompiler();
+        m_meiqueConfig[CFG_COMPILER] = m_compiler->name();
+    }
+}
+
+Config::~Config()
+{
+    delete m_compiler;
 }
 
 void Config::parseArguments(int argc, char** argv)

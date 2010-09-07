@@ -265,7 +265,7 @@ void MeiqueScript::exportApi()
     // Enable debug/release scope
     enableScope(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
     // Enable compiler scope
-    std::string compiler = m_config.compiler();
+    std::string compiler = m_config.compiler()->name();
     std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
     enableScope(compiler.c_str());
     // Enable OS scopes
