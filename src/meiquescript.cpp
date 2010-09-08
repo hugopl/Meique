@@ -367,26 +367,31 @@ TargetList MeiqueScript::targets() const
     return list;
 }
 
-static void filterPkgConfigLinkLibraries(std::string& str)
+struct StrFilter
 {
-    std::istringstream s(str);
-    std::string token;
-    std::string result;
-    while (s) {
-        s >> token;
-        if (!s)
-            break;
-        if (token.find("-l") == 0) {
-            token.erase(0, 2);
-            result += ' ';
-            result += token;
-        } else {
-            Debug() << "Discarding \"" << token << "\" from pkg-config link libraries.";
+    StrFilter(const std::string& garbage) : m_garbage(garbage) {}
+    void filter(std::string& str)
+    {
+        std::istringstream s(str);
+        std::string token;
+        std::string result;
+        while (s) {
+            s >> token;
+            if (!s)
+                break;
+            if (token.find(m_garbage) == 0) {
+                token.erase(0, 2);
+                result += ' ';
+                result += token;
+            } else {
+                Debug() << "Discarding \"" << token << "\" from pkg-config link libraries.";
+            }
         }
+        trim(result);
+        str = result;
     }
-    trim(result);
-    str = result;
-}
+    std::string m_garbage;
+};
 
 int MeiqueScript::findPackage(lua_State* L)
 {
@@ -422,11 +427,14 @@ int MeiqueScript::findPackage(lua_State* L)
                            "cflags",
                            "version"
                           };
-    void (*filterFunc[])(std::string&) = {
+
+    StrFilter libFilter("-l");
+    StrFilter includeFilter("-I");
+    StrFilter* filters[] = {
                             0,
-                            filterPkgConfigLinkLibraries,
+                            &libFilter,
                             0,
-                            0,
+                            &includeFilter,
                             0,
                             0,
                           };
@@ -440,8 +448,8 @@ int MeiqueScript::findPackage(lua_State* L)
         OS::exec("pkg-config", args, &output);
         args.pop_back();
         trim(output);
-        if (filterFunc[i])
-            filterFunc[i](output);
+        if (filters[i])
+            filters[i]->filter(output);
         lua_pushstring(L, output.c_str());
         lua_setfield(L, -2, names[i]);
     }
