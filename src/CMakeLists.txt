@@ -1,6 +1,7 @@
 
 set(meique_SRC
 main.cpp
+meiqueregex.cpp
 meique.cpp
 logger.cpp
 meiquescript.cpp

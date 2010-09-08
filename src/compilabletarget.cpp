@@ -32,6 +32,7 @@
 #include "jobqueue.h"
 #include "oscommandjob.h"
 #include "meiquescript.h"
+#include "meiqueregex.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
     : LuaTarget(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
@@ -102,6 +103,8 @@ void CompilableTarget::preprocessFile(const std::string& source,
                                       bool isSystemHeader,
                                       StringList* deps)
 {
+    static Regex regex("^[ \t]*#[ \t]*include[ \t]*([<\"])([^\">]+)[\">]");
+
     if (source.empty())
         return;
 
@@ -144,37 +147,15 @@ void CompilableTarget::preprocessFile(const std::string& source,
         return;
     }
 
-    std::string buffer1;
-    std::string buffer2;
+    std::string line;
 
-    while (!fp.eof()) {
-        std::getline(fp, buffer1);
-        trim(buffer1);
-
-        if (buffer1[0] != '#')
-            continue;
-        buffer1.erase(0, 1);
-
-        while (buffer1[buffer1.size() - 1] == '\\') {
-            if (fp.eof())
-                return;
-            std::getline(fp, buffer2);
-            buffer1.erase(buffer1.size() - 1, 1);
-            buffer1 += buffer2;
-            trim(buffer1);
-        }
-
-        if (buffer1.compare(0, 7, "include") != 0)
-            continue;
-        buffer1.erase(0, 7);
-        trim(buffer1);
-        bool isSystemInclude = buffer1[ 0 ] == '<' || buffer1[ 0 ] == '>';
-        bool isLocalInclude = buffer1[ 0 ] == '"';
-        if (isSystemInclude || isLocalInclude) {
-            std::string includedFile = buffer1.substr(1, buffer1.find_first_of("\">") - 1);
+    while (fp) {
+        std::getline(fp, line);
+        if (fp && regex.match(line)) {
+            bool isSystemInclude = regex.group(1, line) == "<";
             userIncludeDirs.pop_front();
             userIncludeDirs.push_front(OS::dirName(absSource));
-            preprocessFile(includedFile, userIncludeDirs, systemIncludeDirs, isSystemInclude, deps);
+            preprocessFile(regex.group(2, line), userIncludeDirs, systemIncludeDirs, isSystemInclude, deps);
         }
     }
 }
