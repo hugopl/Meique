@@ -63,7 +63,6 @@ private:
     void exportApi();
     void extractTargets();
 
-    static int findPackage(lua_State* L);
     void enableScope(const char* scopeName);
 };
 

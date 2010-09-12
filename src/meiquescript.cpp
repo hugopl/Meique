@@ -44,6 +44,8 @@ enum TargetTypes {
     CUSTOM_TARGET
 };
 
+static int findPackage(lua_State* L);
+
 const char meiqueApi[] = "\n"
 "function abortIf(var, message)\n"
 "    if var then\n"
@@ -393,7 +395,7 @@ struct StrFilter
     std::string m_garbage;
 };
 
-int MeiqueScript::findPackage(lua_State* L)
+int findPackage(lua_State* L)
 {
     const char PKGCONFIG[] = "pkg-config";
     int nargs = lua_gettop(L);
