@@ -174,6 +174,9 @@ StringList CompilableTarget::getFileDependencies(const std::string& source, cons
 
 void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
+    // Add source dir in the include path
+    m_compilerOptions->addIncludePath(config().sourceRoot() + directory());
+
     // Get the package info
     getLuaField("_packages");
     lua_State* L = luaState();
