@@ -36,7 +36,7 @@ void CompilerOptions::addIncludePath(const std::string& includePath)
 void CompilerOptions::addIncludePaths(const StringList& includePaths)
 {
     StringList::const_iterator it = includePaths.begin();
-    for (; it != includePaths.begin(); ++it)
+    for (; it != includePaths.end(); ++it)
         addIncludePath(*it);
 }
 
