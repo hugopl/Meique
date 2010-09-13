@@ -188,10 +188,10 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
         StringMap map;
         readLuaTable(L, lua_gettop(L), map);
 
-        compilerOptions->addIncludePath(map["includePaths"]);
+        compilerOptions->addIncludePaths(split(map["includePaths"]));
         compilerOptions->addCustomFlag(map["cflags"]);
         linkerOptions->addCustomFlag(map["linkerFlags"]);
-        linkerOptions->addLibraryPath(map["libraryPaths"]);
+        linkerOptions->addLibraryPaths(split(map["libraryPaths"]));
         linkerOptions->addLibraries(split(map["linkLibraries"]));
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
