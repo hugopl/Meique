@@ -69,6 +69,7 @@ void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOption
 {
     CompilableTarget::fillCompilerAndLinkerOptions(compilerOptions, linkerOptions);
     linkerOptions->setLinkType(m_linkType);
+    compilerOptions->setCompileForLibrary(true);
 }
 
 void LibraryTarget::useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions)
