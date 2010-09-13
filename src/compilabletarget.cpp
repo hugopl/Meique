@@ -245,6 +245,9 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
         if (target)
             target->useIn(this, compilerOptions, linkerOptions);
     }
+
+    // Add build dir in the include path
+    m_compilerOptions->addIncludePath(config().buildRoot() + directory());
 }
 
 void CompilableTarget::clean()
