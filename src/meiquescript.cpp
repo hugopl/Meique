@@ -22,6 +22,7 @@
 #include <cstring>
 #include <cassert>
 #include <algorithm>
+#include <fstream>
 
 #include "config.h"
 #include "logger.h"
@@ -37,6 +38,7 @@
 #include "stdstringsux.h"
 #include "maintarget.h"
 #include "executabletarget.h"
+#include "meiqueregex.h"
 
 enum TargetTypes {
     EXECUTABLE_TARGET = 1,
@@ -44,7 +46,11 @@ enum TargetTypes {
     CUSTOM_TARGET
 };
 
+// Key used to store the meique script object on lua registry
+#define MEIQUESCRIPTOBJ_KEY "MeIqUeScRiPt"
+
 static int findPackage(lua_State* L);
+static int configureFile(lua_State* L);
 
 const char meiqueApi[] = "\n"
 "function abortIf(var, message)\n"
@@ -71,6 +77,10 @@ const char meiqueApi[] = "\n"
 "Target = { }\n"
 "_meiqueAllTargets = {}\n"
 "_meiqueCurrentDir = {'.'}\n"
+"\n"
+"function currentDir()\n"
+"   return table.concat(_meiqueCurrentDir, '/')\n"
+"end\n"
 "\n"
 "-- Object used for disabled scopes\n"
 "_meiqueNone = {}\n"
@@ -109,7 +119,7 @@ const char meiqueApi[] = "\n"
 "function addSubDirectory(dir)\n"
 "    local strDir = tostring(dir)\n"
 "    table.insert(_meiqueCurrentDir, dir)\n"
-"    local fileName = table.concat(_meiqueCurrentDir, '/')..'/meique.lua'\n"
+"    local fileName = currentDir()..'/meique.lua'\n"
 "    local func, error = loadfile(fileName, fileName)\n"
 "    abortIf(func == nil, error)\n"
 "    func()\n"
@@ -126,7 +136,7 @@ const char meiqueApi[] = "\n"
 "        o._name = name\n"
 "        o._files = {}\n"
 "        o._deps = {}\n"
-"        o._dir = table.concat(_meiqueCurrentDir, '/')\n"
+"        o._dir = currentDir()\n"
 "        _meiqueAllTargets[tostring(name)] = o\n"
 "    end\n"
 "    return o\n"
@@ -227,6 +237,14 @@ const char meiqueApi[] = "\n"
 "    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
+static MeiqueScript* getMeiqueScriptObject(lua_State* L)
+{
+    lua_getfield(L, LUA_REGISTRYINDEX, MEIQUESCRIPTOBJ_KEY);
+    MeiqueScript* obj = reinterpret_cast<MeiqueScript*>(lua_touserdata(L, -1));
+    lua_pop(L, 1);
+    return obj;
+}
+
 MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
@@ -276,6 +294,7 @@ void MeiqueScript::exportApi()
         enableScope(it->c_str());
 
     lua_register(m_L, "findPackage", &findPackage);
+    lua_register(m_L, "configureFile", &configureFile);
     lua_settop(m_L, 0);
     // export user options as variables
     const StringMap& userOptions = config().userOptions();
@@ -288,6 +307,10 @@ void MeiqueScript::exportApi()
         lua_pushstring(m_L, it->second.c_str());
         lua_setglobal(m_L, varName.c_str());
     }
+
+    // Export MeiqueScript class to lua registry
+    lua_pushlightuserdata(m_L, (void*) this);
+    lua_setfield(m_L, LUA_REGISTRYINDEX, MEIQUESCRIPTOBJ_KEY);
 }
 
 template<>
@@ -457,6 +480,44 @@ int findPackage(lua_State* L)
     }
 
     return 1;
+}
+
+int configureFile(lua_State* L)
+{
+    int nargs = lua_gettop(L);
+    if (nargs != 2)
+        LuaError(L) << "configureFile(input, output) called with wrong number of arguments.";
+
+    lua_getglobal(L, "currentDir");
+    lua_call(L, 0, 1);
+    std::string currentDir = lua_tocpp<std::string>(L, -1) + '/';
+    lua_pop(L, 1);
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+
+    std::string input = script->config().sourceRoot() + currentDir + lua_tocpp<std::string>(L, -2);
+    std::string output = script->config().buildRoot() + currentDir + lua_tocpp<std::string>(L, -1);
+
+    std::ifstream in(input.c_str());
+    if (!in)
+        LuaError(L) << "Can't read file: " << input;
+    std::ofstream out(output.c_str());
+
+    Regex regex("@(.+)@");
+    std::string line;
+    while (in) {
+        std::getline(in, line);
+        if (regex.match(line)) {
+            std::pair<int, int> idx = regex.group(1);
+            lua_getglobal(L, line.substr(idx.first, idx.second) .c_str());
+            std::string value = lua_tocpp<std::string>(L, -1);
+            lua_pop(L, 1);
+            line.replace(idx.first - 1, idx.second + 2, value);
+        }
+        out << line << std::endl;
+    }
+
+    return 0;
 }
 
 void MeiqueScript::enableScope(const char* scopeName)
