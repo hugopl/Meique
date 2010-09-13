@@ -70,6 +70,10 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         if (lang != identifyLanguage(*it))
             Error() << "You can't mix two programming languages in the same target!";
 
+        // Create necessary directories if needed.
+        if (it->find_first_of('/'))
+            OS::mkdir(OS::dirName(*it));
+
         std::string source = sourceDir + *it;
         std::string output = *it + ".o";
 
