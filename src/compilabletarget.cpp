@@ -155,6 +155,11 @@ void CompilableTarget::preprocessFile(const std::string& source,
 
     while (fp) {
         std::getline(fp, line);
+
+        // Avoid regex execution non-preprocessor lines
+        if (line.find_first_of('#') == std::string::npos)
+            continue;
+
         if (fp && regex.match(line)) {
             bool isSystemInclude = regex.group(1, line) == "<";
             userIncludeDirs.pop_front();
