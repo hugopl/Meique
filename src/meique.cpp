@@ -36,6 +36,7 @@ Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_jobManager(new J
 
 Meique::~Meique()
 {
+    delete m_jobManager;
 }
 
 void Meique::exec()
