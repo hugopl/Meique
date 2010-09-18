@@ -195,15 +195,16 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     int tableIndex = lua_gettop(L);
     lua_pushnil(L);  /* first key */
     while (lua_next(L, tableIndex) != 0) {
+        if (lua_istable(L, -1)) {
+            StringMap map;
+            readLuaTable(L, lua_gettop(L), map);
 
-        StringMap map;
-        readLuaTable(L, lua_gettop(L), map);
-
-        compilerOptions->addIncludePaths(split(map["includePaths"]));
-        compilerOptions->addCustomFlag(map["cflags"]);
-        linkerOptions->addCustomFlag(map["linkerFlags"]);
-        linkerOptions->addLibraryPaths(split(map["libraryPaths"]));
-        linkerOptions->addLibraries(split(map["linkLibraries"]));
+            compilerOptions->addIncludePaths(split(map["includePaths"]));
+            compilerOptions->addCustomFlag(map["cflags"]);
+            linkerOptions->addCustomFlag(map["linkerFlags"]);
+            linkerOptions->addLibraryPaths(split(map["libraryPaths"]));
+            linkerOptions->addLibraries(split(map["linkLibraries"]));
+        }
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
     lua_pop(L, 1);

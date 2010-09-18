@@ -116,6 +116,10 @@ const char meiqueApi[] = "\n"
 "MSVC = _meiqueNone\n"
 "MINGW = _meiqueNone\n"
 "\n"
+"\n"
+"-- Constants\n"
+"OPTIONAL = true\n"
+"\n"
 "function addSubDirectory(dir)\n"
 "    local strDir = tostring(dir)\n"
 "    table.insert(_meiqueCurrentDir, dir)\n"
@@ -422,10 +426,14 @@ int findPackage(lua_State* L)
 {
     const char PKGCONFIG[] = "pkg-config";
     int nargs = lua_gettop(L);
-    if (nargs < 1 || nargs > 2)
-        LuaError(L) << "findPackage(name [, version]) called with wrong number of arguments.";
+    if (nargs < 1 || nargs > 3)
+        LuaError(L) << "findPackage(name [, version, flags]) called with wrong number of arguments.";
     std::string pkgName = lua_tocpp<std::string>(L, 1);
     std::string version = lua_tocpp<std::string>(L, 2);
+    bool optional = false;
+
+    if (nargs == 3)
+        optional = lua_tocpp<bool>(L, 3);
     StringList args;
 
     // Check if the package exists
@@ -434,8 +442,18 @@ int findPackage(lua_State* L)
     if (!version.empty())
         args.push_back("--atleast-version="+version);
     int retval = OS::exec(PKGCONFIG, args);
-    if (retval)
-        LuaError(L) << pkgName << " package not found!";
+    if (retval) {
+        if (!optional) {
+            LuaError(L) << pkgName << " package not found!";
+        } else {
+            Notice() << "-- " << pkgName << red() << " not found!";
+            lua_getglobal(L, "_meiqueNone");
+            return 1;
+        }
+    } else {
+        Notice() << "-- " << pkgName << green() << " found!";
+    }
+    args.pop_back();
 
     // Get config options
     const char* pkgConfigCmds[] = {"--libs-only-L",
@@ -479,6 +497,9 @@ int findPackage(lua_State* L)
         lua_setfield(L, -2, names[i]);
     }
 
+    // do the magic!
+    lua_getglobal(L, "_meiqueNotNone");
+    lua_setmetatable(L, -2);
     return 1;
 }
 

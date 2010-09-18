@@ -42,6 +42,12 @@ inline int lua_tocpp<int>(lua_State* L, int index)
     return lua_tointeger(L, index);
 }
 
+template<>
+inline bool lua_tocpp<bool>(lua_State* L, int index)
+{
+    return lua_toboolean(L, index);
+}
+
 template<typename Map>
 static void readLuaTable(lua_State* L, int tableIndex, Map& map)
 {
