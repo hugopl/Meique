@@ -134,6 +134,7 @@ void Config::loadCache()
     lua_register(L, "userOption", &readOption);
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
     lua_register(L, "fileHash", &readFileHash);
+    lua_register(L, "package", &readPackage);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
     lua_pushlightuserdata(L, (void *)L);
     lua_pushlightuserdata(L, (void *)this);
@@ -161,11 +162,11 @@ void Config::saveCache()
     std::ofstream file(MEIQUECACHE);
     if (!file.is_open())
         Error() << "Can't open " MEIQUECACHE " for write.";
-    StringMap::const_iterator it = m_userOptions.begin();
-    for (; it != m_userOptions.end(); ++it) {
-        std::string name(it->first);
+    StringMap::const_iterator mapIt = m_userOptions.begin();
+    for (; mapIt != m_userOptions.end(); ++mapIt) {
+        std::string name(mapIt->first);
         stringReplace(name, "\"", "\\\"");
-        std::string value(it->second);
+        std::string value(mapIt->second);
         stringReplace(name, "\"", "\\\"");
         file << "userOption {\n"
                 "    name = \"" << name << "\",\n"
@@ -174,31 +175,49 @@ void Config::saveCache()
     }
 
     file << "meiqueConfig {\n";
-    it = m_meiqueConfig.begin();
-    for (; it != m_meiqueConfig.end(); ++it) {
-        std::string value = it->second;
+    mapIt = m_meiqueConfig.begin();
+    for (; mapIt != m_meiqueConfig.end(); ++mapIt) {
+        std::string value = mapIt->second;
         stringReplace(value, "\"", "\\\"");
-        file << "    " << it->first << " = \"" << value << "\",\n";
+        file << "    " << mapIt->first << " = \"" << value << "\",\n";
     }
     file << "}\n\n";
 
-    std::map<std::string, StringMap>::iterator hashesIt = m_fileHashes.begin();
-    for (; hashesIt != m_fileHashes.end(); ++hashesIt) {
-        if (hashesIt->second.empty())
+    // Info about packages
+    std::map<std::string, StringMap>::iterator mapMapIt = m_packages.begin();
+    for (; mapMapIt != m_packages.end(); ++mapMapIt) {
+        file << "package {\n";
+        std::string name(mapMapIt->first);
+        stringReplace(name, "\"", "\\\"");
+        file << "    name = \"" << name << "\",\n";
+        // Write package data
+        // Write other files hashes
+        StringMap::const_iterator it = mapMapIt->second.begin();
+        for (; it != mapMapIt->second.end(); ++it) {
+            std::string value(it->second);
+            stringReplace(value, "\"", "\\\"");
+            file << "    " << it->first << " = \"" << value << "\",\n";
+        }
+        file << "}\n\n";
+    }
+
+    mapMapIt = m_fileHashes.begin();
+    for (; mapMapIt != m_fileHashes.end(); ++mapMapIt) {
+        if (mapMapIt->second.empty())
             continue;
 
         file << "fileHash {\n";
         // Write the key first!
-        std::string name(hashesIt->first);
+        std::string name(mapMapIt->first);
         stringReplace(name, "\"", "\\\"");
         file << "    \"" << name << "\",\n";
-        file << "    \"" << hashesIt->second[name] << "\",\n";
+        file << "    \"" << mapMapIt->second[name] << "\",\n";
 
         // Write other files hashes
-        StringMap::const_iterator it = hashesIt->second.begin();
-        for (; it != hashesIt->second.end(); ++it) {
+        StringMap::const_iterator it = mapMapIt->second.begin();
+        for (; it != mapMapIt->second.end(); ++it) {
             // Skip the file hash if it's the key file!
-            if (it->first == hashesIt->first || it->first.empty())
+            if (it->first == mapMapIt->first || it->first.empty())
                 continue;
 
             name = it->first;
@@ -295,4 +314,29 @@ Config::BuildType Config::buildType() const
         return Debug;
     Warn() << "Unknown build type, using \"release\".";
     return Release;
+}
+
+StringMap Config::package(const std::string& pkgName) const
+{
+    std::map<std::string, StringMap>::const_iterator it = m_packages.find(pkgName);
+    if (it != m_packages.end())
+        return it->second;
+    return StringMap();
+}
+
+void Config::setPackage(const std::string& pkgName, const StringMap& pkgData)
+{
+    m_packages[pkgName] = pkgData;
+}
+
+int Config::readPackage(lua_State* L)
+{
+    StringMap pkgData;
+    readLuaTable(L, lua_gettop(L), pkgData);
+    std::string name = pkgData["name"];
+    if (name.empty())
+        LuaError(L) << "Package entry without name.";
+    Config* self = getSelf(L);
+    self->setPackage(name, pkgData);
+    return 0;
 }

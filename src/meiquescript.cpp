@@ -428,78 +428,91 @@ int findPackage(lua_State* L)
     int nargs = lua_gettop(L);
     if (nargs < 1 || nargs > 3)
         LuaError(L) << "findPackage(name [, version, flags]) called with wrong number of arguments.";
+
     std::string pkgName = lua_tocpp<std::string>(L, 1);
     std::string version = lua_tocpp<std::string>(L, 2);
-    bool optional = false;
+    bool optional = lua_tocpp<bool>(L, 3);
 
-    if (nargs == 3)
-        optional = lua_tocpp<bool>(L, 3);
-    StringList args;
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    Config& config = script->config();
 
-    // Check if the package exists
-    args.push_back(pkgName);
-    // TODO: Interpret >, >=, < and <= from the version expression
-    if (!version.empty())
-        args.push_back("--atleast-version="+version);
-    int retval = OS::exec(PKGCONFIG, args);
-    if (retval) {
-        if (!optional) {
-            LuaError(L) << pkgName << " package not found!";
-        } else {
-            Notice() << "-- " << pkgName << red() << " not found!";
-            lua_getglobal(L, "_meiqueNone");
-            return 1;
-        }
+    // When building just check the cache for a package entry.
+    StringMap pkgData;
+    if (config.isInBuildMode()) {
+        pkgData = config.package(pkgName);
     } else {
-        Notice() << "-- " << pkgName << green() << " found!";
-    }
-    args.pop_back();
-
-    // Get config options
-    const char* pkgConfigCmds[] = {"--libs-only-L",
-                                   "--libs-only-l",
-                                   "--libs-only-other",
-                                   "--cflags-only-I",
-                                   "--cflags-only-other",
-                                   "--modversion"
-                                  };
-    const char* names[] = {"libraryPaths",
-                           "linkLibraries",
-                           "linkerFlags",
-                           "includePaths",
-                           "cflags",
-                           "version"
-                          };
-
-    StrFilter libFilter("-l");
-    StrFilter includeFilter("-I");
-    StrFilter* filters[] = {
-                            0,
-                            &libFilter,
-                            0,
-                            &includeFilter,
-                            0,
-                            0,
-                          };
-    const int N = sizeof(pkgConfigCmds)/sizeof(const char*);
-    lua_settop(L, 0);
-    lua_createtable(L, 0, N);
-    assert(sizeof(pkgConfigCmds) == sizeof(names));
-    for (int i = 0; i < N; ++i) {
-        std::string output;
-        args.push_back(pkgConfigCmds[i]);
-        OS::exec("pkg-config", args, &output);
+        // Check if the package exists
+        StringList args;
+        args.push_back(pkgName);
+        // TODO: Interpret >, >=, < and <= from the version expression
+        if (!version.empty())
+            args.push_back("--atleast-version="+version);
+        int retval = OS::exec(PKGCONFIG, args);
+        if (retval) {
+            if (!optional) {
+                LuaError(L) << pkgName << " package not found!";
+            } else {
+                Notice() << "-- " << pkgName << red() << " not found!";
+                lua_getglobal(L, "_meiqueNone");
+                return 1;
+            }
+        } else {
+            Notice() << "-- " << pkgName << green() << " found!";
+        }
         args.pop_back();
-        trim(output);
-        if (filters[i])
-            filters[i]->filter(output);
-        lua_pushstring(L, output.c_str());
-        lua_setfield(L, -2, names[i]);
+
+        // Get config options
+        const char* pkgConfigCmds[] = {"--libs-only-L",
+                                    "--libs-only-l",
+                                    "--libs-only-other",
+                                    "--cflags-only-I",
+                                    "--cflags-only-other",
+                                    "--modversion"
+                                    };
+        const char* names[] = {"libraryPaths",
+                            "linkLibraries",
+                            "linkerFlags",
+                            "includePaths",
+                            "cflags",
+                            "version"
+                            };
+
+        StrFilter libFilter("-l");
+        StrFilter includeFilter("-I");
+        StrFilter* filters[] = {
+                                0,
+                                &libFilter,
+                                0,
+                                &includeFilter,
+                                0,
+                                0,
+                            };
+        const int N = sizeof(pkgConfigCmds)/sizeof(const char*);
+        assert(sizeof(pkgConfigCmds) == sizeof(names));
+        for (int i = 0; i < N; ++i) {
+            std::string output;
+            args.push_back(pkgConfigCmds[i]);
+            OS::exec("pkg-config", args, &output);
+            args.pop_back();
+            trim(output);
+            if (filters[i])
+                filters[i]->filter(output);
+            pkgData[names[i]] = output;
+        }
+        // Store pkg information
+        config.setPackage(pkgName, pkgData);
     }
 
-    // do the magic!
-    lua_getglobal(L, "_meiqueNotNone");
-    lua_setmetatable(L, -2);
+    if (pkgData.empty()) {
+        lua_getglobal(L, "_meiqueNone");
+    } else {
+        lua_settop(L, 0);
+        createLuaTable(L, pkgData);
+        // do the magic!
+        lua_getglobal(L, "_meiqueNotNone");
+        lua_setmetatable(L, -2);
+    }
+
     return 1;
 }
 

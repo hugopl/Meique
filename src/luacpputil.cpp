@@ -63,3 +63,14 @@ void luaPCall(lua_State* L, const std::string& scriptName)
     int errorCode = lua_pcall(L, 0, 0, 1);
     translateLuaError(L, errorCode, scriptName);
 }
+
+void createLuaTable(lua_State* L, const StringMap& map)
+{
+    lua_createtable(L, 0, map.size());
+    StringMap::const_iterator it = map.begin();
+    for (; it != map.end(); ++it) {
+        lua_pushstring(L, it->second.c_str());
+        lua_setfield(L, -2, it->first.c_str());
+    }
+}
+

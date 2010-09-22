@@ -63,6 +63,9 @@ public:
 
     bool isHashGroupOutdated(const StringList& files);
     void updateHashGroup(const StringList& files);
+
+    StringMap package(const std::string& pkgName) const;
+    void setPackage(const std::string& pkgName, const StringMap& pkgData);
 private:
     int m_jobsAtOnce;
     std::string m_mainArgument;
@@ -74,6 +77,7 @@ private:
     std::map<std::string, StringMap> m_fileHashes;
     pthread_mutex_t m_configMutex;
     Compiler* m_compiler;
+    std::map<std::string, StringMap> m_packages;
 
     // disable copy
     Config(const Config&);
@@ -84,6 +88,7 @@ private:
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
     static int readFileHash(lua_State* L);
+    static int readPackage(lua_State* L);
 };
 
 #endif

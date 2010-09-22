@@ -24,6 +24,7 @@
 #include <list>
 #include <cassert>
 #include "lua.h"
+#include "basictypes.h"
 
 /// Convert a lua type at index \p index to the C++ type \p T.
 template<typename T>
@@ -62,6 +63,8 @@ static void readLuaTable(lua_State* L, int tableIndex, Map& map)
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 }
+
+void createLuaTable(lua_State* L, const StringMap& map);
 
 template<typename List>
 static void readLuaList(lua_State* L, int tableIndex, List& list)
