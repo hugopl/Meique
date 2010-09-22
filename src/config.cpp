@@ -52,15 +52,21 @@ Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_compiler(0)
         m_compiler = CompilerFactory::createCompiler(compilerName);
         if (!m_compiler)
             Error() << "The compiler '" << compilerName << "' doesn't exists!";
-    } else {
-        m_compiler = CompilerFactory::findCompiler();
-        m_meiqueConfig[CFG_COMPILER] = m_compiler->name();
     }
 }
 
 Config::~Config()
 {
     delete m_compiler;
+}
+
+Compiler* Config::compiler()
+{
+    if (!m_compiler) {
+        m_compiler = CompilerFactory::findCompiler();
+        m_meiqueConfig[CFG_COMPILER] = m_compiler->name();
+    }
+    return m_compiler;
 }
 
 void Config::parseArguments(int argc, char** argv)

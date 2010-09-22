@@ -50,7 +50,7 @@ public:
     StringMap arguments() const { return m_args; }
     std::string sourceRoot() const { return m_meiqueConfig.at(CFG_SOURCE_ROOT); }
     std::string buildRoot() const { return m_buildRoot; }
-    Compiler* compiler() const { return m_compiler; }
+    Compiler* compiler();
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
     bool isInBuildMode() const { return m_mode == BuildMode; }
     void setUserOptions(const StringMap& userOptions);
