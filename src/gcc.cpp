@@ -48,7 +48,6 @@ Gcc::Gcc() : m_isAvailable(false)
 
 OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
-    // TODO: Identify what to use, g++ or gcc
     StringList args;
     args.push_back("-c");
     args.push_back(fileName);
