@@ -143,7 +143,7 @@ void Config::loadCache()
     if (res)
         Error() << "Error loading " MEIQUECACHE ", this *should* never happen. A bug? maybe...";
     if (lua_pcall(L, 0, 0, 0))
-        Error() << "Error loading " MEIQUECACHE ".";
+        Error() << "Error loading " MEIQUECACHE ": " << lua_tostring(L, -1);
 }
 
 // Retrieve the Config instance
