@@ -80,7 +80,7 @@ void Config::parseArguments(int argc, char** argv)
             } else {
                 m_mainArgument = arg;
             }
-        } else if (m_mode == BuildMode) {
+        } else if (m_mode == BuildMode && arg != "--help" && arg != "--version") {
             Error() << "You can use option \"" << arg << "\" only when configuring the project.";
         } else{
             arg.erase(0, 2);
