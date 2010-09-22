@@ -286,16 +286,7 @@ void MeiqueScript::exportApi()
     translateLuaError(m_L, sanityCheck, m_scriptName);
     assert(!sanityCheck);
 
-    // Enable debug/release scope
-    enableScope(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
-    // Enable compiler scope
-    std::string compiler = m_config.compiler()->name();
-    std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
-    enableScope(compiler.c_str());
-    // Enable OS scopes
-    StringList osVars = OS::getOSType();
-    for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
-        enableScope(it->c_str());
+    enableBuitinScopes();
 
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
@@ -554,10 +545,32 @@ int configureFile(lua_State* L)
     return 0;
 }
 
-void MeiqueScript::enableScope(const char* scopeName)
+void MeiqueScript::enableScope(const std::string& scopeName)
 {
     lua_State* L = luaState();
     lua_getglobal(L, "_meiqueNotNone");
-    lua_setglobal(L, scopeName);
+    lua_setglobal(L, scopeName.c_str());
 }
 
+void MeiqueScript::enableBuitinScopes()
+{
+    StringList scopes;
+    if (m_config.isInBuildMode()) {
+        scopes = m_config.scopes();
+    } else {
+        // Enable debug/release scope
+        scopes.push_back(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
+        // Enable compiler scope
+        std::string compiler = m_config.compiler()->name();
+        std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
+        scopes.push_back(compiler.c_str());
+        // Enable OS scopes
+        StringList osVars = OS::getOSType();
+        for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
+            scopes.push_back(it->c_str());
+        m_config.setScopes(scopes);
+    }
+    StringList::const_iterator it = scopes.begin();
+    for (; it != scopes.end(); ++it)
+        enableScope(*it);
+}

@@ -63,7 +63,8 @@ private:
     void exportApi();
     void extractTargets();
 
-    void enableScope(const char* scopeName);
+    void enableScope(const std::string& scopeName);
+    void enableBuitinScopes();
 };
 
 #endif

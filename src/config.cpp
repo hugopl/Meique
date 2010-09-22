@@ -135,6 +135,7 @@ void Config::loadCache()
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
     lua_register(L, "fileHash", &readFileHash);
     lua_register(L, "package", &readPackage);
+    lua_register(L, "scopes", &readScopes);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
     lua_pushlightuserdata(L, (void *)L);
     lua_pushlightuserdata(L, (void *)this);
@@ -182,6 +183,15 @@ void Config::saveCache()
         file << "    " << mapIt->first << " = \"" << value << "\",\n";
     }
     file << "}\n\n";
+
+    // Cached scopes
+    file << "scopes {\n";
+    StringList::const_iterator listIt = m_scopes.begin();
+    for (; listIt != m_scopes.end(); ++listIt) {
+        file << "    \"" << *listIt << "\"," << std::endl;
+    }
+    file << "}\n\n";
+
 
     // Info about packages
     std::map<std::string, StringMap>::iterator mapMapIt = m_packages.begin();
@@ -340,3 +350,21 @@ int Config::readPackage(lua_State* L)
     self->setPackage(name, pkgData);
     return 0;
 }
+
+StringList Config::scopes() const
+{
+    return m_scopes;
+}
+
+void Config::setScopes(const StringList& scopes)
+{
+    m_scopes = scopes;
+}
+
+int Config::readScopes(lua_State* L)
+{
+    Config* self = getSelf(L);
+    readLuaList(L, 1, self->m_scopes);
+    return 0;
+}
+

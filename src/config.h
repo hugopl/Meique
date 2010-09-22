@@ -66,6 +66,8 @@ public:
 
     StringMap package(const std::string& pkgName) const;
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
+    StringList scopes() const;
+    void setScopes(const StringList& scopes);
 private:
     int m_jobsAtOnce;
     std::string m_mainArgument;
@@ -78,6 +80,7 @@ private:
     pthread_mutex_t m_configMutex;
     Compiler* m_compiler;
     std::map<std::string, StringMap> m_packages;
+    StringList m_scopes;
 
     // disable copy
     Config(const Config&);
@@ -89,6 +92,7 @@ private:
     static int readMeiqueConfig(lua_State* L);
     static int readFileHash(lua_State* L);
     static int readPackage(lua_State* L);
+    static int readScopes(lua_State* L);
 };
 
 #endif
