@@ -110,8 +110,8 @@ void Meique::showHelp(const OptionsMap& options)
         std::cout << " --release                          Create a release build.\n";
         OptionsMap::const_iterator it = options.begin();
         for (; it != options.end(); ++it) {
-            std::cout << "  --" << std::left;
-            std::cout.width(32);
+            std::cout << " --" << std::left;
+            std::cout.width(33);
             std::cout << it->first;
             std::cout << it->second.description;
             if (!it->second.defaultValue.empty())
