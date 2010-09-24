@@ -33,6 +33,8 @@ T lua_tocpp(lua_State* L, int index);
 template<>
 inline std::string lua_tocpp<std::string>(lua_State* L, int index)
 {
+    if (lua_type(L, index) == LUA_TBOOLEAN)
+        return lua_toboolean(L, index) ? "true" : "false";
     const char* res = lua_tostring(L, index);
     return res ? res : std::string();
 }
