@@ -47,10 +47,13 @@ enum TargetTypes {
 };
 
 // Key used to store the meique script object on lua registry
-#define MEIQUESCRIPTOBJ_KEY "MeIqUeScRiPt"
+#define MEIQUESCRIPTOBJ_KEY "MeiqueScript"
+// Key used to store the meique options, see option function
+#define MEIQUEOPTIONS_KEY "MeiqueOptions"
 
 static int findPackage(lua_State* L);
 static int configureFile(lua_State* L);
+static int option(lua_State* L);
 
 const char meiqueApi[] = "\n"
 "function abortIf(var, message)\n"
@@ -233,12 +236,6 @@ const char meiqueApi[] = "\n"
 "    o._libType = libType or SHARED\n"
 "    o._type = 2\n"
 "    return o\n"
-"end\n"
-"\n"
-"_meiqueOptions = {}\n"
-"function addOption(name, description, defaultValue)\n"
-"    abortIf(name == nil, \"An option can't have a nil name\")\n"
-"    _meiqueOptions[name] = {description, defaultValue}\n"
 "end\n";
 
 static MeiqueScript* getMeiqueScriptObject(lua_State* L)
@@ -290,6 +287,7 @@ void MeiqueScript::exportApi()
 
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
+    lua_register(m_L, "option", &option);
     lua_settop(m_L, 0);
     // export user options as variables
     const StringMap& userOptions = config().userOptions();
@@ -302,6 +300,10 @@ void MeiqueScript::exportApi()
         lua_pushstring(m_L, it->second.c_str());
         lua_setglobal(m_L, varName.c_str());
     }
+
+    // Add options table to lua registry
+    lua_newtable(m_L);
+    lua_setfield(m_L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
 
     // Export MeiqueScript class to lua registry
     lua_pushlightuserdata(m_L, (void*) this);
@@ -323,11 +325,8 @@ OptionsMap MeiqueScript::options()
     if (m_options.size())
         return m_options;
 
-    lua_getglobal(m_L, "_meiqueOptions");
+    lua_getfield(m_L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
     int tableIndex = lua_gettop(m_L);
-    if (!lua_istable(m_L, tableIndex))
-        Error() << "Your script is evil! Do not declare variables starting with _meique!";
-
     readLuaTable(m_L, tableIndex, m_options);
     return m_options;
 }
@@ -573,4 +572,73 @@ void MeiqueScript::enableBuitinScopes()
     StringList::const_iterator it = scopes.begin();
     for (; it != scopes.end(); ++it)
         enableScope(*it);
+}
+
+int option(lua_State* L)
+{
+    int nargs = lua_gettop(L);
+    if (nargs < 2 || nargs > 3)
+        LuaError(L) << "option(name, description [, defaultValue]) called with wrong number of arguments.";
+    if (nargs == 2)
+        lua_pushnil(L);
+
+    std::string name = lua_tocpp<std::string>(L, 1);
+    std::string description = lua_tocpp<std::string>(L, 2);
+
+    if (name.empty())
+        LuaError(L) << "An option MUST have a name.";
+    if (description.empty())
+        LuaError(L) << "Be nice and put a description for the option \"" << name << "\" :-).";
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    std::string optionValue;
+
+    if (script->config().isInBuildMode()) {
+    } else {
+        // get options table
+        lua_getfield(L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
+
+        // Create table {description, defaultValue}
+        lua_createtable(L, 2, 0);
+        lua_pushvalue(L, 2);
+        lua_rawseti(L, -2, 1);
+        lua_pushvalue(L, 3);
+        lua_rawseti(L, -2, 2);
+
+        // to options[name] = {description, defaultValue}
+        lua_setfield(L, -2, name.c_str());
+
+        const StringMap& args = script->config().arguments();
+        StringMap::const_iterator it = args.find(name);
+
+        if (it == args.end()) {
+            // option not provided by the user, uses default value.
+            optionValue = lua_tocpp<std::string>(L, 3);
+        } else if (it->second.empty()) {
+            // option provided by the user but without a value, probably a boolean option, sets it to true.
+            optionValue = "true";
+        } else {
+            optionValue = it->second;
+        }
+        lua_settop(L, 0);
+    }
+
+    // Create return object, a table with a field "value"
+    lua_createtable(L, 0, 1);
+    lua_pushstring(L, optionValue.c_str());
+    lua_setfield(L, -2, "value");
+
+    // Decide if the we will return a valid scope or not.
+    // options setted to false
+    std::transform(optionValue.begin(), optionValue.end(), optionValue.begin(), ::tolower);
+
+    if (optionValue == "false" || optionValue == "off" || optionValue.empty()) {
+        lua_getglobal(L, "_meiqueNone");
+        lua_setmetatable(L, -2);
+    } else {
+        lua_getglobal(L, "_meiqueNotNone");
+        lua_setmetatable(L, -2);
+    }
+
+    return 1;
 }
