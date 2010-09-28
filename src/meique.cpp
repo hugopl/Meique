@@ -23,10 +23,9 @@
 #include "compilerfactory.h"
 #include "target.h"
 #include "jobmanager.h"
-// TODO: Integrate the version number on build system
-#define MEIQUE_VERSION "0.1"
 #include "jobqueue.h"
 #include "graph.h"
+#include "meiqueversion.h"
 #include <vector>
 
 Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_jobManager(new JobManager)

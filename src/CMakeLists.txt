@@ -1,4 +1,7 @@
 
+set(meiqueVersion "0.9")
+configure_file(meiqueversion.h.in meiqueversion.h @ONLY)
+
 set(meique_SRC
 main.cpp
 meiqueregex.cpp
@@ -34,7 +37,7 @@ lualocker.cpp
 
 add_definitions("-Wall")
 
-include_directories(${lua_SOURCE_DIR})
+include_directories(${lua_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
 add_executable(meique ${meique_SRC})
 target_link_libraries(meique lua -lpthread)
 install(TARGETS meique DESTINATION bin)
