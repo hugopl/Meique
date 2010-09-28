@@ -20,11 +20,7 @@
 #define CONFIG_H
 
 #include "basictypes.h"
-
-#define MEIQUECACHE "meiquecache.lua"
-#define CFG_SOURCE_ROOT "sourceRoot"
-#define CFG_COMPILER "compiler"
-#define CFG_BUILD_TYPE "buildType"
+#include "meiqueoption.h"
 
 struct lua_State;
 class Compiler;
@@ -32,34 +28,53 @@ class Compiler;
 class Config
 {
 public:
-    enum Mode {
-        ConfigureMode,
-        BuildMode
+    enum Action {
+        NoAction,
+        ShowHelp,
+        ShowVersion,
+        Build,
+        Install,
+        Clean,
+        Uninstall
     };
 
     enum BuildType {
+        NoType,
         Debug,
         Release
     };
 
+    enum Mode {
+        NoMode,
+        ConfigureMode,
+        BuildMode
+    };
+
     Config(int argc, char** argv);
     ~Config();
-    Mode mode() const { return m_mode; }
 
-    std::string mainArgument() const { return m_mainArgument; }
     StringMap arguments() const { return m_args; }
-    std::string sourceRoot() const { return m_meiqueConfig.at(CFG_SOURCE_ROOT); }
+    StringList targets() const { return m_targets; }
+    std::string meiqueFile() const;
+
+    Action action() const { return m_action; }
+
+    std::string sourceRoot() const { return m_sourceRoot; }
     std::string buildRoot() const { return m_buildRoot; }
+
     Compiler* compiler();
+
     bool isInConfigureMode() const { return m_mode == ConfigureMode; }
     bool isInBuildMode() const { return m_mode == BuildMode; }
-    void setUserOptions(const StringMap& userOptions);
-    const StringMap& userOptions() const { return m_userOptions; }
+
+    void setUserOptionValue(const std::string& key, const std::string& value);
+    std::string userOption(const std::string& key) const;
+
     void saveCache();
-    bool hasArgument(const std::string& arg) const;
+
     int jobsAtOnce() const { return m_jobsAtOnce; }
 
-    BuildType buildType() const;
+    BuildType buildType() const { return m_buildType; }
 
     bool isHashGroupOutdated(const StringList& files);
     void updateHashGroup(const StringList& files);
@@ -69,23 +84,34 @@ public:
     StringList scopes() const;
     void setScopes(const StringList& scopes);
 private:
+    // Arguments
     int m_jobsAtOnce;
-    std::string m_mainArgument;
-    StringMap m_meiqueConfig;
-    std::string m_buildRoot;
     Mode m_mode;
+    Action m_action;
+    BuildType m_buildType;
     StringMap m_args;
-    StringMap m_userOptions;
-    std::map<std::string, StringMap> m_fileHashes;
-    pthread_mutex_t m_configMutex;
+
+    // Env. stuff
+    std::string m_buildRoot;
+    std::string m_sourceRoot;
+    std::string m_compilerName;
     Compiler* m_compiler;
+
+    // Stuff stored in meiquecache.lua by meique.lua
     std::map<std::string, StringMap> m_packages;
+    std::map<std::string, StringMap> m_fileHashes;
     StringList m_scopes;
+    StringList m_targets;
+    StringMap m_userOptions;
+
+    // helper variables
+    pthread_mutex_t m_configMutex;
 
     // disable copy
     Config(const Config&);
     Config& operator=(const Config&);
     void parseArguments(int argc, char** argv);
+    void setAction(const Config::Action& action);
     void detectMode();
     void loadCache();
     static int readOption(lua_State* L);
@@ -93,6 +119,7 @@ private:
     static int readFileHash(lua_State* L);
     static int readPackage(lua_State* L);
     static int readScopes(lua_State* L);
+    void setBuildMode(const Config::BuildType& mode);
 };
 
 #endif

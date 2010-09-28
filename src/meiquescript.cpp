@@ -36,7 +36,6 @@
 #include "customtarget.h"
 #include "os.h"
 #include "stdstringsux.h"
-#include "maintarget.h"
 #include "executabletarget.h"
 #include "meiqueregex.h"
 
@@ -143,7 +142,6 @@ const char meiqueApi[] = "\n"
 "    setmetatable(o, Target)\n"
 "    Target.__index = Target\n"
 "    if type(name) ~= \"table\" then\n"
-"        abortIf(name == 'all' or name == 'clean' or name == 'install', '\"all\", \"clean\" and \"install\" are reserved target names!')\n"
 "        o._name = name\n"
 "        o._files = {}\n"
 "        o._deps = {}\n"
@@ -253,8 +251,8 @@ static MeiqueScript* getMeiqueScriptObject(lua_State* L)
 MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
-    m_scriptName = m_config.sourceRoot()+"meique.lua";
-    translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
+    std::string scriptName = m_config.meiqueFile();
+    translateLuaError(m_L, luaL_loadfile(m_L, scriptName.c_str()), scriptName);
 }
 
 MeiqueScript::~MeiqueScript()
@@ -267,7 +265,7 @@ MeiqueScript::~MeiqueScript()
 void MeiqueScript::exec()
 {
     OS::ChangeWorkingDirectory dirChanger(m_config.sourceRoot());
-    luaPCall(m_L, m_scriptName);
+    luaPCall(m_L, m_config.meiqueFile());
 
     if (m_config.isInBuildMode())
         extractTargets();
@@ -284,7 +282,7 @@ void MeiqueScript::exportApi()
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
     assert(!sanityCheck);
     sanityCheck = lua_pcall(m_L, 0, 0, 0);
-    translateLuaError(m_L, sanityCheck, m_scriptName);
+    translateLuaError(m_L, sanityCheck, m_config.meiqueFile());
     assert(!sanityCheck);
 
     enableBuitinScopes();
@@ -293,17 +291,6 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "configureFile", &configureFile);
     lua_register(m_L, "option", &option);
     lua_settop(m_L, 0);
-    // export user options as variables
-    const StringMap& userOptions = config().userOptions();
-    StringMap::const_iterator it = userOptions.begin();
-    for (; it != userOptions.end(); ++it) {
-        std::string varName = it->first;
-        trim(varName);
-        std::transform(varName.begin(), varName.end(), varName.begin(), ::toupper);
-        stringReplace(varName, "-", "_");
-        lua_pushstring(m_L, it->second.c_str());
-        lua_setglobal(m_L, varName.c_str());
-    }
 
     // Add options table to lua registry
     lua_newtable(m_L);
@@ -368,9 +355,6 @@ void MeiqueScript::extractTargets()
         lua_settable(m_L, LUA_REGISTRYINDEX);
         m_targets[targetName] = target;
     }
-    // Create special "all" target.
-    Target* mainTarget = new MainTarget(this);
-    m_targets[mainTarget->name()] = mainTarget;
 }
 
 Target* MeiqueScript::getTarget(const std::string& name) const
@@ -429,6 +413,13 @@ int findPackage(lua_State* L)
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     Config& config = script->config();
+
+    // do nothing when showing the help screen
+    if (config.action() == Config::ShowHelp) {
+        lua_settop(L, 0);
+        lua_getglobal(L, "_meiqueNone");
+        return 1;
+    }
 
     // When building just check the cache for a package entry.
     StringMap pkgData;
@@ -521,7 +512,13 @@ int configureFile(lua_State* L)
     std::string currentDir = lua_tocpp<std::string>(L, -1) + '/';
     lua_pop(L, 1);
 
+    // Configure anything when in the help screen
     MeiqueScript* script = getMeiqueScriptObject(L);
+    if (script->config().action() == Config::ShowHelp) {
+        lua_settop(L, 0);
+        lua_getglobal(L, "_meiqueNotNone");
+        return 1;
+    }
 
     std::string input = script->config().sourceRoot() + currentDir + lua_tocpp<std::string>(L, -2);
     std::string output = script->config().buildRoot() + currentDir + lua_tocpp<std::string>(L, -1);
@@ -550,6 +547,9 @@ int configureFile(lua_State* L)
 
 void MeiqueScript::enableScope(const std::string& scopeName)
 {
+    // Don't enable any scopes when in help screen
+    if (m_config.action() == Config::ShowHelp)
+        return;
     lua_State* L = luaState();
     lua_getglobal(L, "_meiqueNotNone");
     lua_setglobal(L, scopeName.c_str());
@@ -557,6 +557,10 @@ void MeiqueScript::enableScope(const std::string& scopeName)
 
 void MeiqueScript::enableBuitinScopes()
 {
+    // Don't enable any scopes when in help screen
+    if (m_config.action() == Config::ShowHelp)
+        return;
+
     StringList scopes;
     if (m_config.isInBuildMode()) {
         scopes = m_config.scopes();
@@ -598,6 +602,7 @@ int option(lua_State* L)
     std::string optionValue;
 
     if (script->config().isInBuildMode()) {
+        optionValue = script->config().userOption(name);
     } else {
         // get options table
         lua_getfield(L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
@@ -643,6 +648,7 @@ int option(lua_State* L)
         lua_getglobal(L, "_meiqueNotNone");
         lua_setmetatable(L, -2);
     }
+    script->config().setUserOptionValue(name, optionValue);
 
     return 1;
 }

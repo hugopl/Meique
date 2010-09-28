@@ -31,6 +31,8 @@ Compiler* CompilerFactory::createCompiler(const std::string& compiler)
 {
     if (compiler == "Gcc")
         return new Gcc;
+
+    Error() << "Unable to create compiler wrapper for " << compiler;
     return 0;
 }
 

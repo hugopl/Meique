@@ -22,20 +22,11 @@
 #include <string>
 #include "basictypes.h"
 #include "luastate.h"
+#include "meiqueoption.h"
 #include <list>
 
 class Target;
 class Config;
-
-struct MeiqueOption
-{
-    MeiqueOption() {}
-    MeiqueOption(const std::string& descr, const std::string& defVal) : description(descr), defaultValue(defVal) {}
-    std::string description;
-    std::string defaultValue;
-};
-
-typedef std::map<std::string, MeiqueOption> OptionsMap;
 
 class MeiqueScript
 {
@@ -51,7 +42,6 @@ public:
 
 private:
     LuaState m_L;
-    std::string m_scriptName;
     OptionsMap m_options;
     TargetsMap m_targets;
     Config& m_config;

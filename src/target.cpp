@@ -21,7 +21,7 @@
 #include "os.h"
 #include "jobqueue.h"
 
-Target::Target(const std::string& name) : m_name(name)
+Target::Target(const std::string& name) : m_name(name), m_ran(false)
 {
 }
 
@@ -39,6 +39,7 @@ JobQueue* Target::run(Compiler* compiler)
     JobQueue* queue = doRun(compiler);
     if (!isAllTarget && queue->isEmpty())
         Notice() << "Nothing to do for " << m_name;
+    m_ran = true;
     return queue;
 }
 

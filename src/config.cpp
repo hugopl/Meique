@@ -23,6 +23,7 @@
 #include "stdstringsux.h"
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
 
 #include "lauxlib.h"
 
@@ -32,27 +33,27 @@
 #include "compilerfactory.h"
 #include "compiler.h"
 
+#define MEIQUECACHE "meiquecache.lua"
+#define CFG_SOURCE_ROOT "sourceRoot"
+#define CFG_COMPILER "compiler"
+#define CFG_BUILD_TYPE "buildType"
+
 int verboseMode = 0;
 
 Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_compiler(0)
 {
     pthread_mutex_init(&m_configMutex, 0);
-    m_meiqueConfig[CFG_BUILD_TYPE] = "release"; // default value for build type is release.
     detectMode();
     parseArguments(argc, argv);
+    if (m_buildType == NoType)
+        m_buildType = Release;
+
     std::string verboseValue = OS::getEnv("VERBOSE");
     std::istringstream s(verboseValue);
     s >> verboseMode;
 
-    if (mode() == BuildMode) {
+    if (m_mode == BuildMode)
         m_buildRoot = OS::pwd();
-        std::string compilerName = m_meiqueConfig[CFG_COMPILER];
-        if (compilerName.empty())
-            Error() << "Unable to find the compiler entry on your meiquecache.lua.";
-        m_compiler = CompilerFactory::createCompiler(compilerName);
-        if (!m_compiler)
-            Error() << "The compiler '" << compilerName << "' doesn't exists!";
-    }
 }
 
 Config::~Config()
@@ -60,40 +61,55 @@ Config::~Config()
     delete m_compiler;
 }
 
+std::string Config::meiqueFile() const
+{
+    return m_sourceRoot + "meique.lua";
+}
+
 Compiler* Config::compiler()
 {
     if (!m_compiler) {
-        m_compiler = CompilerFactory::findCompiler();
-        m_meiqueConfig[CFG_COMPILER] = m_compiler->name();
+        if (m_compilerName.empty()) {
+            m_compiler = CompilerFactory::findCompiler();
+            m_compilerName = m_compiler->name();
+        } else {
+            m_compiler = CompilerFactory::createCompiler(m_compilerName);
+        }
     }
     return m_compiler;
+}
+
+void Config::setAction(const Config::Action& action)
+{
+    if (m_action != Config::NoAction)
+        Error() << "The options u, i, c, help and version are mutually exclusives!";
+    m_action = action;
+}
+
+void Config::setBuildMode(const Config::BuildType& mode)
+{
+    if (m_buildType != Config::NoType)
+        Error() << "The options release and debug are mutually exclusives!";
+    m_buildType = mode;
+
 }
 
 void Config::parseArguments(int argc, char** argv)
 {
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
-        if (arg.find("-j") == 0) {
+
+        // long options
+        if (arg.find("--") == 0) {
             arg.erase(0, 2);
-            std::istringstream s(arg);
-            s >> m_jobsAtOnce;
-            if (m_jobsAtOnce < 1)
-                Error() << "You must use a number greater than 1 with -j option.";
-        } else if (arg.find("--") != 0) { // non-option, must be the source directory
-            if (m_mainArgument.size()) {
-                // TODO: A better error message
-                Error() << "The main argument was already specified [main argument: " << m_mainArgument << "].";
-            } else {
-                m_mainArgument = arg;
-            }
-        } else if (m_mode == BuildMode && arg != "--help" && arg != "--version") {
-            Error() << "You can use option \"" << arg << "\" only when configuring the project.";
-        } else{
-            arg.erase(0, 2);
-            if (arg == "debug") {
-                m_meiqueConfig[CFG_BUILD_TYPE] = "debug";
+            if (arg == "version") {
+                setAction(ShowVersion);
+            } else if (arg == "help") {
+                setAction(ShowHelp);
+            } else if (arg == "debug") {
+                setBuildMode(Debug);
             } else if (arg == "release") {
-                m_meiqueConfig[CFG_BUILD_TYPE] = "release";
+                setBuildMode(Release);
             } else {
                 size_t equalPos = arg.find("=");
                 if (equalPos == std::string::npos)
@@ -101,19 +117,46 @@ void Config::parseArguments(int argc, char** argv)
                 else
                     m_args[arg.substr(0, equalPos)] = arg.substr(equalPos + 1, arg.size() - equalPos);
             }
+        } else if (arg[0] == '-') { // short options
+            arg.erase(0, 1);
+            while (!arg.empty()) {
+                const char c = arg[0];
+                arg.erase(0, 1);
+
+                if (c == 'j') {
+                    std::istringstream s(arg);
+                    s >> m_jobsAtOnce;
+                    if (m_jobsAtOnce < 1)
+                        Error() << "You must use a number greater than 1 with -j option.";
+                    arg.erase(0, s.gcount());
+                } else if (c == 'i') {
+                    setAction(Install);
+                } else if (c == 'u') {
+                    setAction(Uninstall);
+                } else if (c == 'c') {
+                    setAction(Clean);
+                }
+            }
+        } else if (m_mode == BuildMode) {
+            m_targets.push_back(arg);
+        } else if (m_mode == ConfigureMode) {
+            if (!m_sourceRoot.empty())
+                Error() << "Two meique.lua directories specified! " << m_sourceRoot << " and " << arg << '.';
+            m_sourceRoot = arg;
         }
     }
 
     if (m_mode == ConfigureMode) {
-        if (!m_mainArgument.empty()) {
-            if (m_mainArgument[0] != '/')
-                m_mainArgument = OS::pwd() + m_mainArgument;
-            if (*(--m_mainArgument.end()) != '/')
-                m_mainArgument += '/';
-            m_meiqueConfig[CFG_SOURCE_ROOT] = m_mainArgument;
-        } else {
-            m_meiqueConfig[CFG_SOURCE_ROOT] = OS::pwd();
+        if (!m_sourceRoot.empty()) {
+            if (m_sourceRoot[0] != '/')
+                m_sourceRoot = OS::pwd() + m_sourceRoot;
+            if (*(--m_sourceRoot.end()) != '/')
+                m_sourceRoot += '/';
+        } else if (m_action == NoAction) {
+            Error() << "Non out of source build detected! It's ugly, dirty and a bad habbit! If you can't avoid it we will force you to do so!";
         }
+    } else if (m_action == NoAction) {
+        m_action = Build;
     }
 }
 
@@ -124,11 +167,6 @@ void Config::detectMode()
         file.close();
         m_mode = BuildMode;
         loadCache();
-        // check if the key attributes are present
-        const char* attrs[] = { CFG_SOURCE_ROOT, CFG_COMPILER, 0 };
-        for (int i = 0; attrs[i]; ++i)
-            if (m_meiqueConfig.find(attrs[i]) == m_meiqueConfig.end())
-                Error() << "meiquecache.lua is probably corrupted, value for key \"" << attrs[i] << "\" was not found!";
     } else {
         m_mode = ConfigureMode;
     }
@@ -169,6 +207,7 @@ void Config::saveCache()
     std::ofstream file(MEIQUECACHE);
     if (!file.is_open())
         Error() << "Can't open " MEIQUECACHE " for write.";
+
     StringMap::const_iterator mapIt = m_userOptions.begin();
     for (; mapIt != m_userOptions.end(); ++mapIt) {
         std::string name(mapIt->first);
@@ -182,12 +221,9 @@ void Config::saveCache()
     }
 
     file << "meiqueConfig {\n";
-    mapIt = m_meiqueConfig.begin();
-    for (; mapIt != m_meiqueConfig.end(); ++mapIt) {
-        std::string value = mapIt->second;
-        stringReplace(value, "\"", "\\\"");
-        file << "    " << mapIt->first << " = \"" << value << "\",\n";
-    }
+    file << "    " CFG_BUILD_TYPE " = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
+    file << "    " CFG_COMPILER " = \"" << m_compilerName << "\",\n";
+    file << "    " CFG_SOURCE_ROOT " = \"" << m_sourceRoot << "\",\n";
     file << "}\n\n";
 
     // Cached scopes
@@ -247,12 +283,6 @@ void Config::saveCache()
     }
 }
 
-bool Config::hasArgument(const std::string& arg) const
-{
-    StringMap::const_iterator it = m_args.find(arg);
-    return it != m_args.end();
-}
-
 int Config::readOption(lua_State* L)
 {
     Config* self = getSelf(L);
@@ -265,7 +295,15 @@ int Config::readOption(lua_State* L)
 int Config::readMeiqueConfig(lua_State* L)
 {
     Config* self = getSelf(L);
-    readLuaTable(L, lua_gettop(L), self->m_meiqueConfig);
+    StringMap opts;
+    readLuaTable(L, lua_gettop(L), opts);
+    try {
+        self->m_sourceRoot = opts.at(CFG_SOURCE_ROOT);
+        self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
+        self->m_compilerName = opts.at(CFG_COMPILER);
+    } catch (std::out_of_range& e) {
+        Error() << MEIQUECACHE " file corrupted, some fundamental entry is missing.";
+    }
     return 0;
 }
 
@@ -316,20 +354,15 @@ void Config::updateHashGroup(const StringList& files)
         map[*it] = getFileHash(*it);
 }
 
-void Config::setUserOptions(const StringMap& userOptions)
+void Config::setUserOptionValue(const std::string& key, const std::string& value)
 {
-    m_userOptions = userOptions;
+    m_userOptions[key] = value;
 }
 
-Config::BuildType Config::buildType() const
+std::string Config::userOption(const std::string& key) const
 {
-    const std::string& value = m_meiqueConfig.at(CFG_BUILD_TYPE);
-    if (value == "release")
-        return Release;
-    else if (value == "debug")
-        return Debug;
-    Warn() << "Unknown build type, using \"release\".";
-    return Release;
+    StringMap::const_iterator it = m_userOptions.find(key);
+    return it == m_userOptions.end() ? std::string() : it->second;
 }
 
 StringMap Config::package(const std::string& pkgName) const

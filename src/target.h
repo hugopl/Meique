@@ -42,11 +42,13 @@ public:
     virtual const std::string directory() = 0;
     /// Clean this target
     virtual void clean() {}
+    bool wasRan() const { return m_ran; }
 protected:
     /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
 private:
     std::string m_name;
+    bool m_ran;
 
     Target(const Target&);
     Target& operator=(const Target&);

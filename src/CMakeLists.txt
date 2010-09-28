@@ -22,7 +22,6 @@ compilabletarget.cpp
 executabletarget.cpp
 librarytarget.cpp
 customtarget.cpp
-maintarget.cpp
 os_unix.cpp
 filehash.cpp
 job.cpp

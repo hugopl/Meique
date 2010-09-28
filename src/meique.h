@@ -34,8 +34,7 @@ private:
     Config m_config;
     JobManager* m_jobManager;
 
-    void checkOptionsAgainstArguments(const OptionsMap& options);
-    void executeJobQueues(const MeiqueScript& script, const std::string& targetName);
+    void executeJobQueues(const MeiqueScript& script, Target* mainTarget);
 };
 
 #endif

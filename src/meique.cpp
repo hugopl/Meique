@@ -40,53 +40,51 @@ Meique::~Meique()
 
 void Meique::exec()
 {
-    if (m_config.hasArgument("version")) {
+    if (m_config.action() == Config::ShowVersion) {
         showVersion();
         return;
-    } else if (m_config.isInConfigureMode()
-               && m_config.mainArgument().empty()
-               && m_config.hasArgument("help")) {
+    } else if (m_config.sourceRoot().empty()
+               && m_config.action() == Config::ShowHelp) {
         showHelp();
         return;
     }
 
+    if (m_config.isInConfigureMode() && m_config.action() != Config::ShowHelp)
+        Notice() << magenta() << "Configuring project...";
+
     MeiqueScript script(m_config);
     script.exec();
-    if (m_config.hasArgument("help")) {
+    if (m_config.action() == Config::ShowHelp) {
         showHelp(script.options());
-    } else if (m_config.isInConfigureMode()) {
-        Notice() << magenta() << "Configuring project...";
-        checkOptionsAgainstArguments(script.options());
-    } else {
-        std::string target = m_config.mainArgument();
-        if (target == "clean") {
-            TargetList list = script.targets();
-            TargetList::iterator it = list.begin();
-            for (; it != list.end(); ++it)
-                (*it)->clean();
+    } else if (m_config.isInBuildMode()) {
+        // Get the list of targets
+        StringList targetNames = m_config.targets();
+        TargetList targetList;
+        if (targetNames.empty()) {
+            targetList = script.targets();
         } else {
-            if (target.empty())
-                target = "all";
-            executeJobQueues(script, target);
+            StringList::const_iterator it = targetNames.begin();
+            for (; it != targetNames.end(); ++it)
+                targetList.push_back(script.getTarget(*it));
+        }
+
+        if (m_config.action() == Config::Clean) {
+            TargetList::iterator it = targetList.begin();
+            for (; it != targetList.end(); ++it)
+                (*it)->clean();
+        } else if (m_config.action() == Config::Build) {
+            TargetList::iterator it = targetList.begin();
+            for (; it != targetList.end(); ++it)
+                executeJobQueues(script, *it);
+        } else if (m_config.action() == Config::Install) {
+            Error() << "Action not supported yet";
+        } else if (m_config.action() == Config::Uninstall) {
+            Error() << "Action not supported yet";
         }
     }
-    m_config.saveCache();
-}
 
-void Meique::checkOptionsAgainstArguments(const OptionsMap& options)
-{
-    const StringMap args = m_config.arguments(); // Is std::map implicitly shared?
-    // copy options to an strmap.
-    StringMap userOptions;
-    for (OptionsMap::const_iterator it = options.begin(); it != options.end(); ++it)
-        userOptions[it->first] = it->second.defaultValue;
-
-    for (StringMap::const_iterator it = args.begin(); it != args.end(); ++it) {
-        if (options.find(it->first) == options.end())
-            Error() << "The option \"" << it->first << "\" doesn't exists, use meique --help to see the available options.";
-        userOptions[it->first] = it->second;
-    }
-    m_config.setUserOptions(userOptions);
+    if (m_config.action() != Config::ShowHelp)
+        m_config.saveCache();
 }
 
 void Meique::showVersion()
@@ -120,10 +118,18 @@ void Meique::showHelp(const OptionsMap& options)
     }
     std::cout << "Build mode options:\n";
     std::cout << " -jN                                Allow N jobs at once.\n";
+    std::cout << " -c [target [, target2 [, ...]]]    Clean a specific target or all targets if\n";
+    std::cout << "                                    none was specified.\n";
+    std::cout << " -i [target [, target2 [, ...]]]    Install a specific target or all targets if\n";
+    std::cout << "                                    none was specified.\n";
+    std::cout << " -u [target [, target2 [, ...]]]    Uninstall a specific target or all targets if\n";
+    std::cout << "                                    none was specified.\n";
 }
 
-void Meique::executeJobQueues(const MeiqueScript& script, const std::string& targetName)
+void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
 {
+    if (mainTarget->wasRan())
+        return;
     TargetList aux = script.targets();
     std::vector<Target*> targets;
     std::copy(aux.begin(), aux.end(), std::back_inserter(targets));
@@ -155,17 +161,23 @@ void Meique::executeJobQueues(const MeiqueScript& script, const std::string& tar
     }
 
     // get all job queues
-    std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[script.getTarget(targetName)]);
+    std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[mainTarget]);
     std::vector<JobQueue*> queues(targets.size());
     for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
-        JobQueue* queue = targets[*it]->run(m_config.compiler());
+        Target* target = targets[*it];
+        if (target->wasRan())
+            continue;
+        JobQueue* queue = target->run(m_config.compiler());
         queues[*it] = queue;
         m_jobManager->addJobQueue(queue);
     }
 
     // add dependency info to job queues
     for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
-        TargetList deps = targets[*it]->dependencies();
+        Target* target = targets[*it];
+        if (target->wasRan())
+            continue;
+        TargetList deps = target->dependencies();
         TargetList::const_iterator it2 = deps.begin();
         for (; it2 != deps.end(); ++it2)
             queues[*it]->addDependency(queues[nodeMap[*it2]]);
