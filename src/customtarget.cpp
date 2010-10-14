@@ -24,7 +24,10 @@
 JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
     JobQueue* queue = new JobQueue;
-    LuaJob* job = new LuaJob(luaState(), this, "_func");
+
+    // Put the lua function on stack
+    getLuaField("_func");
+    LuaJob* job = new LuaJob(luaState(), 0);
     queue->addJob(job);
     return queue;
 }

@@ -22,9 +22,22 @@
 #include "luacpputil.h"
 #include "logger.h"
 
-LuaJob::LuaJob(lua_State* L, void* luaRegisterKey, const std::string& variable)
-    : m_L(L), m_registerKey(luaRegisterKey), m_variable(variable)
+LuaJob::LuaJob(lua_State* L, int args) : m_L(L)
 {
+    assert(lua_type(L, -(args + 1)) == LUA_TFUNCTION);
+    assert(lua_gettop(L) >= args + 1);
+
+    // Put the function and all args into a array
+    const int tableSize = args + 1;
+    lua_createtable(L, tableSize, 0);
+    lua_insert(L, -tableSize - 1);
+    for (int i = 0; i < tableSize; ++i)
+        lua_rawseti(L, i - tableSize - 1, i+1);
+
+    // store the table on lua registry
+    lua_pushlightuserdata(L, this); // key
+    lua_insert(L, -2);
+    lua_settable(L, LUA_REGISTRYINDEX);
 }
 
 int LuaJob::doRun()
@@ -32,15 +45,15 @@ int LuaJob::doRun()
     LuaLocker locker(m_L);
 
     // Get the lua function and put it on lua stack
-    lua_pushlightuserdata(m_L, m_registerKey);
+    lua_pushlightuserdata(m_L, this); // key
     lua_gettable(m_L, LUA_REGISTRYINDEX);
-    lua_getfield(m_L, -1, m_variable.c_str());
-    // remove table from stack
-    lua_insert(m_L, -2);
-    lua_pop(m_L, 1);
+    int objlen = lua_objlen(m_L, -1);
+    for (int i = 1; i <= objlen; ++i)
+        lua_rawgeti(m_L, -i, objlen - i + 1);
 
     try {
-        luaPCall(m_L);
+        luaPCall(m_L, objlen - 1, 0);
+        lua_pop(m_L, 2);
     } catch (const MeiqueError&) {
         MeiqueError::errorAlreadyset = false;
         return 1;

@@ -109,6 +109,6 @@ private:
 
 /// Translate a lua error code into an C++ exception.
 void translateLuaError(lua_State* L, int code, const std::string& scriptName);
-void luaPCall(lua_State* L, const std::string& scriptName = std::string());
+void luaPCall(lua_State* L, int nargs = 0, int nresults = 0, const std::string& scriptName = std::string());
 
 #endif

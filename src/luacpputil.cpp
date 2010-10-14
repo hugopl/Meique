@@ -55,12 +55,12 @@ void translateLuaError(lua_State* L, int code, const std::string& scriptName)
     };
 }
 
-void luaPCall(lua_State* L, const std::string& scriptName)
+void luaPCall(lua_State* L, int nargs, int nresults, const std::string& scriptName)
 {
-    int errorIndex = lua_gettop(L);
     lua_pushcfunction(L, meiqueErrorHandler);
+    int errorIndex = lua_gettop(L) - nargs - 1;
     lua_insert(L, errorIndex);
-    int errorCode = lua_pcall(L, 0, 0, 1);
+    int errorCode = lua_pcall(L, nargs, nresults, errorIndex);
     translateLuaError(L, errorCode, scriptName);
 }
 

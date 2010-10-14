@@ -24,13 +24,12 @@ struct lua_State;
 class LuaJob : public Job
 {
 public:
-    LuaJob(lua_State* L, void* luaRegisterKey, const std::string& variable);
+    /// Pops a lua_function from stack, store in the lua registry and execute them later
+    LuaJob(lua_State* L, int args);
 protected:
     virtual int doRun();
 private:
     lua_State* m_L;
-    void* m_registerKey;
-    std::string m_variable;
 };
 
 #endif // LUAJOB_H

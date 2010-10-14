@@ -265,7 +265,7 @@ MeiqueScript::~MeiqueScript()
 void MeiqueScript::exec()
 {
     OS::ChangeWorkingDirectory dirChanger(m_config.sourceRoot());
-    luaPCall(m_L, m_config.meiqueFile());
+    luaPCall(m_L, 0, 0, m_config.meiqueFile());
 
     if (m_config.isInBuildMode())
         extractTargets();
