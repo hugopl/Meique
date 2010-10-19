@@ -128,7 +128,7 @@ void Config::parseArguments(int argc, char** argv)
                     s >> m_jobsAtOnce;
                     if (m_jobsAtOnce < 1)
                         Error() << "You must use a number greater than 1 with -j option.";
-                    arg.erase(0, s.gcount());
+                    arg.erase(0, s.tellg());
                 } else if (c == 'i') {
                     setAction(Install);
                 } else if (c == 'u') {
@@ -152,7 +152,7 @@ void Config::parseArguments(int argc, char** argv)
                 m_sourceRoot = OS::pwd() + m_sourceRoot;
             if (*(--m_sourceRoot.end()) != '/')
                 m_sourceRoot += '/';
-        } else if (m_action == NoAction) {
+        } else if (m_action != ShowHelp && m_action != ShowVersion) {
             Error() << "Non out of source build detected! It's ugly, dirty and a bad habbit! If you can't avoid it we will force you to do so!";
         }
     } else if (m_action == NoAction) {
