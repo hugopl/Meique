@@ -41,6 +41,8 @@ public:
     StringList files();
     /// Get the target job queue
     JobQueue* run(Compiler* compiler);
+    /// Execute the tests provided by this target
+    virtual void test();
     /// Returns the target's name
     const std::string& name() const { return m_name; }
     /// Returns the target directory (relative path to source root)

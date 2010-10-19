@@ -36,7 +36,8 @@ public:
         Build,
         Install,
         Clean,
-        Uninstall
+        Uninstall,
+        Test
     };
 
     enum BuildType {

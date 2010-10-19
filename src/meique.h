@@ -35,6 +35,10 @@ private:
     JobManager* m_jobManager;
 
     void executeJobQueues(const MeiqueScript& script, Target* mainTarget);
+
+    void test(const TargetList& targets);
+    void clean(const TargetList& targets);
+    void build(const MeiqueScript& script, const TargetList& targets);
 };
 
 #endif

@@ -68,18 +68,20 @@ void Meique::exec()
                 targetList.push_back(script.getTarget(*it));
         }
 
-        if (m_config.action() == Config::Clean) {
-            TargetList::iterator it = targetList.begin();
-            for (; it != targetList.end(); ++it)
-                (*it)->clean();
-        } else if (m_config.action() == Config::Build) {
-            TargetList::iterator it = targetList.begin();
-            for (; it != targetList.end(); ++it)
-                executeJobQueues(script, *it);
-        } else if (m_config.action() == Config::Install) {
-            Error() << "Action not supported yet";
-        } else if (m_config.action() == Config::Uninstall) {
-            Error() << "Action not supported yet";
+        switch(m_config.action()) {
+            case Config::Clean:
+                clean(targetList);
+                break;
+            case Config::Build:
+                build(script, targetList);
+                break;
+            case Config::Test:
+                test(targetList);
+                break;
+            case Config::Install:
+            case Config::Uninstall:
+            default:
+                Error() << "Action not supported yet";
         }
     }
 
@@ -124,6 +126,8 @@ void Meique::showHelp(const OptionsMap& options)
     std::cout << "                                    none was specified.\n";
     std::cout << " -u [target [, target2 [, ...]]]    Uninstall a specific target or all targets if\n";
     std::cout << "                                    none was specified.\n";
+    std::cout << " -t [target [, target2 [, ...]]]    Run tests for a specific target or all targets\n";
+    std::cout << "                                    if none was specified.\n";
 }
 
 void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
@@ -184,4 +188,25 @@ void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
     }
 
     m_jobManager->processJobs();
+}
+
+void Meique::clean(const TargetList& targets)
+{
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        (*it)->clean();
+}
+
+void Meique::test(const TargetList& targets)
+{
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        (*it)->test();
+}
+
+void Meique::build(const MeiqueScript& script, const TargetList& targets)
+{
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        executeJobQueues(script, *it);
 }

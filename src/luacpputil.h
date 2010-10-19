@@ -26,6 +26,9 @@
 #include "lua.h"
 #include "basictypes.h"
 
+template<typename List>
+void readLuaList(lua_State* L, int tableIndex, List& list);
+
 /// Convert a lua type at index \p index to the C++ type \p T.
 template<typename T>
 T lua_tocpp(lua_State* L, int index);
@@ -51,8 +54,16 @@ inline bool lua_tocpp<bool>(lua_State* L, int index)
     return lua_toboolean(L, index);
 }
 
+template<>
+inline StringList lua_tocpp<StringList>(lua_State* L, int index)
+{
+    StringList list;
+    readLuaList(L, index, list);
+    return list;
+}
+
 template<typename Map>
-static void readLuaTable(lua_State* L, int tableIndex, Map& map)
+void readLuaTable(lua_State* L, int tableIndex, Map& map)
 {
     assert(tableIndex >= 0);
     assert(lua_istable(L, tableIndex));
@@ -69,7 +80,7 @@ static void readLuaTable(lua_State* L, int tableIndex, Map& map)
 void createLuaTable(lua_State* L, const StringMap& map);
 
 template<typename List>
-static void readLuaList(lua_State* L, int tableIndex, List& list)
+void readLuaList(lua_State* L, int tableIndex, List& list)
 {
     assert(tableIndex >= 0);
     assert(lua_istable(L, tableIndex));

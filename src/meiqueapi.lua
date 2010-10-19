@@ -106,6 +106,7 @@ function Target:new(name)
         o._files = {}
         o._deps = {}
         o._dir = currentDir()
+        o._tests = {}
         o._preTargetCompileHooks = {}
         _meiqueAllTargets[tostring(name)] = o
     end
@@ -129,6 +130,11 @@ end
 function Target:addDependency(target)
     abortIf(not instanceOf(target, Target), 'Expected a target, got something different.')
     table.insert(self._deps, target._name)
+end
+
+function Target:addTest(testCommand, testName)
+    testName = testName or self._name..'-test #'..#self._tests
+    table.insert(self._tests, {testName, testCommand, currentDir()})
 end
 
 -- Custom target

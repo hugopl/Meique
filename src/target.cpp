@@ -23,6 +23,7 @@
 #include "luacpputil.h"
 #include "lua.h"
 #include "meiquescript.h"
+#include <stdlib.h>
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
 {
@@ -117,4 +118,31 @@ StringList Target::files()
     StringList files;
     readLuaList(luaState(), lua_gettop(luaState()), files);
     return files;
+}
+
+void Target::test()
+{
+    getLuaField("_tests");
+    lua_State* L = luaState();
+    int top = lua_gettop(L);
+    int numTests = lua_objlen(L, top);
+    if (!numTests) {
+        Notice() << magenta() << "No tests for " << name() << '.';
+        return;
+    }
+
+    Notice() << magenta() << "Testing " << name() << "...";
+    std::list<StringList> tests;
+    readLuaList(L, top, tests);
+    std::list<StringList>::const_iterator it = tests.begin();
+    for (; it != tests.end(); ++it) {
+        StringList::const_iterator j = it->begin();
+        const std::string& testName = *j;
+        const std::string& testCmd = *(++j);
+        const std::string& testDir = *(++j);
+
+        OS::mkdir(testDir);
+        OS::ChangeWorkingDirectory dirChanger(testDir);
+        OS::exec(testCmd);
+    }
 }

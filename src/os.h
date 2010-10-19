@@ -23,7 +23,7 @@
 
 namespace OS
 {
-    int exec(const std::string& cmd, const StringList& args, std::string* output = 0, const std::string& workingDir = std::string());
+    int exec(const std::string& cmd, const StringList& args = StringList(), std::string* output = 0, const std::string& workingDir = std::string());
     inline int exec(const std::string& cmd, const std::string& arg, std::string* output = 0, const std::string& workingDir = std::string())
     {
         StringList args;

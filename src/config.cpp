@@ -43,7 +43,6 @@ int verboseMode = 0;
 Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_action(NoAction), m_compiler(0)
 {
     pthread_mutex_init(&m_configMutex, 0);
-    detectMode();
     parseArguments(argc, argv);
     if (m_buildType == NoType)
         m_buildType = Release;
@@ -96,6 +95,8 @@ void Config::setBuildMode(const Config::BuildType& mode)
 
 void Config::parseArguments(int argc, char** argv)
 {
+    detectMode();
+
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
 
@@ -122,7 +123,6 @@ void Config::parseArguments(int argc, char** argv)
             while (!arg.empty()) {
                 const char c = arg[0];
                 arg.erase(0, 1);
-
                 if (c == 'j') {
                     std::istringstream s(arg);
                     s >> m_jobsAtOnce;
@@ -135,6 +135,10 @@ void Config::parseArguments(int argc, char** argv)
                     setAction(Uninstall);
                 } else if (c == 'c') {
                     setAction(Clean);
+                } else if (c == 't') {
+                    setAction(Test);
+                } else {
+                    Error() << "Unknown option '-" << c << "', type meique --help to see the available options.";
                 }
             }
         } else if (m_mode == BuildMode) {
