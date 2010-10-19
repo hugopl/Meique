@@ -517,8 +517,21 @@ void luaV_execute (lua_State *L, int nexeccalls) {
         continue;
       }
       case OP_NOT: {
-        int res = l_isfalse(L, RB(i));  /* next assignment may change this value */
-        setbvalue(ra, res);
+        const TValue *rb = RB(i);
+        switch(ttype(rb)) {
+          case LUA_TUSERDATA:
+          case LUA_TTABLE: {
+            Protect(
+            if (!call_binTM(L, rb, luaO_nilobject, ra, TM_NOT))
+                luaG_typeerror(L, rb, "use not operator on");
+            )
+            break;
+          }
+          default: {
+            int res = l_isfalse(L, rb);  /* next assignment may change this value */
+            setbvalue(ra, res);
+          }
+        }
         continue;
       }
       case OP_LEN: {
