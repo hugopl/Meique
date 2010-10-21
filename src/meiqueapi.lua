@@ -102,6 +102,7 @@ function Target:new(name)
         o._files = {}
         o._deps = {}
         o._dir = currentDir()
+        o._preTargetCompileHooks = {}
         _meiqueAllTargets[tostring(name)] = o
     end
     return o

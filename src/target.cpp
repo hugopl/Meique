@@ -34,13 +34,25 @@ Target::~Target()
 
 JobQueue* Target::run(Compiler* compiler)
 {
-    bool isAllTarget = m_name == "all";
-    if (!isAllTarget)
-        Notice() << magenta() << "Getting jobs for target " << m_name;
+    lua_State* L = luaState();
+    // execute pre-compile hook functions
+    getLuaField("_preTargetCompileHooks");
+    int tableIndex = lua_gettop(L);
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, tableIndex) != 0) {
+        // push the target to the stack, it'll be the arg.
+        lua_pushlightuserdata(L, (void *)this);
+        lua_gettable(L, LUA_REGISTRYINDEX);
+        luaPCall(L, 1, 0, "[preTargetCompileHook]");
+        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+    lua_pop(L, 1); // remove the table
+
+    Notice() << magenta() << "Getting jobs for target " << m_name;
     OS::mkdir(directory());
     OS::ChangeWorkingDirectory dirChanger(directory());
     JobQueue* queue = doRun(compiler);
-    if (!isAllTarget && queue->isEmpty())
+    if (queue->isEmpty())
         Notice() << "Nothing to do for " << m_name;
     m_ran = true;
     return queue;
