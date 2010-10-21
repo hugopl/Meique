@@ -17,7 +17,6 @@ gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp
 target.cpp
-luatarget.cpp
 compilabletarget.cpp
 executabletarget.cpp
 librarytarget.cpp

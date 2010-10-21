@@ -19,13 +19,13 @@
 #ifndef COMPILABLETARGET_H
 #define COMPILABLETARGET_H
 
-#include "luatarget.h"
+#include "target.h"
 #include "joblistenner.h"
 
 class LinkerOptions;
 class CompilerOptions;
 
-class CompilableTarget : public LuaTarget, public JobListenner
+class CompilableTarget : public Target, public JobListenner
 {
 public:
     CompilableTarget(const std::string& targetName, MeiqueScript* script);

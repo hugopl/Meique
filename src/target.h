@@ -20,6 +20,9 @@
 #define TARGET_H
 #include "basictypes.h"
 
+class Config;
+struct lua_State;
+class MeiqueScript;
 class JobQueue;
 class Compiler;
 
@@ -30,25 +33,33 @@ class Target
 {
 public:
     /// Constructs a new target with the name \p name.
-    Target(const std::string& name);
+    Target(const std::string& name, MeiqueScript* script);
     virtual ~Target();
     /// Returns a list with all target dependencies
-    virtual TargetList dependencies() = 0;
+    TargetList dependencies();
     /// Get the target job queue
     JobQueue* run(Compiler* compiler);
     /// Returns the target's name
     const std::string& name() const { return m_name; }
     /// Returns the target directory (relative path to source root)
-    virtual const std::string directory() = 0;
+    const std::string directory();
     /// Clean this target
     virtual void clean() {}
     bool wasRan() const { return m_ran; }
+    lua_State* luaState();
+    Config& config();
+    const MeiqueScript* script() const { return m_script; }
 protected:
+    void getLuaField(const char* field);
     /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
 private:
     std::string m_name;
     bool m_ran;
+    MeiqueScript* m_script;
+    std::string m_directory;
+    TargetList m_dependencies;
+    bool m_dependenciesCached;
 
     Target(const Target&);
     Target& operator=(const Target&);

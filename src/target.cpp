@@ -20,8 +20,11 @@
 #include "logger.h"
 #include "os.h"
 #include "jobqueue.h"
+#include "luacpputil.h"
+#include "lua.h"
+#include "meiquescript.h"
 
-Target::Target(const std::string& name) : m_name(name), m_ran(false)
+Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
 {
 }
 
@@ -46,4 +49,53 @@ JobQueue* Target::run(Compiler* compiler)
 JobQueue* Target::doRun(Compiler*)
 {
     return new JobQueue;
+}
+
+TargetList Target::dependencies()
+{
+    if (!m_dependenciesCached) {
+        getLuaField("_deps");
+        StringList list;
+        readLuaList(luaState(), lua_gettop(luaState()), list);
+        lua_pop(luaState(), 1);
+        StringList::iterator it = list.begin();
+        for (; it != list.end(); ++it) {
+            Target* target = script()->getTarget(*it);
+            m_dependencies.push_back(target);
+        }
+        m_dependenciesCached = true;
+    }
+    return m_dependencies;
+}
+
+lua_State* Target::luaState()
+{
+    return m_script->luaState();
+}
+
+Config& Target::config()
+{
+    return m_script->config();
+}
+
+const std::string Target::directory()
+{
+    if (m_directory.empty()) {
+        getLuaField("_dir");
+        m_directory = lua_tocpp<std::string>(luaState(), -1);
+        lua_pop(luaState(), 1);
+        if (!m_directory.empty())
+            m_directory += '/';
+    }
+    return m_directory;
+}
+
+void Target::getLuaField(const char* field)
+{
+    lua_pushlightuserdata(luaState(), (void *)this);
+    lua_gettable(luaState(), LUA_REGISTRYINDEX);
+    lua_getfield(luaState(), -1, field);
+    // remove table from stack
+    lua_insert(luaState(), -2);
+    lua_pop(luaState(), 1);
 }

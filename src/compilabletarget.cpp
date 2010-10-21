@@ -35,7 +35,7 @@
 #include "meiqueregex.h"
 
 CompilableTarget::CompilableTarget(const std::string& targetName, MeiqueScript* script)
-    : LuaTarget(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
+    : Target(targetName, script), m_compilerOptions(0), m_linkerOptions(0)
 {
     m_compilerOptions = new CompilerOptions;
     m_linkerOptions = new LinkerOptions;
