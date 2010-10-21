@@ -2,7 +2,16 @@
 set(meiqueVersion "0.9")
 configure_file(meiqueversion.h.in meiqueversion.h @ONLY)
 
+add_custom_command(
+    OUTPUT meiqueapi.cpp
+    COMMAND
+    echo "extern const char meiqueApi[] = {" > meiqueapi.cpp &&
+    hexdump -v -e '16/1 \" 0x0%02x,\" \"\\n\"' ${CMAKE_CURRENT_SOURCE_DIR}/meiqueapi.lua >> meiqueapi.cpp &&
+    echo "}\;" >> meiqueapi.cpp
+)
+
 set(meique_SRC
+${CMAKE_CURRENT_BINARY_DIR}/meiqueapi.cpp
 main.cpp
 meiqueregex.cpp
 meique.cpp
