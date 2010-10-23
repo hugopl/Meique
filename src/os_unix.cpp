@@ -97,7 +97,10 @@ std::string pwd()
 static void meiqueMkdir(const std::string& dir)
 {
     const char ERROR_MSG[] = "Internal error creating directory ";
-    if (::mkdir(dir.c_str(), 0755) == -1 && errno != EEXIST && errno != ENOENT) {
+
+    if (dir.empty())
+        return;
+    if (::mkdir(dir.c_str(), 0755) == -1 && errno != EEXIST) {
         size_t pos = dir.find_last_of('/');
         if (pos == std::string::npos)
             Error() << ERROR_MSG << dir << '.';

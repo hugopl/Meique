@@ -24,7 +24,11 @@ _meiqueAllTargets = {}
 _meiqueCurrentDir = {'.'}
 
 function currentDir()
-   return table.concat(_meiqueCurrentDir, '/')
+    if #_meiqueCurrentDir > 1 then
+        return table.concat(_meiqueCurrentDir, '/')..'/'
+    else
+        return './'
+    end
 end
 
 -- Object used for disabled scopes
@@ -85,7 +89,7 @@ OPTIONAL = true
 function addSubDirectory(dir)
     local strDir = tostring(dir)
     table.insert(_meiqueCurrentDir, dir)
-    local fileName = currentDir()..'/meique.lua'
+    local fileName = currentDir()..'meique.lua'
     local func, error = loadfile(fileName, fileName)
     abortIf(func == nil, error)
     func()
@@ -106,6 +110,14 @@ function Target:new(name)
         _meiqueAllTargets[tostring(name)] = o
     end
     return o
+end
+
+function Target:sourceDir()
+    return meiqueSourceDir()..self._dir
+end
+
+function Target:buildDir()
+    return meiqueSourceDir()..self._dir
 end
 
 function Target:addFiles(...)

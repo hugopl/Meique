@@ -64,6 +64,20 @@ static MeiqueScript* getMeiqueScriptObject(lua_State* L)
     return obj;
 }
 
+static int meiqueSourceDir(lua_State* L)
+{
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    lua_pushstring(L, script->config().sourceRoot().c_str());
+    return 1;
+}
+
+static int meiqueBuildDir(lua_State* L)
+{
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    lua_pushstring(L, script->config().buildRoot().c_str());
+    return 1;
+}
+
 MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
@@ -93,6 +107,7 @@ void MeiqueScript::exportApi()
     luaopen_base(m_L);
     luaopen_string(m_L);
     luaopen_table(m_L);
+    luaopen_os(m_L);
 
     // export lua API
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
@@ -105,6 +120,8 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
     lua_register(m_L, "option", &option);
+    lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
+    lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
     lua_settop(m_L, 0);
 
     // Add options table to lua registry

@@ -96,8 +96,6 @@ const std::string Target::directory()
         getLuaField("_dir");
         m_directory = lua_tocpp<std::string>(luaState(), -1);
         lua_pop(luaState(), 1);
-        if (!m_directory.empty())
-            m_directory += '/';
     }
     return m_directory;
 }
