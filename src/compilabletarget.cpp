@@ -80,7 +80,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         bool compileIt = !OS::fileExists(output);
         StringList dependents = getFileDependencies(source, compiler->defaultIncludeDirs());
         if (!compileIt)
-            compileIt = config().isHashGroupOutdated(dependents);
+            compileIt = config().isHashGroupOutdated(source, dependents);
 
         if (compileIt) {
             OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
@@ -88,7 +88,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             job->setWorkingDirectory(buildDir);
             job->setDescription("Compiling " + *it);
             queue->addJob(job);
-            m_job2Sources[job] = dependents;
+            m_job2Sources[job] = std::make_pair(source, dependents);
         }
         objects->push_back(output);
     }
@@ -98,7 +98,8 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
 void CompilableTarget::jobFinished(Job* job)
 {
     if (!job->result())
-        config().updateHashGroup(m_job2Sources[job]);
+        config().updateHashGroup(m_job2Sources[job].first, m_job2Sources[job].second);
+    m_job2Sources.erase(job);
 }
 
 void CompilableTarget::preprocessFile(const std::string& source,
@@ -178,6 +179,9 @@ StringList CompilableTarget::getFileDependencies(const std::string& source, cons
     StringList includePaths = m_compilerOptions->includePaths();
     includePaths.push_front(baseDir);
     preprocessFile(source, includePaths, systemIncludeDirs, false, &dependents);
+
+    if (!dependents.empty())
+        dependents.pop_front();
     return dependents;
 }
 

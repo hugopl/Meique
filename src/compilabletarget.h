@@ -41,7 +41,8 @@ protected:
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
     virtual void useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions) = 0;
 private:
-    std::map<Job*, StringList> m_job2Sources;
+    // job => (master, [dep1, dep2, ...])
+    std::map<Job*, std::pair<std::string, StringList> > m_job2Sources;
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
     std::string m_outputFileName;

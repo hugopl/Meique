@@ -16,6 +16,7 @@ main.cpp
 meiqueregex.cpp
 meique.cpp
 logger.cpp
+hashgroups.cpp
 meiquescript.cpp
 config.cpp
 luastate.cpp

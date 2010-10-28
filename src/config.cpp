@@ -40,7 +40,7 @@
 
 int verboseMode = 0;
 
-Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_compiler(0)
+Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_action(NoAction), m_compiler(0)
 {
     pthread_mutex_init(&m_configMutex, 0);
     detectMode();
@@ -177,7 +177,7 @@ void Config::loadCache()
     LuaState L;
     lua_register(L, "userOption", &readOption);
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
-    lua_register(L, "fileHash", &readFileHash);
+    lua_register(L, "hashGroup", &readHashGroup);
     lua_register(L, "package", &readPackage);
     lua_register(L, "scopes", &readScopes);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
@@ -252,35 +252,7 @@ void Config::saveCache()
         }
         file << "}\n\n";
     }
-
-    mapMapIt = m_fileHashes.begin();
-    for (; mapMapIt != m_fileHashes.end(); ++mapMapIt) {
-        if (mapMapIt->second.empty())
-            continue;
-
-        file << "fileHash {\n";
-        // Write the key first!
-        std::string name(mapMapIt->first);
-        stringReplace(name, "\"", "\\\"");
-        file << "    \"" << name << "\",\n";
-        file << "    \"" << mapMapIt->second[name] << "\",\n";
-
-        // Write other files hashes
-        StringMap::const_iterator it = mapMapIt->second.begin();
-        for (; it != mapMapIt->second.end(); ++it) {
-            // Skip the file hash if it's the key file!
-            if (it->first == mapMapIt->first || it->first.empty())
-                continue;
-
-            name = it->first;
-            stringReplace(name, "\"", "\\\"");
-            file << "    \"" << name << "\",\n";
-
-            std::string value(it->second);
-            file << "    \"" << value << "\",\n";
-        }
-        file << "}\n\n";
-    }
+    m_hashGroups.serializeHashGroups(file);
 }
 
 int Config::readOption(lua_State* L)
@@ -307,51 +279,26 @@ int Config::readMeiqueConfig(lua_State* L)
     return 0;
 }
 
-int Config::readFileHash(lua_State* L)
+int Config::readHashGroup(lua_State* L)
 {
     Config* self = getSelf(L);
-    StringList list;
-    readLuaList(L, 1, list);
-
-    if (list.empty() || list.size() % 2)
-        LuaError(L) << "File hash database corrupted!";
-
-    StringList::const_iterator it = list.begin();
-    StringMap& map = self->m_fileHashes[*it];
-    for (; it != list.end(); ++it) {
-        std::string name = *it;
-        std::string value = *(++it);
-        map[name] = value;
-    }
+    self->m_hashGroups.loadHashGroup(L);
     return 0;
 }
 
-bool Config::isHashGroupOutdated(const StringList& files)
+bool Config::isHashGroupOutdated(const std::string& masterFile, const std::string& dep)
 {
-    MutexLocker locker(&m_configMutex);
-    if (files.empty())
-        return false;
-    StringList::const_iterator it = files.begin();
-    StringMap& map = m_fileHashes[files.front()];
-    if (map.empty())
-        return true;
-    for (; it != files.end(); ++it) {
-        if (getFileHash(*it) != map[*it])
-            return true;
-    }
-    return false;
+    return m_hashGroups.isOutdated(masterFile, dep);
 }
 
-void Config::updateHashGroup(const StringList& files)
+bool Config::isHashGroupOutdated(const std::string& masterFile, const StringList& deps)
 {
-    MutexLocker locker(&m_configMutex);
-    if (files.empty())
-        return;
+    return m_hashGroups.isOutdated(masterFile, deps);
+}
 
-    StringList::const_iterator it = files.begin();
-    StringMap& map = m_fileHashes[files.front()];
-    for (; it != files.end(); ++it)
-        map[*it] = getFileHash(*it);
+void Config::updateHashGroup(const std::string& masterFile, const StringList& deps)
+{
+    m_hashGroups.updateHashGroup(masterFile, deps);
 }
 
 void Config::setUserOptionValue(const std::string& key, const std::string& value)

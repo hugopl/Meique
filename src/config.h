@@ -21,6 +21,7 @@
 
 #include "basictypes.h"
 #include "meiqueoption.h"
+#include "hashgroups.h"
 
 struct lua_State;
 class Compiler;
@@ -76,8 +77,9 @@ public:
 
     BuildType buildType() const { return m_buildType; }
 
-    bool isHashGroupOutdated(const StringList& files);
-    void updateHashGroup(const StringList& files);
+    bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep = std::string());
+    bool isHashGroupOutdated(const std::string& masterFile, const StringList& deps);
+    void updateHashGroup(const std::string& masterFile, const StringList& deps = StringList());
 
     StringMap package(const std::string& pkgName) const;
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
@@ -99,7 +101,7 @@ private:
 
     // Stuff stored in meiquecache.lua by meique.lua
     std::map<std::string, StringMap> m_packages;
-    std::map<std::string, StringMap> m_fileHashes;
+    HashGroups m_hashGroups;
     StringList m_scopes;
     StringList m_targets;
     StringMap m_userOptions;
@@ -116,7 +118,7 @@ private:
     void loadCache();
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
-    static int readFileHash(lua_State* L);
+    static int readHashGroup(lua_State* L);
     static int readPackage(lua_State* L);
     static int readScopes(lua_State* L);
     void setBuildMode(const Config::BuildType& mode);
