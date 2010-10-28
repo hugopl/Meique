@@ -49,10 +49,7 @@ CompilableTarget::~CompilableTarget()
 
 JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList* objects)
 {
-    // get sources
-    getLuaField("_files");
-    StringList files;
-    readLuaList(luaState(), lua_gettop(luaState()), files);
+    StringList files = this->files();
 
     if (files.empty())
         Error() << "Compilable target '" << name() << "' has no files!";
@@ -67,6 +64,9 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
     Language lang = identifyLanguage(*it);
     m_linkerOptions->setLanguage(lang);
     for (; it != files.end(); ++it) {
+        if (it->empty())
+            continue;
+
         if (lang != identifyLanguage(*it))
             Error() << "You can't mix two programming languages in the same target!";
 
@@ -74,7 +74,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         if (it->find_first_of('/'))
             OS::mkdir(OS::dirName(*it));
 
-        std::string source = sourceDir + *it;
+        std::string source = it->at(0) == '/' ? *it : sourceDir + *it;
         std::string output = *it + ".o";
 
         bool compileIt = !OS::fileExists(output);

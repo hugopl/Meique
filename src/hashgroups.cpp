@@ -31,15 +31,14 @@ bool HashGroups::isOutdated(const std::string& master, const std::string& dep)
 {
     StringList deps;
     if (!dep.empty())
-        return isOutdated(master, deps);
-    return false;
+        deps.push_back(dep);
+    return isOutdated(master, deps);
 }
 
 bool HashGroups::isOutdated(const std::string& master, const StringList& deps)
 {
     MutexLocker locker(&m_mutex);
-    if (deps.empty())
-        return false;
+
     StringMap& map = m_fileHashes[master];
     if (getFileHash(master) != map[master])
         return true;

@@ -78,6 +78,29 @@ static int meiqueBuildDir(lua_State* L)
     return 1;
 }
 
+static int isOutDated(lua_State* L)
+{
+    std::string master = lua_tocpp<std::string>(L, 1);
+    if (master.empty())
+        LuaError(L) << "isOutDated(filePath) called with wrong arguments.";
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    bool res = script->config().isHashGroupOutdated(master);
+    lua_pushboolean(L, res);
+    return 1;
+}
+
+static int setUpToDate(lua_State* L)
+{
+    std::string master = lua_tocpp<std::string>(L, 1);
+    if (master.empty())
+        LuaError(L) << "setUpToDate(filePath) called with wrong arguments.";
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    script->config().updateHashGroup(master);
+    return 0;
+}
+
 MeiqueScript::MeiqueScript(Config& config) : m_config(config)
 {
     exportApi();
@@ -122,6 +145,8 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "option", &option);
     lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
+    lua_register(m_L, "isOutdated", &isOutDated);
+    lua_register(m_L, "setUpToDate", &setUpToDate);
     lua_settop(m_L, 0);
 
     // Add options table to lua registry

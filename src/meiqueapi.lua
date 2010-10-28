@@ -117,7 +117,7 @@ function Target:sourceDir()
 end
 
 function Target:buildDir()
-    return meiqueSourceDir()..self._dir
+    return meiqueBuildDir()..self._dir
 end
 
 function Target:addFiles(...)

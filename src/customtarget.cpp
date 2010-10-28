@@ -20,14 +20,51 @@
 #include "jobqueue.h"
 #include "lua.h"
 #include "luajob.h"
+#include "config.h"
+#include "logger.h"
 
 JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
-    JobQueue* queue = new JobQueue;
+    Config& cfg = config();
+    bool isOutdated = false;
+    std::string sourceDir = config().sourceRoot() + directory();
+    StringList files = this->files();
 
-    // Put the lua function on stack
-    getLuaField("_func");
-    LuaJob* job = new LuaJob(luaState(), 0);
-    queue->addJob(job);
+    // Check if we need to run this target.
+    if (!files.empty()) {
+        StringList::iterator it = files.begin();
+        for (; it != files.end(); ++it) {
+            if (it->empty())
+                continue;
+            *it = it->at(0) == '/' ? *it : sourceDir + *it;
+            if (cfg.isHashGroupOutdated(*it)) {
+                isOutdated = true;
+                break;
+            }
+        }
+    } else {
+        isOutdated = true;
+    }
+
+    JobQueue* queue = new JobQueue;
+    if (isOutdated) {
+        // Put the lua function on stack
+        getLuaField("_func");
+        LuaJob* job = new LuaJob(luaState(), 0);
+        job->setDescription("Running custom target function for " + name());
+        job->addJobListenner(this);
+        m_job2Sources[job] = files;
+        queue->addJob(job);
+    }
     return queue;
+}
+
+void CustomTarget::jobFinished(Job* job)
+{
+    if (!job->result()) {
+        StringList& files = m_job2Sources[job];
+        for (StringList::const_iterator it = files.begin(); it != files.end(); ++it)
+            config().updateHashGroup(*it);
+    }
+    m_job2Sources.erase(job);
 }

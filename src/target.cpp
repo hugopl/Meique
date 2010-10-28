@@ -109,3 +109,12 @@ void Target::getLuaField(const char* field)
     lua_insert(luaState(), -2);
     lua_pop(luaState(), 1);
 }
+
+StringList Target::files()
+{
+    // get sources
+    getLuaField("_files");
+    StringList files;
+    readLuaList(luaState(), lua_gettop(luaState()), files);
+    return files;
+}

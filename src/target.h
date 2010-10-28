@@ -37,6 +37,8 @@ public:
     virtual ~Target();
     /// Returns a list with all target dependencies
     TargetList dependencies();
+    /// Returns a list with all target files
+    StringList files();
     /// Get the target job queue
     JobQueue* run(Compiler* compiler);
     /// Returns the target's name
