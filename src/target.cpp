@@ -120,15 +120,14 @@ StringList Target::files()
     return files;
 }
 
-void Target::test()
+int Target::test()
 {
     getLuaField("_tests");
     lua_State* L = luaState();
     int top = lua_gettop(L);
     int numTests = lua_objlen(L, top);
     if (!numTests) {
-        Notice() << magenta() << "No tests for " << name() << '.';
-        return;
+        return 0;
     }
 
     Notice() << magenta() << "Testing " << name() << "...";
@@ -145,4 +144,5 @@ void Target::test()
         OS::ChangeWorkingDirectory dirChanger(testDir);
         OS::exec(testCmd);
     }
+    return tests.size();
 }
