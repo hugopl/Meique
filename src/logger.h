@@ -30,6 +30,7 @@
     #define COLOR_YELLOW "\033[1;33m"
     #define COLOR_GREEN "\033[0;32m"
     #define COLOR_RED "\033[0;31m"
+    #define COLOR_BLUE "\033[1;34m"
     #define COLOR_MAGENTA "\033[1;35m"
 #else
     #define COLOR_END ""
@@ -37,6 +38,7 @@
     #define COLOR_YELLOW ""
     #define COLOR_GREEN ""
     #define COLOR_RED ""
+    #define COLOR_BLUE ""
     #define COLOR_MAGENTA ""
 #endif
 
@@ -48,12 +50,14 @@ struct red {};
 struct yellow {};
 struct magenta {};
 struct white {};
+struct blue {};
 struct nocolor {};
 
 std::ostream& operator<<(std::ostream& out, const green&);
 std::ostream& operator<<(std::ostream& out, const red&);
 std::ostream& operator<<(std::ostream& out, const yellow&);
 std::ostream& operator<<(std::ostream& out, const nocolor&);
+std::ostream& operator<<(std::ostream& out, const blue&);
 std::ostream& operator<<(std::ostream& out, const magenta&);
 std::ostream& operator<<(std::ostream& out, const white&);
 
@@ -87,6 +91,12 @@ protected:
     std::ostream& m_stream;
     unsigned int m_options;
 };
+
+template<typename T1, typename T2>
+inline std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& pair)
+{
+    return out << '(' << pair.first << ", " << pair.second << ')';
+}
 
 template<typename T>
 inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
