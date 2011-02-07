@@ -300,6 +300,11 @@ bool Config::isHashGroupOutdated(const std::string& masterFile, const StringList
     return m_hashGroups.isOutdated(masterFile, deps);
 }
 
+void Config::updateHashGroup(const std::string& masterFile, const std::string& dep)
+{
+    m_hashGroups.updateHashGroup(masterFile, dep);
+}
+
 void Config::updateHashGroup(const std::string& masterFile, const StringList& deps)
 {
     m_hashGroups.updateHashGroup(masterFile, deps);

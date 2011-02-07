@@ -27,6 +27,7 @@ class HashGroups
 {
 public:
     HashGroups();
+    void updateHashGroup(const std::string& master, const std::string& dep);
     void updateHashGroup(const std::string& master, const StringList& deps);
     bool isOutdated(const std::string& master, const std::string& dep);
     bool isOutdated(const std::string& master, const StringList& deps);

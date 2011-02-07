@@ -53,6 +53,7 @@ enum TargetTypes {
 static int findPackage(lua_State* L);
 static int configureFile(lua_State* L);
 static int option(lua_State* L);
+static int meiqueAutomoc(lua_State* L);
 
 extern const char meiqueApi[];
 
@@ -147,6 +148,7 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
     lua_register(m_L, "isOutdated", &isOutDated);
     lua_register(m_L, "setUpToDate", &setUpToDate);
+    lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
     lua_settop(m_L, 0);
 
     // Add options table to lua registry
@@ -508,4 +510,72 @@ int option(lua_State* L)
     script->config().setUserOptionValue(name, optionValue);
 
     return 1;
+}
+
+int meiqueAutomoc(lua_State* L)
+{
+    // possible extensions for header files
+    static const char* headerExts[] = {
+        "h", "hpp", "hxx", "H", 0
+    };
+
+    // get target name
+    lua_getfield(L, -1, "_name");
+    std::string targetName = lua_tocpp<std::string>(L, -1);
+    lua_pop(L, 1);
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    Target* target = script->getTarget(targetName);
+    StringList files = target->files();
+    if (!files.size())
+        return 0;
+
+    std::string srcDir = script->config().sourceRoot() + target->directory();
+    std::string binDir = script->config().buildRoot() + target->directory();
+    // search what files need to be moced
+    StringList::const_iterator it = files.begin();
+    Regex regex("# *include +[\"<]([^ ]+\\.moc)[\">]");
+    for (; it != files.end(); ++it) {
+        std::string filePath = srcDir + *it;
+        std::ifstream f(filePath.c_str(), std::ios_base::in);
+        std::string line;
+        while (f && !f.eof()) {
+            std::getline(f, line);
+            if (regex.match(line)) {
+                // check if the header exists
+                std::string headerBase = *it;
+                size_t dotIdx = headerBase.find_last_of('.');
+                if (dotIdx == std::string::npos)
+                    break;
+                headerBase.erase(dotIdx + 1);
+                headerBase = srcDir + headerBase;
+                std::string headerPath;
+                for (int i = 0; headerExts[i]; ++i) {
+                    std::string test(headerBase + headerExts[i]);
+                    if (OS::fileExists(test))
+                        headerPath = test;
+                }
+
+                if (headerPath.empty()) {
+                    Warn() << "Found moc include but can't deduce the header file for " << srcDir << *it;
+                    break;
+                }
+
+                std::string mocPath = binDir + regex.group(1, line);
+                if (script->config().isHashGroupOutdated(headerPath, mocPath)) {
+                    // TODO: the moc executable MUST be configurable
+                    StringList args;
+                    args.push_back("-o");
+                    args.push_back(mocPath);
+                    args.push_back(headerPath);
+                    Notice() << blue() << "Running moc for header of " << *it;
+                    if (!OS::exec("moc", args))
+                        script->config().updateHashGroup(headerPath, mocPath);
+                    else
+                        LuaError(L) << "Error running moc for file " << headerPath;
+                }
+            }
+        }
+    }
+    return 0;
 }

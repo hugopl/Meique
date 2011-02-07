@@ -80,6 +80,7 @@ public:
 
     bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep = std::string());
     bool isHashGroupOutdated(const std::string& masterFile, const StringList& deps);
+    void updateHashGroup(const std::string& masterFile, const std::string& dep);
     void updateHashGroup(const std::string& masterFile, const StringList& deps = StringList());
 
     StringMap package(const std::string& pkgName) const;

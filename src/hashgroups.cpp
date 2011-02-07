@@ -116,6 +116,15 @@ void HashGroups::loadHashGroup(lua_State* L)
     }
 }
 
+void HashGroups::updateHashGroup(const std::string& master, const std::string& dep)
+{
+    StringList deps;
+    if (!dep.empty())
+        deps.push_back(dep);
+    return updateHashGroup(master, deps);
+
+}
+
 void HashGroups::updateHashGroup(const std::string& master, const StringList& deps)
 {
     MutexLocker locker(&m_mutex);

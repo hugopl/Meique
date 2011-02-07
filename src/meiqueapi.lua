@@ -215,3 +215,10 @@ function Library:new(name, libType)
     o._type = 2
     return o
 end
+
+
+-- Qt extensions
+
+function CompilableTarget:useQtAutomoc()
+    table.insert(self._preTargetCompileHooks, _meiqueAutomoc)
+end
