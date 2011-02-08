@@ -49,7 +49,7 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
 
     pid_t pid = fork();
     if (pid == -1) {
-        Error() << "Error running command: " << cmdline;
+        Error() << "Error forking process to run: " << cmdline;
     } else if (!pid) {
         if (!workingDir.empty())
             OS::cd(workingDir);
