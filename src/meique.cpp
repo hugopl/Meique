@@ -84,9 +84,6 @@ void Meique::exec()
                 Error() << "Action not supported yet";
         }
     }
-
-    if (m_config.action() != Config::ShowHelp)
-        m_config.saveCache();
 }
 
 void Meique::showVersion()

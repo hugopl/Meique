@@ -57,6 +57,8 @@ Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_action(NoAction), m_c
 
 Config::~Config()
 {
+    if (isInBuildMode())
+        saveCache();
     delete m_compiler;
 }
 
