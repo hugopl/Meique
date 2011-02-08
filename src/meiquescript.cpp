@@ -526,6 +526,8 @@ int meiqueAutomoc(lua_State* L)
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     Target* target = script->getTarget(targetName);
+    OS::mkdir(target->directory());
+
     StringList files = target->files();
     if (!files.size())
         return 0;
