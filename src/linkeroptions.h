@@ -39,7 +39,7 @@ public:
     StringList libraries() const { return m_libraries; }
     void addLibraryPath(const std::string& libraryPath);
     void addLibraryPaths(const StringList& libraryPaths);
-    StringList libraryPath() const { return m_libraryPaths; }
+    StringList libraryPaths() const { return m_libraryPaths; }
     void addCustomFlag(const std::string& customFlag);
     StringList customFlags() const { return m_customFlags; }
     void setLinkType(LinkType linkType) { m_linkType = linkType; }

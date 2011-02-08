@@ -115,7 +115,7 @@ OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, co
         std::copy(flags.begin(), flags.end(), std::back_inserter(args));
 
         // library paths
-        StringList paths = options->libraryPath();
+        StringList paths = options->libraryPaths();
         StringList::iterator it = paths.begin();
         for (; it != paths.end(); ++it)
             args.push_back("-L\"" + *it + '"');
@@ -129,6 +129,10 @@ OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, co
         // static libraries
         StringList staticLibs = options->staticLibraries();
         std::copy(staticLibs.begin(), staticLibs.end(), std::back_inserter(args));
+
+        // Add rpath
+        if (paths.size())
+            args.push_back("-Wl,-rpath=" + join(paths, ":"));
     }
 
     return new OSCommandJob(linker, args);

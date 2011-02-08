@@ -59,3 +59,20 @@ StringList split(const std::string& str)
     return result;
 }
 
+std::string join(const StringList& list, const std::string& sep)
+{
+    std::string output;
+    StringList::const_iterator itBegin = list.begin();
+    StringList::const_iterator itEnd = list.end();
+
+    if (itBegin != itEnd) {
+        output.append(*itBegin);
+        ++itBegin;
+        for (; itBegin != itEnd; ++itBegin) {
+            output.append(*itBegin);
+            output.append(sep);
+        }
+    }
+    return output;
+}
+
