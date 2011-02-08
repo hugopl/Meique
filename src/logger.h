@@ -61,7 +61,7 @@ std::ostream& operator<<(std::ostream& out, const blue&);
 std::ostream& operator<<(std::ostream& out, const magenta&);
 std::ostream& operator<<(std::ostream& out, const white&);
 
-class BaseLogger : public std::ostream
+class LogWriter : public std::ostream
 {
 public:
     enum Options
@@ -71,8 +71,8 @@ public:
         Quiet = 2
     };
 
-    BaseLogger(std::ostream& output, Options options = None) : m_stream(output), m_options(options) {}
-    ~BaseLogger()
+    LogWriter(std::ostream& output, Options options = None) : m_stream(output), m_options(options) {}
+    ~LogWriter()
     {
         if (m_options & Quiet)
             return;
@@ -142,10 +142,10 @@ inline std::ostream& operator<<(std::ostream& out, const std::map<K, V>& map)
     return out;
 }
 
-class Warn : public BaseLogger
+class Warn : public LogWriter
 {
 public:
-    Warn() : BaseLogger(std::cout)
+    Warn() : LogWriter(std::cout)
     {
         m_stream << COLOR_YELLOW "WARNING" COLOR_END " :: ";
     }
@@ -157,10 +157,10 @@ struct MeiqueError
     static bool errorAlreadyset;
 };
 
-class Error : public BaseLogger
+class Error : public LogWriter
 {
 public:
-    Error() : BaseLogger(std::cerr)
+    Error() : LogWriter(std::cerr)
     {
         m_stream << COLOR_RED "ERROR" COLOR_END " :: ";
     }
@@ -171,16 +171,16 @@ public:
     }
 };
 
-class Notice : public BaseLogger
+class Notice : public LogWriter
 {
 public:
-    Notice() : BaseLogger(std::cout) {}
+    Notice() : LogWriter(std::cout) {}
 };
 
-class Debug : public BaseLogger
+class Debug : public LogWriter
 {
 public:
-    Debug(int level = 1) : BaseLogger(std::cout)
+    Debug(int level = 1) : LogWriter(std::cout)
     {
         if (level > verboseMode)
             m_options |= Quiet;
