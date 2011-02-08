@@ -24,6 +24,8 @@
 #include "lua.h"
 #include "meiquescript.h"
 #include <stdlib.h>
+#include <fstream>
+#include "config.h"
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
 {
@@ -131,6 +133,8 @@ int Target::test()
     }
 
     Notice() << magenta() << "Testing " << name() << "...";
+    Log log((config().buildRoot() + "meiquetest.log").c_str(), Log::Append);
+
     std::list<StringList> tests;
     readLuaList(L, top, tests);
     std::list<StringList>::const_iterator it = tests.begin();
@@ -141,8 +145,15 @@ int Target::test()
         const std::string& testDir = *(++j);
 
         OS::mkdir(testDir);
-        OS::ChangeWorkingDirectory dirChanger(testDir);
-        OS::exec(testCmd);
+        std::string output;
+        Notice() << testName << nobreak();
+        int res = OS::exec(testCmd, StringList(), &output, testDir);
+        if (res)
+            Notice() << red() << "fail";
+        else
+            Notice() << green() << "pass";
+        log << ":: Running test: " << testName;
+        log << output;
     }
     return tests.size();
 }

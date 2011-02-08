@@ -22,25 +22,8 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <fstream>
 #include "os.h"
-
-#ifndef NOCOLOR
-    #define COLOR_END "\033[0m"
-    #define COLOR_WHITE "\033[1;37m"
-    #define COLOR_YELLOW "\033[1;33m"
-    #define COLOR_GREEN "\033[0;32m"
-    #define COLOR_RED "\033[0;31m"
-    #define COLOR_BLUE "\033[1;34m"
-    #define COLOR_MAGENTA "\033[1;35m"
-#else
-    #define COLOR_END ""
-    #define COLOR_WHITE ""
-    #define COLOR_YELLOW ""
-    #define COLOR_GREEN ""
-    #define COLOR_RED ""
-    #define COLOR_BLUE ""
-    #define COLOR_MAGENTA ""
-#endif
 
 // definied in config.cpp
 extern int verboseMode;
@@ -52,45 +35,51 @@ struct magenta {};
 struct white {};
 struct blue {};
 struct nocolor {};
+struct nobreak {};
 
-std::ostream& operator<<(std::ostream& out, const green&);
-std::ostream& operator<<(std::ostream& out, const red&);
-std::ostream& operator<<(std::ostream& out, const yellow&);
-std::ostream& operator<<(std::ostream& out, const nocolor&);
-std::ostream& operator<<(std::ostream& out, const blue&);
-std::ostream& operator<<(std::ostream& out, const magenta&);
-std::ostream& operator<<(std::ostream& out, const white&);
-
-class LogWriter : public std::ostream
+class LogWriter
 {
 public:
     enum Options
     {
         None = 0,
-        ShowPid = 1,
+        NoBreak = 1,
         Quiet = 2
     };
 
-    LogWriter(std::ostream& output, Options options = None) : m_stream(output), m_options(options) {}
-    ~LogWriter()
-    {
-        if (m_options & Quiet)
-            return;
-        m_stream << nocolor() << std::endl;
-    }
-    std::ostream& operator()() { return m_stream; };
+    LogWriter(std::ostream& output, unsigned int options = None) : m_stream(output), m_options(options) {}
+    ~LogWriter();
+    LogWriter(const LogWriter& other);
+
     template <typename T>
-    std::ostream& operator<<(const T& t)
+    LogWriter& operator<<(const T& t)
     {
-        if (m_options & Quiet)
-            return *this;
-        return m_stream << t;
+        if (!(m_options & Quiet))
+            m_stream << t;
+        return *this;
     }
 
 protected:
     std::ostream& m_stream;
     unsigned int m_options;
 };
+
+template<>
+LogWriter& LogWriter::operator<<<green>(const green&);
+template<>
+LogWriter& LogWriter::operator<<<red>(const red&);
+template<>
+LogWriter& LogWriter::operator<<<yellow>(const yellow&);
+template<>
+LogWriter& LogWriter::operator<<<magenta>(const magenta&);
+template<>
+LogWriter& LogWriter::operator<<<white>(const white&);
+template<>
+LogWriter& LogWriter::operator<<<blue>(const blue&);
+template<>
+LogWriter& LogWriter::operator<<<nocolor>(const nocolor&);
+template<>
+LogWriter& LogWriter::operator<<<nobreak>(const nobreak&);
 
 template<typename T1, typename T2>
 inline std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& pair)
@@ -147,7 +136,7 @@ class Warn : public LogWriter
 public:
     Warn() : LogWriter(std::cout)
     {
-        m_stream << COLOR_YELLOW "WARNING" COLOR_END " :: ";
+        *this << yellow() << "WARNING" << nocolor() << " :: ";
     }
 };
 
@@ -162,7 +151,7 @@ class Error : public LogWriter
 public:
     Error() : LogWriter(std::cerr)
     {
-        m_stream << COLOR_RED "ERROR" COLOR_END " :: ";
+        *this << red() << "ERROR" << nocolor() << " :: ";
     }
     ~Error()
     {
@@ -185,8 +174,26 @@ public:
         if (level > verboseMode)
             m_options |= Quiet;
         else
-            m_stream << white() << "> " << nocolor();
+            *this << white() << "> " << nocolor();
     }
 };
+
+class Log
+{
+public:
+    enum Mode {
+        Append = std::ios_base::ate
+    };
+
+    Log(const std::string& fileName, Mode mode);
+    template<typename T>
+    LogWriter operator<<(const T& t)
+    {
+        return LogWriter(m_stream, LogWriter::NoBreak) << t;
+    }
+private:
+    std::ofstream m_stream;
+};
+
 
 #endif // LOGGER_H

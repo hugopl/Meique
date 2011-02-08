@@ -16,7 +16,39 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#ifndef NOCOLOR
+    #define COLOR_END "\033[0m"
+    #define COLOR_WHITE "\033[1;37m"
+    #define COLOR_YELLOW "\033[1;33m"
+    #define COLOR_GREEN "\033[0;32m"
+    #define COLOR_RED "\033[0;31m"
+    #define COLOR_BLUE "\033[1;34m"
+    #define COLOR_MAGENTA "\033[1;35m"
+#else
+    #define COLOR_END ""
+    #define COLOR_WHITE ""
+    #define COLOR_YELLOW ""
+    #define COLOR_GREEN ""
+    #define COLOR_RED ""
+    #define COLOR_BLUE ""
+    #define COLOR_MAGENTA ""
+#endif
+
+
 #include "logger.h"
+
+LogWriter::LogWriter(const LogWriter& other) : m_stream(other.m_stream), m_options(other.m_options & Quiet)
+{
+}
+
+LogWriter::~LogWriter()
+{
+    if (m_options & Quiet)
+        return;
+    *this << nocolor();
+    if (!(m_options & NoBreak))
+        m_stream << std::endl;
+}
 
 bool MeiqueError::errorAlreadyset = false;
 
@@ -25,36 +57,62 @@ MeiqueError::MeiqueError()
     errorAlreadyset = true;
 }
 
-std::ostream& operator<<(std::ostream& out, const green&)
+template<>
+LogWriter& LogWriter::operator<<<green>(const green&)
 {
-    return out << COLOR_GREEN;
+    m_stream << COLOR_GREEN;
+    return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, const red&)
+template<>
+LogWriter& LogWriter::operator<<<red>(const red&)
 {
-    return out << COLOR_RED;
-}
-std::ostream& operator<<(std::ostream& out, const yellow&)
-{
-    return out << COLOR_YELLOW;
+    m_stream << COLOR_RED;
+    return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, const nocolor&)
+template<>
+LogWriter& LogWriter::operator<<<yellow>(const yellow&)
 {
-    return out << COLOR_END;
+    m_stream << COLOR_YELLOW;
+    return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, const blue&)
+template<>
+LogWriter& LogWriter::operator<<<nocolor>(const nocolor&)
 {
-    return out << COLOR_BLUE;
+    m_stream << COLOR_END;
+    return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, const magenta&)
+template<>
+LogWriter& LogWriter::operator<<<blue>(const blue&)
 {
-    return out << COLOR_MAGENTA;
+    m_stream << COLOR_BLUE;
+    return *this;
 }
 
-std::ostream& operator<<(std::ostream& out, const white&)
+template<>
+LogWriter& LogWriter::operator<<<magenta>(const magenta&)
 {
-    return out << COLOR_WHITE;
+    m_stream << COLOR_MAGENTA;
+    return *this;
+}
+
+template<>
+LogWriter& LogWriter::operator<<<white>(const white&)
+{
+    m_stream << COLOR_WHITE;
+    return *this;
+}
+
+template<>
+LogWriter& LogWriter::operator<<<nobreak>(const nobreak&)
+{
+    m_options |= NoBreak;
+    return *this;
+}
+
+Log::Log(const std::string& fileName, Mode mode) : m_stream(fileName.c_str(), static_cast<std::ios::openmode>(mode))
+{
 }
