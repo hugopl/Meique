@@ -17,12 +17,16 @@
 */
 
 #include "os.h"
+extern "C" {
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <errno.h>
+#include <time.h>
+}
 #include "logger.h"
-#include <stdlib.h>
+#include <cstdlib>
 #include <cstdio>
 #include "stdstringsux.h"
 
@@ -163,6 +167,13 @@ StringList getOSType()
         retVal.push_back("LINUX");
 
     return retVal;
+}
+
+unsigned long getTimeInMillis()
+{
+    timeval t;
+    gettimeofday(&t, 0);
+    return t.tv_sec * 1000 + t.tv_usec/1000;
 }
 
 }

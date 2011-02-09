@@ -49,6 +49,8 @@ namespace OS
 
     StringList getOSType();
 
+    unsigned long getTimeInMillis();
+
     class ChangeWorkingDirectory
     {
     public:

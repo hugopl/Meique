@@ -25,6 +25,7 @@
 #include "meiquescript.h"
 #include <stdlib.h>
 #include <fstream>
+#include <iomanip>
 #include "config.h"
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
@@ -138,6 +139,8 @@ int Target::test()
     std::list<StringList> tests;
     readLuaList(L, top, tests);
     std::list<StringList>::const_iterator it = tests.begin();
+    int i = 1;
+    const int total = tests.size();
     for (; it != tests.end(); ++it) {
         StringList::const_iterator j = it->begin();
         const std::string& testName = *j;
@@ -146,14 +149,23 @@ int Target::test()
 
         OS::mkdir(testDir);
         std::string output;
-        Notice() << testName << nobreak();
+
+        // Write a nice output.
+        Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << nobreak();
+        Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << nobreak();
+
+        unsigned long start = OS::getTimeInMillis();
         int res = OS::exec(testCmd, StringList(), &output, testDir);
+        unsigned long end = OS::getTimeInMillis();
+
         if (res)
-            Notice() << red() << "fail";
+            Notice() << red() << "FAILED" << nobreak();
         else
-            Notice() << green() << "pass";
+            Notice() << green() << "passed" << nobreak();
+        Notice() << "  " << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
         log << ":: Running test: " << testName;
         log << output;
+        ++i;
     }
     return tests.size();
 }

@@ -133,10 +133,10 @@ function Target:addDependency(target)
 end
 
 function Target:addTest(testCommand, testName)
-    testName = testName or self._name..'-test #'..#self._tests
     if instanceOf(testCommand, Executable) then
-        table.insert(self._tests, {testName, testCommand:buildDir()..testCommand._name, currentDir()})
+        table.insert(self._tests, {testCommand._name, testCommand:buildDir()..testCommand._name, currentDir()})
     else
+        testName = testName or self._name..'-test #'..#self._tests
         table.insert(self._tests, {testName, testCommand, currentDir()})
     end
 end
