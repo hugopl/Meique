@@ -87,6 +87,7 @@ public:
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
     StringList scopes() const;
     void setScopes(const StringList& scopes);
+    int verbosityLevel() const;
 private:
     // Arguments
     int m_jobsAtOnce;

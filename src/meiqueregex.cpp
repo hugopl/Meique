@@ -32,7 +32,7 @@ Regex::~Regex()
     regfree(&m_regex);
 }
 
-bool Regex::isValid()
+bool Regex::isValid() const
 {
     return m_matches;
 }
@@ -42,14 +42,14 @@ bool Regex::match(const std::string& str)
     return !regexec(&m_regex, str.c_str(), m_regex.re_nsub + 1, m_matches, 0);
 }
 
-std::pair<int, int> Regex::group(int n)
+std::pair<int, int> Regex::group(int n) const
 {
     std::size_t start = m_matches[n].rm_so;
     std::size_t end = m_matches[n].rm_eo - start;
     return std::pair<int, int>(start, end);
 }
 
-std::string Regex::group(int n, const std::string& str)
+std::string Regex::group(int n, const std::string& str) const
 {
     std::size_t start = m_matches[n].rm_so;
     std::size_t end = m_matches[n].rm_eo - start;

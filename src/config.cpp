@@ -38,7 +38,7 @@
 #define CFG_COMPILER "compiler"
 #define CFG_BUILD_TYPE "buildType"
 
-int verboseMode = 0;
+int verbosityLevel = 0;
 
 Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_action(NoAction), m_compiler(0)
 {
@@ -49,7 +49,7 @@ Config::Config(int argc, char** argv) : m_jobsAtOnce(1), m_action(NoAction), m_c
 
     std::string verboseValue = OS::getEnv("VERBOSE");
     std::istringstream s(verboseValue);
-    s >> verboseMode;
+    s >> ::verbosityLevel;
 
     if (m_mode == BuildMode)
         m_buildRoot = OS::pwd();
@@ -363,5 +363,10 @@ int Config::readScopes(lua_State* L)
     Config* self = getSelf(L);
     readLuaList(L, 1, self->m_scopes);
     return 0;
+}
+
+int Config::verbosityLevel() const
+{
+    return ::verbosityLevel;
 }
 

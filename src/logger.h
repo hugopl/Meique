@@ -26,7 +26,7 @@
 #include "os.h"
 
 // definied in config.cpp
-extern int verboseMode;
+extern int verbosityLevel;
 
 struct green {};
 struct red {};
@@ -171,10 +171,8 @@ class Debug : public LogWriter
 public:
     Debug(int level = 1) : LogWriter(std::cout)
     {
-        if (level > verboseMode)
+        if (level > verbosityLevel)
             m_options |= Quiet;
-        else
-            *this << white() << "> " << nocolor();
     }
 };
 

@@ -29,9 +29,9 @@ public:
     Regex(const char* pattern);
     ~Regex();
     bool match(const std::string& str);
-    std::pair<int, int> group(int n);
-    std::string group(int n, const std::string& str);
-    bool isValid();
+    std::pair<int, int> group(int n) const;
+    std::string group(int n, const std::string& str) const;
+    bool isValid() const;
 private:
     regex_t m_regex;
     regmatch_t* m_matches;

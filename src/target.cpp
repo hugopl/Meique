@@ -123,6 +123,14 @@ StringList Target::files()
     return files;
 }
 
+static void writeTestResults(LogWriter& s, int result, unsigned long start, unsigned long end) {
+    if (result)
+        s << red() << "FAILED";
+    else
+        s << green() << "Passed";
+    s << nocolor() << ' ' << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
+}
+
 int Target::test()
 {
     getLuaField("_tests");
@@ -135,6 +143,7 @@ int Target::test()
 
     Notice() << magenta() << "Testing " << name() << "...";
     Log log((config().buildRoot() + "meiquetest.log").c_str(), Log::Append);
+    bool verboseMode = config().verbosityLevel() != 0;
 
     std::list<StringList> tests;
     readLuaList(L, top, tests);
@@ -151,18 +160,31 @@ int Target::test()
         std::string output;
 
         // Write a nice output.
-        Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << nobreak();
-        Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << nobreak();
+        if (!verboseMode) {
+            Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << nobreak();
+            Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << nobreak();
+        }
 
         unsigned long start = OS::getTimeInMillis();
+        Debug() << i << ": Test Command: " << nobreak();
         int res = OS::exec(testCmd, StringList(), &output, testDir);
         unsigned long end = OS::getTimeInMillis();
 
-        if (res)
-            Notice() << red() << "FAILED" << nobreak();
-        else
-            Notice() << green() << "passed" << nobreak();
-        Notice() << "  " << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
+        if (verboseMode) {
+            std::istringstream in(output);
+            std::string line;
+            while (!in.eof()) {
+                std::getline(in, line);
+                Debug() << i << ": " << line;
+            }
+            Debug s;
+            s << i << ": Test result: ";
+            writeTestResults(s, res, start, end);
+            Debug();
+        } else {
+            Notice s;
+            writeTestResults(s, res, start, end);
+        }
         log << ":: Running test: " << testName;
         log << output;
         ++i;
