@@ -23,58 +23,31 @@
 #include "meiqueoption.h"
 #include "hashgroups.h"
 
+class CmdLine;
 struct lua_State;
 class Compiler;
 
-class Config
+class MeiqueCache
 {
 public:
-    enum Action {
-        NoAction,
-        ShowHelp,
-        ShowVersion,
-        Build,
-        Install,
-        Clean,
-        Uninstall,
-        Test
-    };
-
     enum BuildType {
         NoType,
         Debug,
         Release
     };
 
-    enum Mode {
-        NoMode,
-        ConfigureMode,
-        BuildMode
-    };
-
-    Config(int argc, char** argv);
-    ~Config();
-
-    StringMap arguments() const { return m_args; }
-    StringList targets() const { return m_targets; }
-    std::string meiqueFile() const;
-
-    Action action() const { return m_action; }
-
-    std::string sourceRoot() const { return m_sourceRoot; }
-    std::string buildRoot() const { return m_buildRoot; }
+    /// Build a cache based on a meiquecache.lua file at the current directory.
+    MeiqueCache();
+    /// Create a new cache based somehow on the given command line
+    MeiqueCache(const CmdLine* cmdLine);
+    ~MeiqueCache();
 
     Compiler* compiler();
-
-    bool isInConfigureMode() const { return m_mode == ConfigureMode; }
-    bool isInBuildMode() const { return m_mode == BuildMode; }
 
     void setUserOptionValue(const std::string& key, const std::string& value);
     std::string userOption(const std::string& key) const;
 
     void saveCache();
-
-    int jobsAtOnce() const { return m_jobsAtOnce; }
 
     BuildType buildType() const { return m_buildType; }
 
@@ -87,20 +60,18 @@ public:
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
     StringList scopes() const;
     void setScopes(const StringList& scopes);
-    int verbosityLevel() const;
+
+    void setSourceDir(const std::string& dir) { m_sourceDir = dir; }
+    std::string sourceDir() const { return m_sourceDir; }
 private:
     // Arguments
-    int m_jobsAtOnce;
-    Mode m_mode;
-    Action m_action;
     BuildType m_buildType;
-    StringMap m_args;
 
     // Env. stuff
-    std::string m_buildRoot;
-    std::string m_sourceRoot;
     std::string m_compilerName;
     Compiler* m_compiler;
+
+    std::string m_sourceDir;
 
     // Stuff stored in meiquecache.lua by meique.lua
     std::map<std::string, StringMap> m_packages;
@@ -112,19 +83,17 @@ private:
     // helper variables
     pthread_mutex_t m_configMutex;
 
-    // disable copy
-    Config(const Config&);
-    Config& operator=(const Config&);
-    void parseArguments(int argc, char** argv);
-    void setAction(const Config::Action& action);
-    void detectMode();
     void loadCache();
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
     static int readHashGroup(lua_State* L);
     static int readPackage(lua_State* L);
     static int readScopes(lua_State* L);
-    void setBuildMode(const Config::BuildType& mode);
+
+    // disable copy
+    MeiqueCache(const MeiqueCache&);
+    MeiqueCache& operator=(const MeiqueCache&);
+    void init();
 };
 
 #endif

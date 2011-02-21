@@ -15,6 +15,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/meiqueapi.cpp
 main.cpp
 meiqueregex.cpp
 meique.cpp
+cmdline.cpp
 logger.cpp
 hashgroups.cpp
 meiquescript.cpp

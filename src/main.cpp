@@ -20,13 +20,17 @@
 #include "meique.h"
 #include "logger.h"
 
-int main(int argc, char** argv)
+int main(int argc, const char** argv)
 {
+#ifndef DEBUG
+    Meique meique(argc, argv);
+    meique.exec();
+#else
     try {
         Meique meique(argc, argv);
         meique.exec();
     } catch (MeiqueError&) {
         return 1;
     }
-    return 0;
+#endif
 }

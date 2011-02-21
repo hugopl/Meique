@@ -89,9 +89,9 @@ lua_State* Target::luaState()
     return m_script->luaState();
 }
 
-Config& Target::config()
+MeiqueCache* Target::cache()
 {
-    return m_script->config();
+    return m_script->cache();
 }
 
 const std::string Target::directory()
@@ -142,8 +142,8 @@ int Target::test()
     }
 
     Notice() << magenta() << "Testing " << name() << "...";
-    Log log((config().buildRoot() + "meiquetest.log").c_str(), Log::Append);
-    bool verboseMode = config().verbosityLevel() != 0;
+    Log log((script()->buildDir() + "meiquetest.log").c_str(), Log::Append);
+    bool verboseMode = /*config().verbosityLevel() != 0*/ true;
 
     std::list<StringList> tests;
     readLuaList(L, top, tests);

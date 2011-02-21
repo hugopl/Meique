@@ -1,20 +1,23 @@
 digraph G {
-graph [bgcolor=transparent]
 edge [fontsize=12]
 node [shape=box]
 
-"Check program arguments" [shape=box3d]
+"checkArgs()" [shape=box3d]
 
-"Check program arguments" -> "Display help" [label="--help"]
-"Check program arguments" -> "Display version" [label="--version"]
-"Check program arguments" -> "Look for meiquecache.lua" [label="other or none arguments"]
-"Look for meiquecache.lua" -> "meiquecache.lua is up to date?" [label="Found"]
-"Look for meiquecache.lua" -> "A path was given?" [label="Not Found"]
-"A path was given?" -> "There's a meique.lua file?" [label=Yes]
-"There's a meique.lua file?" -> "Configure the project" [label=Yes]
-"A path was given?" -> "Display help" [label=No]
-"meiquecache.lua is up to date?" -> "Execute in buildmode" [label="Yes"]
-"meiquecache.lua is up to date?" -> "Re-configure the project" [label="No"]
-"Re-configure the project" -> "Execute in buildmode"
-"Display help" -> "Display aditional project help" [label="A path to a meique.lua was given"]
+"checkArgs()" -> "showHelp()" [label="HasHelpArg"]
+"checkArgs()" -> "showVersion()" [label="HasVersionArg"]
+"checkArgs()" -> "lookForMeiqueCache()" [label="NormalArgs"]
+"lookForMeiqueCache()" -> "isMeiqueCacheIsUpToDate()" [label="Found"]
+"lookForMeiqueCache()" -> "lookForMeiqueLua()" [label="NotFound"]
+"lookForMeiqueLua()" -> "configureProject()" [label=Found]
+"lookForMeiqueLua()" -> "showHelp()" [label=NotFound]
+"isMeiqueCacheIsUpToDate()" -> "getBuildAction()" [label="Yes"]
+"isMeiqueCacheIsUpToDate()" -> "reconfigureProject()" [label="No"]
+"reconfigureProject()" -> "getBuildAction()"
+"getBuildAction()" -> "testTargets()" [label=TestAction]
+"getBuildAction()" -> "installTargets()" [label=InstallAction]
+"getBuildAction()" -> "uninstallTargets()" [label=UninstallAction]
+"getBuildAction()" -> "buildTargets()" [label=BuildAction]
+"getBuildAction()" -> "cleanTargets()" [label=CleanAction]
+
 }

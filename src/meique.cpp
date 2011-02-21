@@ -27,72 +27,208 @@
 #include "graph.h"
 #include "meiqueversion.h"
 #include <vector>
+#include <sstream>
+#include "statemachine.h"
+#include "config.h"
 
-Meique::Meique(int argc, char** argv) : m_config(argc, argv), m_jobManager(new JobManager)
+#define MEIQUECACHE "meiquecache.lua"
+
+enum {
+    HasVersionArg = 1,
+    HasHelpArg,
+    NormalArgs,
+    Found,
+    NotFound,
+    Yes,
+    No,
+    TestAction,
+    InstallAction,
+    UninstallAction,
+    BuildAction,
+    CleanAction
+};
+
+Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0)
 {
-    m_jobManager->setJobCountLimit(m_config.jobsAtOnce());
+    m_jobManager->setJobCountLimit(m_args.intArg("j", 1));
 }
 
 Meique::~Meique()
 {
+    delete m_script;
     delete m_jobManager;
+}
+
+int verbosityLevel = 0;
+
+int Meique::checkArgs()
+{
+    std::string verboseValue = OS::getEnv("VERBOSE");
+    std::istringstream s(verboseValue);
+    s >> ::verbosityLevel;
+
+    if (m_args.boolArg("version"))
+        return HasVersionArg;
+    if (m_args.boolArg("help"))
+        return HasHelpArg;
+    return NormalArgs;
+}
+
+int Meique::lookForMeiqueCache()
+{
+    std::ifstream file(MEIQUECACHE);
+    return file ? Found : NotFound;
+}
+
+int Meique::isMeiqueCacheIsUpToDate()
+{
+    // FIXME: Implement this!
+    return Yes;
+}
+
+int Meique::lookForMeiqueLua()
+{
+    if (m_args.numberOfFreeArgs() != 1)
+        return NotFound;
+
+    std::string path = m_args.freeArg(0);
+    return OS::fileExists(path + "/meique.lua") ? Found : NotFound;
+}
+
+int Meique::configureProject()
+{
+    std::string meiqueLuaPath = m_args.freeArg(0);
+    meiqueLuaPath.append("/meique.lua");
+    m_script = new MeiqueScript(meiqueLuaPath, &m_args);
+
+    std::string sourceDir = m_args.freeArg(0);
+    const std::string pwd = OS::pwd();
+    if (sourceDir[0] != '/') // FIXME what about windows!?
+        sourceDir = pwd + sourceDir + '/';
+    m_script->setSourceDir(sourceDir);
+    m_script->setBuildDir(pwd);
+    m_script->exec();
+    return 0;
+}
+
+int Meique::reconfigureProject()
+{
+    return 0;
+}
+
+int Meique::getBuildAction()
+{
+    m_script = new MeiqueScript;
+    m_script->exec();
+
+    if (m_args.boolArg("c"))
+        return CleanAction;
+    else if (m_args.boolArg("i"))
+        return InstallAction;
+    else if (m_args.boolArg("t"))
+        return TestAction;
+    else if (m_args.boolArg("u"))
+        return UninstallAction;
+    else
+        return BuildAction;
+}
+
+TargetList Meique::getChosenTargets()
+{
+    int ntargets = m_args.numberOfFreeArgs();
+    StringList targetNames;
+    for (int i = 0; i < ntargets; ++i)
+        targetNames.push_back(m_args.freeArg(i));
+
+    TargetList targets;
+    if (targetNames.empty()) {
+        targets = m_script->targets();
+    } else {
+        StringList::const_iterator it = targetNames.begin();
+        for (; it != targetNames.end(); ++it)
+            targets.push_back(m_script->getTarget(*it));
+    }
+
+    if (targets.empty())
+        Error() << "There's no targets!";
+
+    return targets;
+}
+
+int Meique::buildTargets()
+{
+    TargetList targets = getChosenTargets();
+    TargetList::iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        executeJobQueues(m_script, *it);
+
+    return 0;
+}
+
+int Meique::cleanTargets()
+{
+    TargetList targets = getChosenTargets();
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        (*it)->clean();
+    return 0;
+}
+
+int Meique::installTargets()
+{
+    return 0;
+}
+
+int Meique::testTargets()
+{
+    TargetList targets = getChosenTargets();
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        (*it)->test();
+    return 0;
+}
+
+int Meique::uninstallTargets()
+{
+    return 0;
 }
 
 void Meique::exec()
 {
-    if (m_config.action() == Config::ShowVersion) {
-        showVersion();
-        return;
-    } else if (m_config.sourceRoot().empty()
-               && m_config.action() == Config::ShowHelp) {
-        showHelp();
-        return;
-    }
+    StateMachine<Meique> machine(this);
 
-    if (m_config.isInConfigureMode() && m_config.action() != Config::ShowHelp)
-        Notice() << magenta() << "Configuring project...";
+    machine[STATE(Meique::checkArgs)][HasHelpArg] = STATE(Meique::showHelp);
+    machine[STATE(Meique::checkArgs)][HasVersionArg] = STATE(Meique::showVersion);
+    machine[STATE(Meique::checkArgs)][NormalArgs] = STATE(Meique::lookForMeiqueCache);
 
-    MeiqueScript script(m_config);
-    script.exec();
-    if (m_config.action() == Config::ShowHelp) {
-        showHelp(script.options());
-    } else if (m_config.isInBuildMode()) {
-        // Get the list of targets
-        StringList targetNames = m_config.targets();
-        TargetList targetList;
-        if (targetNames.empty()) {
-            targetList = script.targets();
-        } else {
-            StringList::const_iterator it = targetNames.begin();
-            for (; it != targetNames.end(); ++it)
-                targetList.push_back(script.getTarget(*it));
-        }
+    machine[STATE(Meique::lookForMeiqueCache)][Found] = STATE(Meique::isMeiqueCacheIsUpToDate);
+    machine[STATE(Meique::lookForMeiqueCache)][NotFound] = STATE(Meique::lookForMeiqueLua);
 
-        switch(m_config.action()) {
-            case Config::Clean:
-                clean(targetList);
-                break;
-            case Config::Build:
-                build(script, targetList);
-                break;
-            case Config::Test:
-                test(targetList);
-                break;
-            case Config::Install:
-            case Config::Uninstall:
-            default:
-                Error() << "Action not supported yet";
-        }
-    }
+    machine[STATE(Meique::lookForMeiqueLua)][Found] = STATE(Meique::configureProject);
+    machine[STATE(Meique::lookForMeiqueLua)][NotFound] = STATE(Meique::showHelp);
+
+    machine[STATE(Meique::isMeiqueCacheIsUpToDate)][Yes] = STATE(Meique::getBuildAction);
+    machine[STATE(Meique::isMeiqueCacheIsUpToDate)][No] = STATE(Meique::reconfigureProject);
+
+    machine[STATE(Meique::reconfigureProject)][0] = STATE(Meique::getBuildAction);
+
+    machine[STATE(Meique::getBuildAction)][TestAction] = STATE(Meique::testTargets);
+    machine[STATE(Meique::getBuildAction)][InstallAction] = STATE(Meique::installTargets);
+    machine[STATE(Meique::getBuildAction)][UninstallAction] = STATE(Meique::uninstallTargets);
+    machine[STATE(Meique::getBuildAction)][BuildAction] = STATE(Meique::buildTargets);
+    machine[STATE(Meique::getBuildAction)][CleanAction] = STATE(Meique::cleanTargets);
+
+    machine.execute(STATE(Meique::checkArgs));
 }
 
-void Meique::showVersion()
+int Meique::showVersion()
 {
     std::cout << "Meique version " MEIQUE_VERSION << std::endl;
-    std::cout << "Copyright 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>\n";
+    std::cout << "Copyright 2009-2011 Hugo Parente Lima <hugo.pl@gmail.com>\n";
+    return 0;
 }
 
-void Meique::showHelp(const OptionsMap& options)
+int Meique::showHelp()
 {
     std::cout << "Use meique OPTIONS TARGET\n\n";
     std::cout << "When in configure mode, TARGET is the directory of meique.lua file.\n";
@@ -100,6 +236,7 @@ void Meique::showHelp(const OptionsMap& options)
     std::cout << "General options:\n";
     std::cout << " --help                             Print this message and exit.\n";
     std::cout << " --version                          Print the version number of meique and exit.\n";
+/*
     if (options.size()) {
         std::cout << "Config mode options for this project:\n";
         std::cout << " --debug                            Create a debug build.\n";
@@ -115,6 +252,7 @@ void Meique::showHelp(const OptionsMap& options)
             std::cout << std::endl;
         }
     }
+*/
     std::cout << "Build mode options:\n";
     std::cout << " -jN                                Allow N jobs at once.\n";
     std::cout << " -c [target [, target2 [, ...]]]    Clean a specific target or all targets if\n";
@@ -125,13 +263,14 @@ void Meique::showHelp(const OptionsMap& options)
     std::cout << "                                    none was specified.\n";
     std::cout << " -t [target [, target2 [, ...]]]    Run tests for a specific target or all targets\n";
     std::cout << "                                    if none was specified.\n";
+    return 0;
 }
 
-void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
+void Meique::executeJobQueues(const MeiqueScript* script, Target* mainTarget)
 {
     if (mainTarget->wasRan())
         return;
-    TargetList aux = script.targets();
+    TargetList aux = script->targets();
     std::vector<Target*> targets;
     std::copy(aux.begin(), aux.end(), std::back_inserter(targets));
 
@@ -168,7 +307,7 @@ void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
         Target* target = targets[*it];
         if (target->wasRan())
             continue;
-        JobQueue* queue = target->run(m_config.compiler());
+        JobQueue* queue = target->run(m_script->cache()->compiler());
         queues[*it] = queue;
         m_jobManager->addJobQueue(queue);
     }
@@ -185,25 +324,4 @@ void Meique::executeJobQueues(const MeiqueScript& script, Target* mainTarget)
     }
 
     m_jobManager->processJobs();
-}
-
-void Meique::clean(const TargetList& targets)
-{
-    TargetList::const_iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        (*it)->clean();
-}
-
-void Meique::test(const TargetList& targets)
-{
-    TargetList::const_iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        (*it)->test();
-}
-
-void Meique::build(const MeiqueScript& script, const TargetList& targets)
-{
-    TargetList::const_iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        executeJobQueues(script, *it);
 }

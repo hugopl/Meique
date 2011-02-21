@@ -68,14 +68,14 @@ static MeiqueScript* getMeiqueScriptObject(lua_State* L)
 static int meiqueSourceDir(lua_State* L)
 {
     MeiqueScript* script = getMeiqueScriptObject(L);
-    lua_pushstring(L, script->config().sourceRoot().c_str());
+    lua_pushstring(L, script->sourceDir().c_str());
     return 1;
 }
 
 static int meiqueBuildDir(lua_State* L)
 {
     MeiqueScript* script = getMeiqueScriptObject(L);
-    lua_pushstring(L, script->config().buildRoot().c_str());
+    lua_pushstring(L, script->buildDir().c_str());
     return 1;
 }
 
@@ -86,7 +86,7 @@ static int isOutDated(lua_State* L)
         LuaError(L) << "isOutDated(filePath) called with wrong arguments.";
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    bool res = script->config().isHashGroupOutdated(master);
+    bool res = script->cache()->isHashGroupOutdated(master);
     lua_pushboolean(L, res);
     return 1;
 }
@@ -98,15 +98,17 @@ static int setUpToDate(lua_State* L)
         LuaError(L) << "setUpToDate(filePath) called with wrong arguments.";
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    script->config().updateHashGroup(master);
+    script->cache()->updateHashGroup(master);
     return 0;
 }
 
-MeiqueScript::MeiqueScript(Config& config) : m_config(config)
+MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache)
 {
-    exportApi();
-    std::string scriptName = m_config.meiqueFile();
-    translateLuaError(m_L, luaL_loadfile(m_L, scriptName.c_str()), scriptName);
+    m_scriptName = m_cache->sourceDir() + "meique.lua";
+}
+
+MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache(cmdLine)), m_scriptName(scriptName)
+{
 }
 
 MeiqueScript::~MeiqueScript()
@@ -114,15 +116,28 @@ MeiqueScript::~MeiqueScript()
     TargetsMap::const_iterator it = m_targets.begin();
     for (; it != m_targets.end(); ++it)
         delete it->second;
+    delete m_cache;
+}
+
+void MeiqueScript::setSourceDir(const std::string& sourceDir)
+{
+    m_cache->setSourceDir(sourceDir);
+}
+
+std::string MeiqueScript::sourceDir() const
+{
+    return m_cache->sourceDir();
 }
 
 void MeiqueScript::exec()
 {
-    OS::ChangeWorkingDirectory dirChanger(m_config.sourceRoot());
-    luaPCall(m_L, 0, 0, m_config.meiqueFile());
+    OS::ChangeWorkingDirectory dirChanger(sourceDir());
 
-    if (m_config.isInBuildMode())
-        extractTargets();
+    exportApi();
+    translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
+
+    luaPCall(m_L, 0, 0, m_scriptName);
+    extractTargets();
 }
 
 void MeiqueScript::exportApi()
@@ -137,7 +152,7 @@ void MeiqueScript::exportApi()
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
     translateLuaError(m_L, sanityCheck, "[meiqueApi]");
     sanityCheck = lua_pcall(m_L, 0, 0, 0);
-    translateLuaError(m_L, sanityCheck, m_config.meiqueFile());
+    translateLuaError(m_L, sanityCheck, m_scriptName);
 
     enableBuitinScopes();
 
@@ -271,19 +286,19 @@ int findPackage(lua_State* L)
     bool optional = lua_tocpp<bool>(L, 3);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    Config& config = script->config();
-
+    MeiqueCache* cache = script->cache();
+/*
     // do nothing when showing the help screen
-    if (config.action() == Config::ShowHelp) {
+    if (config.action() == MeiqueCache::ShowHelp) {
         lua_settop(L, 0);
         lua_getglobal(L, "_meiqueNone");
         return 1;
     }
-
+*/
     // When building just check the cache for a package entry.
     StringMap pkgData;
-    if (config.isInBuildMode()) {
-        pkgData = config.package(pkgName);
+    if (script->isBuildMode()) {
+        pkgData = cache->package(pkgName);
     } else {
         // Check if the package exists
         StringList args;
@@ -344,7 +359,7 @@ int findPackage(lua_State* L)
             pkgData[names[i]] = output;
         }
         // Store pkg information
-        config.setPackage(pkgName, pkgData);
+        cache->setPackage(pkgName, pkgData);
     }
 
     if (pkgData.empty()) {
@@ -373,14 +388,18 @@ int configureFile(lua_State* L)
 
     // Configure anything when in the help screen
     MeiqueScript* script = getMeiqueScriptObject(L);
-    if (script->config().action() == Config::ShowHelp) {
+/*
+    if (script->config().action() == MeiqueCache::ShowHelp) {
         lua_settop(L, 0);
         lua_getglobal(L, "_meiqueNotNone");
         return 1;
     }
-
-    std::string input = script->config().sourceRoot() + currentDir + lua_tocpp<std::string>(L, -2);
-    std::string output = script->config().buildRoot() + currentDir + lua_tocpp<std::string>(L, -1);
+*/
+    Warn() << "current dir: " << currentDir;
+    Warn() << "src dir: " << script->sourceDir();
+    Warn() << "build dir: " << script->buildDir();
+    std::string input = script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2);
+    std::string output = script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1);
 
     std::ifstream in(input.c_str());
     if (!in)
@@ -406,9 +425,11 @@ int configureFile(lua_State* L)
 
 void MeiqueScript::enableScope(const std::string& scopeName)
 {
+/*
     // Don't enable any scopes when in help screen
-    if (m_config.action() == Config::ShowHelp)
+    if (m_cache.action() == MeiqueCache::ShowHelp)
         return;
+*/
     lua_State* L = luaState();
     lua_getglobal(L, "_meiqueNotNone");
     lua_setglobal(L, scopeName.c_str());
@@ -416,25 +437,26 @@ void MeiqueScript::enableScope(const std::string& scopeName)
 
 void MeiqueScript::enableBuitinScopes()
 {
+/*
     // Don't enable any scopes when in help screen
-    if (m_config.action() == Config::ShowHelp)
+    if (m_cache.action() == MeiqueCache::ShowHelp)
         return;
-
+*/
     StringList scopes;
-    if (m_config.isInBuildMode()) {
-        scopes = m_config.scopes();
+    if (m_isBuildMode) {
+        scopes = m_cache->scopes();
     } else {
         // Enable debug/release scope
-        scopes.push_back(m_config.buildType() == Config::Debug ? "DEBUG" : "RELEASE");
+        scopes.push_back(m_cache->buildType() == MeiqueCache::Debug ? "DEBUG" : "RELEASE");
         // Enable compiler scope
-        std::string compiler = m_config.compiler()->name();
+        std::string compiler = m_cache->compiler()->name();
         std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
         scopes.push_back(compiler.c_str());
         // Enable OS scopes
         StringList osVars = OS::getOSType();
         for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
             scopes.push_back(it->c_str());
-        m_config.setScopes(scopes);
+        m_cache->setScopes(scopes);
     }
     StringList::const_iterator it = scopes.begin();
     for (; it != scopes.end(); ++it)
@@ -460,8 +482,8 @@ int option(lua_State* L)
     MeiqueScript* script = getMeiqueScriptObject(L);
     std::string optionValue;
 
-    if (script->config().isInBuildMode()) {
-        optionValue = script->config().userOption(name);
+    if (script->isBuildMode()) {
+        optionValue = script->cache()->userOption(name);
     } else {
         // get options table
         lua_getfield(L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
@@ -475,8 +497,8 @@ int option(lua_State* L)
 
         // to options[name] = {description, defaultValue}
         lua_setfield(L, -2, name.c_str());
-
-        const StringMap& args = script->config().arguments();
+/*
+        const StringMap& args = script->cache()->arguments();
         StringMap::const_iterator it = args.find(name);
 
         if (it == args.end()) {
@@ -487,7 +509,7 @@ int option(lua_State* L)
             optionValue = "true";
         } else {
             optionValue = it->second;
-        }
+        }*/
         lua_settop(L, 0);
     }
 
@@ -507,7 +529,7 @@ int option(lua_State* L)
         lua_getglobal(L, "_meiqueNotNone");
         lua_setmetatable(L, -2);
     }
-    script->config().setUserOptionValue(name, optionValue);
+    script->cache()->setUserOptionValue(name, optionValue);
 
     return 1;
 }
@@ -532,8 +554,8 @@ int meiqueAutomoc(lua_State* L)
     if (!files.size())
         return 0;
 
-    std::string srcDir = script->config().sourceRoot() + target->directory();
-    std::string binDir = script->config().buildRoot() + target->directory();
+    std::string srcDir = script->sourceDir() + target->directory();
+    std::string binDir = script->buildDir() + target->directory();
     // search what files need to be moced
     StringList::const_iterator it = files.begin();
     Regex regex("# *include +[\"<]([^ ]+\\.moc)[\">]");
@@ -564,7 +586,7 @@ int meiqueAutomoc(lua_State* L)
                 }
 
                 std::string mocPath = binDir + regex.group(1, line);
-                if (script->config().isHashGroupOutdated(headerPath, mocPath)) {
+                if (script->cache()->isHashGroupOutdated(headerPath, mocPath)) {
                     // TODO: the moc executable MUST be configurable
                     StringList args;
                     args.push_back("-o");
@@ -572,7 +594,7 @@ int meiqueAutomoc(lua_State* L)
                     args.push_back(headerPath);
                     Notice() << blue() << "Running moc for header of " << *it;
                     if (!OS::exec("moc", args))
-                        script->config().updateHashGroup(headerPath, mocPath);
+                        script->cache()->updateHashGroup(headerPath, mocPath);
                     else
                         LuaError(L) << "Error running moc for file " << headerPath;
                 }

@@ -26,6 +26,7 @@
 #include "logger.h"
 #include "compileroptions.h"
 #include "config.h"
+#include "meiquescript.h"
 
 LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script): CompilableTarget(targetName, script)
 {
@@ -74,8 +75,8 @@ void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOption
 
 void LibraryTarget::useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions)
 {
-    std::string buildPath = config().buildRoot() + directory();
-    std::string sourcePath = config().sourceRoot() + directory();
+    std::string buildPath = script()->buildDir() + directory();
+    std::string sourcePath = script()->sourceDir() + directory();
     otherCompilerOptions->addIncludePath(sourcePath);
     if (m_linkType == LinkerOptions::SharedLibrary) {
         otherLinkerOptions->addLibraryPath(buildPath);

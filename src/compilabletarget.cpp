@@ -57,7 +57,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
     fillCompilerAndLinkerOptions(m_compilerOptions, m_linkerOptions);
 
     JobQueue* queue = new JobQueue;
-    std::string sourceDir = config().sourceRoot() + directory();
+    std::string sourceDir = script()->sourceDir() + directory();
     std::string buildDir = OS::pwd();
 
     StringList::const_iterator it = files.begin();
@@ -80,7 +80,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         bool compileIt = !OS::fileExists(output);
         StringList dependents = getFileDependencies(source, compiler->defaultIncludeDirs());
         if (!compileIt)
-            compileIt = config().isHashGroupOutdated(source, dependents);
+            compileIt = cache()->isHashGroupOutdated(source, dependents);
 
         if (compileIt) {
             OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
@@ -98,7 +98,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
 void CompilableTarget::jobFinished(Job* job)
 {
     if (!job->result())
-        config().updateHashGroup(m_job2Sources[job].first, m_job2Sources[job].second);
+        cache()->updateHashGroup(m_job2Sources[job].first, m_job2Sources[job].second);
     m_job2Sources.erase(job);
 }
 
@@ -172,7 +172,7 @@ void CompilableTarget::preprocessFile(const std::string& source,
 
 StringList CompilableTarget::getFileDependencies(const std::string& source, const StringList& systemIncludeDirs)
 {
-    std::string baseDir = config().sourceRoot() + directory();
+    std::string baseDir = script()->sourceDir() + directory();
     StringList dependents;
     // FIXME: There is a large room for improviments here, we need to cache some results
     //        to avoid doing a lot of things twice.
@@ -187,7 +187,7 @@ StringList CompilableTarget::getFileDependencies(const std::string& source, cons
 
 void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
-    const std::string baseDir = config().sourceRoot() + directory();
+    const std::string baseDir = script()->sourceDir() + directory();
 
     // Add source dir in the include path
     m_compilerOptions->addIncludePath(baseDir);
@@ -213,7 +213,7 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     }
     lua_pop(L, 1);
 
-    if (config().buildType() == Config::Debug)
+    if (cache()->buildType() == MeiqueCache::Debug)
         compilerOptions->enableDebugInfo();
     else
         compilerOptions->addDefine("NDEBUG");
@@ -257,7 +257,7 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     }
 
     // Add build dir in the include path
-    m_compilerOptions->addIncludePath(config().buildRoot() + directory());
+    m_compilerOptions->addIncludePath(script()->buildDir() + directory());
 }
 
 void CompilableTarget::clean()

@@ -18,27 +18,42 @@
 
 #ifndef MEIQUE_H
 #define MEIQUE_H
-#include "config.h"
-#include "meiquescript.h"
+#include "cmdline.h"
 
 class JobManager;
+class MeiqueScript;
+
 class Meique
 {
 public:
-    Meique(int argc, char** argv);
+    Meique(int argc, const char** argv);
     ~Meique();
     void exec();
-    void showVersion();
-    void showHelp(const OptionsMap& options = OptionsMap());
+    TargetList targets;
 private:
-    Config m_config;
+    CmdLine m_args;
     JobManager* m_jobManager;
+    MeiqueScript* m_script;
 
-    void executeJobQueues(const MeiqueScript& script, Target* mainTarget);
+    void executeJobQueues(const MeiqueScript* script, Target* mainTarget);
 
-    void test(const TargetList& targets);
-    void clean(const TargetList& targets);
-    void build(const MeiqueScript& script, const TargetList& targets);
+    TargetList getChosenTargets();
+
+    // program states
+    int checkArgs();
+    int lookForMeiqueCache();
+    int showVersion();
+    int showHelp();
+    int lookForMeiqueLua();
+    int isMeiqueCacheIsUpToDate();
+    int configureProject();
+    int reconfigureProject();
+    int getBuildAction();
+    int testTargets();
+    int installTargets();
+    int uninstallTargets();
+    int buildTargets();
+    int cleanTargets();
 };
 
 #endif

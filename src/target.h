@@ -20,7 +20,7 @@
 #define TARGET_H
 #include "basictypes.h"
 
-class Config;
+class MeiqueCache;
 struct lua_State;
 class MeiqueScript;
 class JobQueue;
@@ -51,7 +51,7 @@ public:
     virtual void clean() {}
     bool wasRan() const { return m_ran; }
     lua_State* luaState();
-    Config& config();
+    MeiqueCache* cache();
     const MeiqueScript* script() const { return m_script; }
 protected:
     void getLuaField(const char* field);

@@ -22,12 +22,13 @@
 #include "luajob.h"
 #include "config.h"
 #include "logger.h"
+#include "meiquescript.h"
 
 JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
-    Config& cfg = config();
+    MeiqueCache* mcache = cache();
     bool isOutdated = false;
-    std::string sourceDir = config().sourceRoot() + directory();
+    std::string sourceDir = script()->sourceDir() + directory();
     StringList files = this->files();
 
     // Check if we need to run this target.
@@ -37,7 +38,7 @@ JobQueue* CustomTarget::doRun(Compiler* compiler)
             if (it->empty())
                 continue;
             *it = it->at(0) == '/' ? *it : sourceDir + *it;
-            if (cfg.isHashGroupOutdated(*it)) {
+            if (mcache->isHashGroupOutdated(*it)) {
                 isOutdated = true;
                 break;
             }
@@ -64,7 +65,7 @@ void CustomTarget::jobFinished(Job* job)
     if (!job->result()) {
         StringList& files = m_job2Sources[job];
         for (StringList::const_iterator it = files.begin(); it != files.end(); ++it)
-            config().updateHashGroup(*it);
+            cache()->updateHashGroup(*it);
     }
     m_job2Sources.erase(job);
 }
