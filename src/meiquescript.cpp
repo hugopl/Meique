@@ -106,6 +106,7 @@ static int setUpToDate(lua_State* L)
 MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache)
 {
     m_scriptName = m_cache->sourceDir() + "meique.lua";
+    m_isBuildMode = true;
 }
 
 MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache(cmdLine)), m_scriptName(scriptName)
@@ -384,7 +385,7 @@ int configureFile(lua_State* L)
 
     lua_getglobal(L, "currentDir");
     lua_call(L, 0, 1);
-    std::string currentDir = lua_tocpp<std::string>(L, -1) + '/';
+    std::string currentDir = lua_tocpp<std::string>(L, -1);
     lua_pop(L, 1);
 
     // Configure anything when in the help screen

@@ -119,6 +119,7 @@ int Meique::reconfigureProject()
 int Meique::getBuildAction()
 {
     m_script = new MeiqueScript;
+    m_script->setBuildDir("./");
     m_script->exec();
 
     if (m_args.boolArg("c"))
