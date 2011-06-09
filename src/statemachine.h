@@ -35,6 +35,7 @@
  */
 
 #define STATE(X) std::make_pair(#X, &X)
+
 template<typename T>
 class StateMachine
 {
@@ -53,9 +54,6 @@ public:
 
         while (!currentState.first.empty()) {
             int event = (m_subject->*(currentState.second))();
-            #ifndef NDEBUG
-            Warn() << "Got " << event << ", going to state: " << m_graph[currentState][event].first;
-            #endif
             currentState = m_graph[currentState][event];
         }
     }
