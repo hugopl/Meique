@@ -29,7 +29,7 @@
 #include <vector>
 #include <sstream>
 #include "statemachine.h"
-#include "config.h"
+#include "meiquecache.h"
 
 #define MEIQUECACHE "meiquecache.lua"
 

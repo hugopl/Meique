@@ -16,7 +16,7 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "config.h"
+#include "meiquecache.h"
 #include "logger.h"
 #include "luastate.h"
 #include "luacpputil.h"

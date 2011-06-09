@@ -23,7 +23,7 @@
 #include "luacpputil.h"
 #include "compiler.h"
 #include "logger.h"
-#include "config.h"
+#include "meiquecache.h"
 #include "os.h"
 #include "filehash.h"
 #include "compileroptions.h"

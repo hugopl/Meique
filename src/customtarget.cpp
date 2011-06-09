@@ -20,7 +20,7 @@
 #include "jobqueue.h"
 #include "lua.h"
 #include "luajob.h"
-#include "config.h"
+#include "meiquecache.h"
 #include "logger.h"
 #include "meiquescript.h"
 

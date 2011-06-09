@@ -24,7 +24,8 @@
 #include <algorithm>
 #include <fstream>
 
-#include "config.h"
+#include "meiquescript.h"
+#include "meiquecache.h"
 #include "logger.h"
 #include "luacpputil.h"
 #include "lauxlib.h"

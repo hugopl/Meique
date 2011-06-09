@@ -25,7 +25,7 @@
 #include "luacpputil.h"
 #include "logger.h"
 #include "compileroptions.h"
-#include "config.h"
+#include "meiquecache.h"
 #include "meiquescript.h"
 
 LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script): CompilableTarget(targetName, script)

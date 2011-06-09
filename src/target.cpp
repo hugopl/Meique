@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <fstream>
 #include <iomanip>
-#include "config.h"
+#include "meiquecache.h"
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
 {

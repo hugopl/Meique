@@ -19,7 +19,7 @@ cmdline.cpp
 logger.cpp
 hashgroups.cpp
 meiquescript.cpp
-config.cpp
+meiquecache.cpp
 luastate.cpp
 stdstringsux.cpp
 compilerfactory.cpp
