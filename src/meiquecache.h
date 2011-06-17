@@ -61,7 +61,7 @@ public:
     StringList scopes() const;
     void setScopes(const StringList& scopes);
 
-    void setSourceDir(const std::string& dir) { m_sourceDir = dir; }
+    void setSourceDir(const std::string& dir);
     std::string sourceDir() const { return m_sourceDir; }
 private:
     // Arguments

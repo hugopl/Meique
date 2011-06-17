@@ -74,8 +74,8 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         if (it->find_first_of('/'))
             OS::mkdir(OS::dirName(*it));
 
-        std::string source = it->at(0) == '/' ? *it : sourceDir + *it;
-        std::string output = *it + ".o";
+        std::string source = OS::normalizeFilePath(it->at(0) == '/' ? *it : sourceDir + *it);
+        std::string output = OS::normalizeFilePath(*it + ".o");
 
         bool compileIt = !OS::fileExists(output);
         StringList dependents = getFileDependencies(source, compiler->defaultIncludeDirs());

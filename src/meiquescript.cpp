@@ -109,8 +109,9 @@ MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache)
     m_isBuildMode = true;
 }
 
-MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache(cmdLine)), m_scriptName(scriptName)
+MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache(cmdLine))
 {
+    m_scriptName = OS::normalizeFilePath(scriptName);
 }
 
 MeiqueScript::~MeiqueScript()
@@ -592,8 +593,8 @@ int meiqueAutomoc(lua_State* L)
                     // TODO: the moc executable MUST be configurable
                     StringList args;
                     args.push_back("-o");
-                    args.push_back(mocPath);
-                    args.push_back(headerPath);
+                    args.push_back(OS::normalizeFilePath(mocPath));
+                    args.push_back(OS::normalizeFilePath(headerPath));
                     Notice() << blue() << "Running moc for header of " << *it;
                     if (!OS::exec("moc", args))
                         script->cache()->updateHashGroup(headerPath, mocPath);

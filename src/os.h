@@ -51,6 +51,13 @@ namespace OS
 
     unsigned long getTimeInMillis();
 
+    /// Path separator used in the current platform, / on unices and \ on MS Windows
+    extern const char PathSep;
+    /// Returns the canonical form of \p path
+    std::string normalizeFilePath(const std::string& path);
+    /// Returns the canonical form of \p path + OS::PathSep
+    std::string normalizeDirPath(const std::string& path);
+
     class ChangeWorkingDirectory
     {
     public:

@@ -35,7 +35,7 @@ namespace OS
 
 int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir)
 {
-    std::string cmdline = cmd;
+    std::string cmdline(cmd);
     StringList::const_iterator it = args.begin();
     for (; it != args.end(); ++it) {
         cmdline += ' ';
@@ -174,6 +174,45 @@ unsigned long getTimeInMillis()
     timeval t;
     gettimeofday(&t, 0);
     return t.tv_sec * 1000 + t.tv_usec/1000;
+}
+
+const char PathSep = '/';
+
+static std::string normalizePath(const std::string& path)
+{
+    std::string rpath;
+    if (path.length() && path[0] != PathSep)
+        rpath = OS::pwd() + path;
+    else
+        rpath = path;
+    StringList pathParts = split(rpath, PathSep);
+
+    StringList::iterator it = pathParts.begin();
+    for (; it != pathParts.end(); ++it) {
+        const std::string& part = *it;
+        if (part == ".") {
+            StringList::iterator start(it);
+            pathParts.erase(start, ++it);
+        } else if (part == "..") {
+            if  (it == pathParts.begin())
+                Error() << "Invalid path given: " << path;
+
+            StringList::iterator start(it);
+            pathParts.erase(--start, ++it);
+        }
+    }
+
+    return PathSep + join(pathParts, "/");
+}
+
+std::string normalizeFilePath(const std::string& path)
+{
+    return normalizePath(path);
+}
+
+std::string normalizeDirPath(const std::string& path)
+{
+    return normalizePath(path) + PathSep;
 }
 
 }

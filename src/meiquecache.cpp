@@ -175,7 +175,7 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     StringMap opts;
     readLuaTable(L, lua_gettop(L), opts);
     try {
-        self->m_sourceDir = opts.at(CFG_SOURCE_DIR);
+        self->m_sourceDir = OS::normalizeDirPath(opts.at(CFG_SOURCE_DIR));
         self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
         self->m_compilerName = opts.at(CFG_COMPILER);
     } catch (std::out_of_range& e) {
@@ -262,5 +262,10 @@ int MeiqueCache::readScopes(lua_State* L)
     MeiqueCache* self = getSelf(L);
     readLuaList(L, 1, self->m_scopes);
     return 0;
+}
+
+void MeiqueCache::setSourceDir(const std::string& dir)
+{
+    m_sourceDir = OS::normalizeDirPath(dir);
 }
 
