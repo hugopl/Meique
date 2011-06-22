@@ -69,8 +69,8 @@ std::string join(const StringList& list, const std::string& sep)
         output.append(*itBegin);
         ++itBegin;
         for (; itBegin != itEnd; ++itBegin) {
-            output.append(*itBegin);
             output.append(sep);
+            output.append(*itBegin);
         }
     }
     return output;
