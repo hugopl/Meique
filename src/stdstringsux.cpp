@@ -45,16 +45,14 @@ void trim(std::string& str)
         str.erase(e + 1);
 }
 
-StringList split(const std::string& str)
+StringList split(const std::string& str, char sep)
 {
     std::istringstream s(str);
     std::string token;
     StringList result;
-    while (s) {
-        s >> token;
-        if (!s)
-            break;
-        result.push_back(token);
+    while (std::getline(s, token, sep)) {
+        if (!token.empty())
+            result.push_back(token);
     }
     return result;
 }

@@ -29,6 +29,6 @@ void stringReplace(std::string& str, const std::string& substr, const std::strin
 */
 void trim(std::string& str);
 
-StringList split(const std::string& str);
+StringList split(const std::string& str, char sep = ' ');
 std::string join(const StringList& list, const std::string& sep);
 #endif
