@@ -34,6 +34,7 @@ struct yellow {};
 struct magenta {};
 struct white {};
 struct blue {};
+struct cyan {};
 struct nocolor {};
 struct nobreak {};
 
@@ -76,6 +77,8 @@ template<>
 LogWriter& LogWriter::operator<<<white>(const white&);
 template<>
 LogWriter& LogWriter::operator<<<blue>(const blue&);
+template<>
+LogWriter& LogWriter::operator<<<cyan>(const cyan&);
 template<>
 LogWriter& LogWriter::operator<<<nocolor>(const nocolor&);
 template<>

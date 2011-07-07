@@ -24,6 +24,7 @@
     #define COLOR_RED "\033[0;31m"
     #define COLOR_BLUE "\033[1;34m"
     #define COLOR_MAGENTA "\033[1;35m"
+    #define COLOR_CYAN "\033[0;36m"
 #else
     #define COLOR_END ""
     #define COLOR_WHITE ""
@@ -32,6 +33,7 @@
     #define COLOR_RED ""
     #define COLOR_BLUE ""
     #define COLOR_MAGENTA ""
+    #define COLOR_CYAN ""
 #endif
 
 
@@ -89,6 +91,13 @@ template<>
 LogWriter& LogWriter::operator<<<blue>(const blue&)
 {
     m_stream << COLOR_BLUE;
+    return *this;
+}
+
+template<>
+LogWriter& LogWriter::operator<<<cyan>(const cyan&)
+{
+    m_stream << COLOR_CYAN;
     return *this;
 }
 
