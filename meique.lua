@@ -1,3 +1,3 @@
 addSubDirectory("ext")
 addSubDirectory("src")
-addSubDirectory("tests")
+-- addSubDirectory("tests")

@@ -9,10 +9,11 @@ meique:addFiles([[
 main.cpp
 meiqueregex.cpp
 meique.cpp
+cmdline.cpp
 logger.cpp
 hashgroups.cpp
 meiquescript.cpp
-config.cpp
+meiquecache.cpp
 luastate.cpp
 stdstringsux.cpp
 compilerfactory.cpp
@@ -36,6 +37,7 @@ graph.cpp
 luacpputil.cpp
 lualocker.cpp
 ]])
+
 meique:addFiles(meique:buildDir().."meiqueapi.cpp")
 
 meiqueApi = CustomTarget:new("meiqueapi", function()
