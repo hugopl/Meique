@@ -58,6 +58,8 @@ namespace OS
     /// Returns the canonical form of \p path + OS::PathSep
     std::string normalizeDirPath(const std::string& path);
 
+    void setCTRLCHandler(void (*func)());
+
     class ChangeWorkingDirectory
     {
     public:

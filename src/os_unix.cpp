@@ -24,6 +24,7 @@ extern "C" {
 #include <sys/time.h>
 #include <errno.h>
 #include <time.h>
+#include <signal.h>
 }
 #include "logger.h"
 #include <cstdlib>
@@ -213,6 +214,19 @@ std::string normalizeFilePath(const std::string& path)
 std::string normalizeDirPath(const std::string& path)
 {
     return normalizePath(path) + PathSep;
+}
+
+void (*ctrlCHandler)();
+
+static void _handleCtrlC(int sig)
+{
+    ctrlCHandler();
+}
+
+void setCTRLCHandler(void (*func)())
+{
+    ctrlCHandler = func;
+    signal(SIGINT, _handleCtrlC);
 }
 
 }

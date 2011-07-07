@@ -24,6 +24,7 @@
 #include <fstream>
 #include <sstream>
 #include <stdexcept>
+#include <cstdlib>
 
 #include "lauxlib.h"
 
@@ -39,8 +40,27 @@
 #define CFG_COMPILER "compiler"
 #define CFG_BUILD_TYPE "buildType"
 
+
+/*
+ * We need to save the cache when the user hits CTRL+C.
+ *
+ * Note: If there are two instances of MeiqueCache, only the last one
+ *       will have the cache saved!
+ */
+MeiqueCache* currentCache = 0;
+void handleCtrlC()
+{
+    if (currentCache && currentCache->isAutoSaveEnabled())
+        currentCache->saveCache();
+    std::exit(1);
+}
+
 void MeiqueCache::init()
 {
+    assert(!currentCache);
+    currentCache = this;
+    OS::setCTRLCHandler(handleCtrlC);
+
     m_compiler = 0;
     pthread_mutex_init(&m_configMutex, 0);
     m_autoSave = true;

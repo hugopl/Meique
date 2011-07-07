@@ -64,6 +64,7 @@ public:
     void setSourceDir(const std::string& dir);
     std::string sourceDir() const { return m_sourceDir; }
     void setAutoSave(bool value) { m_autoSave = value; }
+    bool isAutoSaveEnabled() const { return m_autoSave; }
 private:
     // Arguments
     BuildType m_buildType;
