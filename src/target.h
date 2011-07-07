@@ -43,6 +43,8 @@ public:
     JobQueue* run(Compiler* compiler);
     /// Execute the tests provided by this target
     int test();
+    /// Install all target files
+    void install();
     /// Returns the target's name
     const std::string& name() const { return m_name; }
     /// Returns the target directory (relative path to source root)
@@ -57,6 +59,7 @@ protected:
     void getLuaField(const char* field);
     /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
+    virtual void doTargetInstall(const std::string& destDir) {}
 private:
     std::string m_name;
     bool m_ran;

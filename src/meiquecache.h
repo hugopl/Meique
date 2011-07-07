@@ -65,6 +65,7 @@ public:
     std::string sourceDir() const { return m_sourceDir; }
     void setAutoSave(bool value) { m_autoSave = value; }
     bool isAutoSaveEnabled() const { return m_autoSave; }
+    std::string installPrefix();
 private:
     // Arguments
     BuildType m_buildType;
@@ -81,6 +82,7 @@ private:
     StringList m_scopes;
     StringList m_targets;
     StringMap m_userOptions;
+    std::string m_installPrefix;
 
     // helper variables
     pthread_mutex_t m_configMutex;

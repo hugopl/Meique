@@ -39,7 +39,7 @@
 #define CFG_SOURCE_DIR "sourceDir"
 #define CFG_COMPILER "compiler"
 #define CFG_BUILD_TYPE "buildType"
-
+#define CFG_INSTALL_PREFIX "installPrefix"
 
 /*
  * We need to save the cache when the user hits CTRL+C.
@@ -76,6 +76,7 @@ MeiqueCache::MeiqueCache(const CmdLine* cmdLine)
 {
     init();
     m_buildType = cmdLine->boolArg("debug") ? Debug : Release;
+    m_installPrefix = cmdLine->arg("install-prefix");
 }
 
 
@@ -151,6 +152,8 @@ void MeiqueCache::saveCache()
     file << "    " CFG_BUILD_TYPE " = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
     file << "    " CFG_COMPILER " = \"" << m_compilerName << "\",\n";
     file << "    " CFG_SOURCE_DIR " = \"" << m_sourceDir << "\",\n";
+    if (!m_installPrefix.empty())
+        file << "    " CFG_INSTALL_PREFIX " = \"" << m_installPrefix << "\",\n";
     file << "}\n\n";
 
     // Cached scopes
@@ -200,6 +203,7 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
         self->m_sourceDir = OS::normalizeDirPath(opts.at(CFG_SOURCE_DIR));
         self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
         self->m_compilerName = opts.at(CFG_COMPILER);
+        self->m_installPrefix = opts[CFG_INSTALL_PREFIX];
     } catch (std::out_of_range& e) {
         Error() << MEIQUECACHE " file corrupted, some fundamental entry is missing.";
     }
@@ -289,5 +293,18 @@ int MeiqueCache::readScopes(lua_State* L)
 void MeiqueCache::setSourceDir(const std::string& dir)
 {
     m_sourceDir = OS::normalizeDirPath(dir);
+}
+
+std::string MeiqueCache::installPrefix()
+{
+    // Check if DESTDIR env variable is set
+    std::string destDir = OS::getEnv("DESTDIR");
+    if (!destDir.empty())
+        return OS::normalizeDirPath(destDir);
+
+    // Last resort, the default install prefix.
+    if (m_installPrefix.empty())
+        return  OS::defaultInstallPrefix();
+    return m_installPrefix;
 }
 

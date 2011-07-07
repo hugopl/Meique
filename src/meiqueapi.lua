@@ -108,6 +108,7 @@ function Target:new(name)
         o._dir = currentDir()
         o._tests = {}
         o._preTargetCompileHooks = {}
+        o._installFiles = {}
         _meiqueAllTargets[tostring(name)] = o
     end
     return o
@@ -138,6 +139,16 @@ function Target:addTest(testCommand, testName)
     else
         testName = testName or self._name..'-test #'..#self._tests
         table.insert(self._tests, {testName, testCommand, currentDir()})
+    end
+end
+
+function Target:install(srcs, destDir)
+    if destDir then
+        installEntry = {destDir}
+        string.gsub(srcs, '([^%s]+)', function(f) table.insert(installEntry, f) end)
+        table.insert(self._installFiles, installEntry )
+    else
+        table.insert(self._installFiles, {srcs})
     end
 end
 

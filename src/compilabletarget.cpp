@@ -270,3 +270,10 @@ void CompilableTarget::clean()
     for (; it != files.end(); ++it)
         OS::rm(directory() + *it + ".o");
 }
+
+void CompilableTarget::doTargetInstall(const std::string& destDir)
+{
+    // FIXME: We need to write special version for this on Windows when using shared libraries...
+    //        or outputFileName() can return a list instead of a single entry.
+    OS::install(outputFileName(), destDir);
+}

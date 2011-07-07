@@ -23,14 +23,15 @@
 #include "oscommandjob.h"
 #include "logger.h"
 #include "linkeroptions.h"
+#include "meiquecache.h"
 
 ExecutableTarget::ExecutableTarget(const std::string& targetName, MeiqueScript* script): CompilableTarget(targetName, script)
 {
+    setOutputFileName(cache()->compiler()->nameForExecutable(name()));
 }
 
 JobQueue* ExecutableTarget::doRun(Compiler* compiler)
 {
-    setOutputFileName(compiler->nameForExecutable(name()));
     StringList objects;
     JobQueue* queue = createCompilationJobs(compiler, &objects);
     if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {

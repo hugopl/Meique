@@ -40,6 +40,7 @@ protected:
     JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
     virtual void useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions) = 0;
+    virtual void doTargetInstall(const std::string& destDir);
 private:
     // job => (master, [dep1, dep2, ...])
     std::map<Job*, std::pair<std::string, StringList> > m_job2Sources;

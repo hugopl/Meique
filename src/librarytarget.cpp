@@ -30,10 +30,7 @@
 
 LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script): CompilableTarget(targetName, script)
 {
-}
-
-JobQueue* LibraryTarget::doRun(Compiler* compiler)
-{
+    std::string outputFileName;
     // get link type
     getLuaField("_libType");
     int libType = lua_tocpp<int>(luaState(), -1);
@@ -41,17 +38,20 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
     switch (libType) {
         case 1:
             m_linkType = LinkerOptions::SharedLibrary;
-            setOutputFileName(compiler->nameForSharedLibrary(name()));
+            outputFileName = cache()->compiler()->nameForSharedLibrary(name());
             break;
         case 2:
             m_linkType = LinkerOptions::StaticLibrary;
-            setOutputFileName(compiler->nameForStaticLibrary(name()));
+            outputFileName = cache()->compiler()->nameForStaticLibrary(name());
             break;
         default:
             Error() << "Unknown library type! " << libType;
     }
-    lua_pop(luaState(), 1);
+    setOutputFileName(outputFileName);
+}
 
+JobQueue* LibraryTarget::doRun(Compiler* compiler)
+{
     StringList objects;
     JobQueue* queue = createCompilationJobs(compiler, &objects);
 

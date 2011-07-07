@@ -229,4 +229,27 @@ void setCTRLCHandler(void (*func)())
     signal(SIGINT, _handleCtrlC);
 }
 
+void install(const std::string& sourceFile, const std::string& destDir)
+{
+    // cosmetic stuff :-D
+    size_t idx = sourceFile.find_last_of('/');
+    std::string sourceFileNoPath = idx == std::string::npos ? sourceFile : sourceFile.substr(idx + 1);
+    Notice() << "-- Install " << destDir << sourceFileNoPath;
+
+    // FIXME Use the install command or copy files by hand!?
+    StringList args;
+    args.push_back("-C");
+    args.push_back("-D");
+    args.push_back(sourceFile);
+    args.push_back(destDir);
+    int status = OS::exec("install", args);
+    if (status)
+        Error() << "Error installing " << sourceFile << " into " << destDir;
+}
+
+std::string defaultInstallPrefix()
+{
+    return "/usr/";
+}
+
 }

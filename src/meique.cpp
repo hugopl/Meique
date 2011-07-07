@@ -182,6 +182,10 @@ int Meique::cleanTargets()
 
 int Meique::installTargets()
 {
+    TargetList targets = getChosenTargets();
+    TargetList::const_iterator it = targets.begin();
+    for (; it != targets.end(); ++it)
+        (*it)->install();
     return 0;
 }
 
@@ -236,17 +240,20 @@ int Meique::showVersion()
 
 int Meique::showHelp()
 {
-    std::cout << "Use meique OPTIONS TARGET\n\n";
+    std::cout << "Usage: meique OPTIONS TARGET\n\n";
     std::cout << "When in configure mode, TARGET is the directory of meique.lua file.\n";
     std::cout << "When in build mode, TARGET is the target name.\n\n";
     std::cout << "General options:\n";
     std::cout << " --help                             Print this message and exit.\n";
     std::cout << " --version                          Print the version number of meique and exit.\n";
+    std::cout << "Config mode options for this project:\n";
+    std::cout << " --debug                            Create a debug build.\n";
+    std::cout << " --release                          Create a release build.\n";
+    std::cout << " --install-prefix                   Install directory used by install, this directory\n";
+    std::cout << "                                    is pre-pended onto all install directories.\n";
+
 /*
     if (options.size()) {
-        std::cout << "Config mode options for this project:\n";
-        std::cout << " --debug                            Create a debug build.\n";
-        std::cout << " --release                          Create a release build.\n";
         OptionsMap::const_iterator it = options.begin();
         for (; it != options.end(); ++it) {
             std::cout << " --" << std::left;

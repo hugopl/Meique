@@ -30,6 +30,10 @@
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
 {
+    // Self register on Lua registry
+    lua_pushlightuserdata(luaState(), (void*) this);
+    lua_insert(luaState(), -2);
+    lua_settable(luaState(), LUA_REGISTRYINDEX);
 }
 
 Target::~Target()
@@ -189,4 +193,40 @@ int Target::test()
         ++i;
     }
     return tests.size();
+}
+
+void Target::install()
+{
+    getLuaField("_installFiles");
+    lua_State* L = luaState();
+    int top = lua_gettop(L);
+    int numDirectives = lua_objlen(L, top);
+    if (!numDirectives)
+        return;
+
+    std::string buildType = cache()->buildType() == MeiqueCache::Release ? "release" : "debug";
+
+    Notice() << cyan() << "Install " << name() << " (" << buildType << ")...";
+
+    std::list<StringList> installDirectives;
+    readLuaList(L, top, installDirectives);
+
+    std::list<StringList>::const_iterator it = installDirectives.begin();
+    for (; it != installDirectives.end(); ++it) {
+        int directiveSize = it->size();
+        if (!directiveSize)
+            continue;
+
+        const std::string destDir = OS::normalizeDirPath(cache()->installPrefix() + it->front());
+        const std::string srcDir = cache()->sourceDir();
+
+        if (directiveSize == 1) { // Target installation
+            doTargetInstall(destDir);
+        } else if (directiveSize > 1) { // custom file install
+            StringList::const_iterator it2 = it->begin();
+            for (++it2; it2 != it->end(); ++it2) {
+                OS::install(srcDir + *it2, destDir);
+            }
+        }
+    }
 }

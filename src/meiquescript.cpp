@@ -232,9 +232,6 @@ void MeiqueScript::extractTargets()
                 Error() << "Unknown target type for target " << targetName;
                 break;
         };
-        lua_pushlightuserdata(m_L, (void*) target);
-        lua_insert(m_L, -2);
-        lua_settable(m_L, LUA_REGISTRYINDEX);
         m_targets[targetName] = target;
     }
 }
