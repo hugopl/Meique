@@ -43,6 +43,7 @@ void MeiqueCache::init()
 {
     m_compiler = 0;
     pthread_mutex_init(&m_configMutex, 0);
+    m_autoSave = true;
 }
 
 MeiqueCache::MeiqueCache()
@@ -60,7 +61,8 @@ MeiqueCache::MeiqueCache(const CmdLine* cmdLine)
 
 MeiqueCache::~MeiqueCache()
 {
-    saveCache();
+    if (m_autoSave)
+        saveCache();
     delete m_compiler;
 }
 

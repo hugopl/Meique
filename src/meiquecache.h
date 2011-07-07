@@ -63,6 +63,7 @@ public:
 
     void setSourceDir(const std::string& dir);
     std::string sourceDir() const { return m_sourceDir; }
+    void setAutoSave(bool value) { m_autoSave = value; }
 private:
     // Arguments
     BuildType m_buildType;
@@ -82,6 +83,7 @@ private:
 
     // helper variables
     pthread_mutex_t m_configMutex;
+    bool m_autoSave;
 
     void loadCache();
     static int readOption(lua_State* L);

@@ -107,7 +107,12 @@ int Meique::configureProject()
         sourceDir = pwd + sourceDir + '/';
     m_script->setSourceDir(sourceDir);
     m_script->setBuildDir(pwd);
-    m_script->exec();
+    try {
+        m_script->exec();
+    } catch (MeiqueError& e) {
+        m_script->cache()->setAutoSave(false);
+        throw;
+    }
     return 0;
 }
 
