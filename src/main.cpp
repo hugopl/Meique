@@ -22,7 +22,7 @@
 
 int main(int argc, const char** argv)
 {
-#ifndef DEBUG
+#ifndef NDEBUG
     Meique meique(argc, argv);
     meique.exec();
 #else
