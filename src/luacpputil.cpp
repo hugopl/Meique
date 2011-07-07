@@ -27,7 +27,7 @@ static int meiqueErrorHandler(lua_State* L)
     lua_Debug ar;
     while (lua_getstack(L, level++, &ar)) {
         lua_getinfo(L, "Snl", &ar);
-        if (std::strcmp("[string \"...\"]", ar.short_src)) {
+        if (std::strncmp("[string \"", ar.short_src, 9)) {
             lua_pushfstring(L, "%s:%d: ", ar.short_src, ar.currentline);
             lua_insert(L, -2); // swap values on stack
             lua_concat(L, lua_gettop(L));
