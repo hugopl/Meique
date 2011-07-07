@@ -127,6 +127,11 @@ void MeiqueScript::setSourceDir(const std::string& sourceDir)
     m_cache->setSourceDir(sourceDir);
 }
 
+void MeiqueScript::setBuildDir(const std::string& buildDir)
+{
+    m_buildDir = OS::normalizeDirPath(buildDir);
+}
+
 std::string MeiqueScript::sourceDir() const
 {
     return m_cache->sourceDir();

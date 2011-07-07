@@ -43,7 +43,7 @@ public:
     lua_State* luaState() { return m_L; }
 
     void setSourceDir(const std::string& sourceDir);
-    void setBuildDir(const std::string& buildDir) { m_buildDir = buildDir; }
+    void setBuildDir(const std::string& buildDir);
     std::string sourceDir() const;
     std::string buildDir() const { return m_buildDir; }
 
