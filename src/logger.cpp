@@ -113,6 +113,6 @@ LogWriter& LogWriter::operator<<<nobreak>(const nobreak&)
     return *this;
 }
 
-Log::Log(const std::string& fileName, Mode mode) : m_stream(fileName.c_str(), static_cast<std::ios::openmode>(mode))
+Log::Log(const std::string& fileName) : m_stream(fileName.c_str(), std::ios::out)
 {
 }

@@ -137,13 +137,12 @@ int Target::test()
     lua_State* L = luaState();
     int top = lua_gettop(L);
     int numTests = lua_objlen(L, top);
-    if (!numTests) {
+    if (!numTests)
         return 0;
-    }
 
     Notice() << magenta() << "Testing " << name() << "...";
-    Log log((script()->buildDir() + "meiquetest.log").c_str(), Log::Append);
-    bool verboseMode = /*config().verbosityLevel() != 0*/ true;
+    Log log((script()->buildDir() + "meiquetest.log").c_str());
+    bool verboseMode = verbosityLevel != 0;
 
     std::list<StringList> tests;
     readLuaList(L, top, tests);

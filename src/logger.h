@@ -179,11 +179,7 @@ public:
 class Log
 {
 public:
-    enum Mode {
-        Append = std::ios_base::ate
-    };
-
-    Log(const std::string& fileName, Mode mode);
+    Log(const std::string& fileName);
     template<typename T>
     LogWriter operator<<(const T& t)
     {
