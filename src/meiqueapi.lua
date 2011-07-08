@@ -237,3 +237,13 @@ end
 function CompilableTarget:useQtAutomoc()
     table.insert(self._preTargetCompileHooks, _meiqueAutomoc)
 end
+
+function CompilableTarget:addQtResource(...)
+    table.insert(self._preTargetCompileHooks, _meiqueQtResource)
+    self._qrcFiles = self._qrcFiles or {}
+
+    for i,file in ipairs(arg) do
+        string.gsub(file, '([^%s]+)', function(f) table.insert(self._qrcFiles, f) end)
+    end
+
+end

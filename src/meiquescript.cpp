@@ -55,6 +55,7 @@ static int findPackage(lua_State* L);
 static int configureFile(lua_State* L);
 static int option(lua_State* L);
 static int meiqueAutomoc(lua_State* L);
+static int meiqueQtResource(lua_State* L);
 
 extern const char meiqueApi[];
 
@@ -172,6 +173,7 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "isOutdated", &isOutDated);
     lua_register(m_L, "setUpToDate", &setUpToDate);
     lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
+    lua_register(m_L, "_meiqueQtResource", &meiqueQtResource);
     lua_settop(m_L, 0);
 
     // Add options table to lua registry
@@ -603,5 +605,47 @@ int meiqueAutomoc(lua_State* L)
             }
         }
     }
+    return 0;
+}
+
+int meiqueQtResource(lua_State* L)
+{
+    // get target name
+    lua_getfield(L, -1, "_name");
+    std::string targetName = lua_tocpp<std::string>(L, -1);
+    lua_pop(L, 1);
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    Target* target = script->getTarget(targetName);
+    std::string srcDir = script->sourceDir() + target->directory();
+    std::string binDir = script->buildDir() + target->directory();
+    OS::mkdir(binDir);
+
+    lua_getfield(L, -1, "_qrcFiles");
+    StringList files;
+    StringList cppFiles;
+    readLuaList(L, lua_gettop(L), files);
+    lua_pop(L, 1);
+
+    StringList::const_iterator it = files.begin();
+    for (; it != files.end(); ++it) {
+        std::string qrcFile = OS::normalizeFilePath(srcDir + *it);
+        std::string cppFile = OS::normalizeFilePath(binDir + *it + ".cpp");
+        cppFiles.push_back(cppFile);
+
+        if (!OS::fileExists(cppFile) || script->cache()->isHashGroupOutdated(qrcFile)) {
+            // TODO: the rcc path MUST be configurable/auto detected
+            StringList args;
+            args.push_back("-o");
+            args.push_back(OS::normalizeFilePath(cppFile));
+            args.push_back(OS::normalizeFilePath(qrcFile));
+
+            if (!OS::exec("rcc", args))
+                script->cache()->updateHashGroup(qrcFile);
+            else
+                LuaError(L) << "Error running rcc on file " << qrcFile;
+        }
+    }
+    target->addFiles(cppFiles);
     return 0;
 }

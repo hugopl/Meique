@@ -110,12 +110,22 @@ const std::string Target::directory()
 
 void Target::getLuaField(const char* field)
 {
-    lua_pushlightuserdata(luaState(), (void *)this);
-    lua_gettable(luaState(), LUA_REGISTRYINDEX);
-    lua_getfield(luaState(), -1, field);
+    lua_State* L = luaState();
+    lua_pushlightuserdata(L, (void *)this);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    lua_getfield(L, -1, field);
     // remove table from stack
-    lua_insert(luaState(), -2);
-    lua_pop(luaState(), 1);
+    lua_insert(L, -2);
+    lua_pop(L, 1);
+}
+
+void Target::setLuaField(const char* field)
+{
+    lua_State* L = luaState();
+    lua_pushlightuserdata(L, (void *)this);
+    lua_gettable(L, LUA_REGISTRYINDEX);
+    lua_insert(L, -2);
+    lua_setfield(L, -2, field);
 }
 
 StringList Target::files()
@@ -125,6 +135,22 @@ StringList Target::files()
     StringList files;
     readLuaList(luaState(), lua_gettop(luaState()), files);
     return files;
+}
+
+void Target::addFiles(const StringList& files)
+{
+    lua_State* L = luaState();
+    // get sources
+    getLuaField("_files");
+    int pos = lua_objlen(L, -1) + 1;
+    StringList::const_iterator it = files.begin();
+    for (; it != files.end(); ++it) {
+        Warn() << "ADD file: " << *it;
+        lua_pushstring(L, it->c_str());
+        lua_rawseti(L, -2, pos);  /* t[pos] = v */
+        ++pos;
+    }
+    setLuaField("_files");
 }
 
 static void writeTestResults(LogWriter& s, int result, unsigned long start, unsigned long end) {

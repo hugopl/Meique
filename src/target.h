@@ -39,6 +39,8 @@ public:
     TargetList dependencies();
     /// Returns a list with all target files
     StringList files();
+    /// Add files to the target
+    void addFiles(const StringList& files);
     /// Get the target job queue
     JobQueue* run(Compiler* compiler);
     /// Execute the tests provided by this target
@@ -57,6 +59,7 @@ public:
     const MeiqueScript* script() const { return m_script; }
 protected:
     void getLuaField(const char* field);
+    void setLuaField(const char* field);
     /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
     virtual void doTargetInstall(const std::string& destDir) {}
