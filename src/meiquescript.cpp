@@ -400,9 +400,6 @@ int configureFile(lua_State* L)
         return 1;
     }
 */
-    Warn() << "current dir: " << currentDir;
-    Warn() << "src dir: " << script->sourceDir();
-    Warn() << "build dir: " << script->buildDir();
     std::string input = script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2);
     std::string output = script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1);
 
