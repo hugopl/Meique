@@ -51,8 +51,8 @@ public:
 
     BuildType buildType() const { return m_buildType; }
 
-    bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep = std::string());
-    bool isHashGroupOutdated(const std::string& masterFile, const StringList& deps);
+    bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep);
+    bool isHashGroupOutdated(const std::string& masterFile, const StringList& deps = StringList());
     void updateHashGroup(const std::string& masterFile, const std::string& dep);
     void updateHashGroup(const std::string& masterFile, const StringList& deps = StringList());
 
