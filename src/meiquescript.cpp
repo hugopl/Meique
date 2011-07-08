@@ -588,7 +588,7 @@ int meiqueAutomoc(lua_State* L)
                 }
 
                 std::string mocPath = binDir + regex.group(1, line);
-                if (script->cache()->isHashGroupOutdated(headerPath, mocPath)) {
+                if (!OS::fileExists(mocPath) || script->cache()->isHashGroupOutdated(headerPath)) {
                     // TODO: the moc executable MUST be configurable
                     StringList args;
                     args.push_back("-o");
@@ -596,7 +596,7 @@ int meiqueAutomoc(lua_State* L)
                     args.push_back(OS::normalizeFilePath(headerPath));
                     Notice() << blue() << "Running moc for header of " << *it;
                     if (!OS::exec("moc", args))
-                        script->cache()->updateHashGroup(headerPath, mocPath);
+                        script->cache()->updateHashGroup(headerPath);
                     else
                         LuaError(L) << "Error running moc for file " << headerPath;
                 }
