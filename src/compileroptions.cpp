@@ -18,6 +18,7 @@
 
 #include "compileroptions.h"
 #include <algorithm>
+#include "os.h"
 
 CompilerOptions::CompilerOptions() : m_compileForLibrary(false), m_debugInfoEnabled(false)
 {
@@ -27,10 +28,7 @@ void CompilerOptions::addIncludePath(const std::string& includePath)
 {
     if (includePath.empty())
         return;
-    if (*includePath.rbegin() != '/')
-        m_includePaths.push_back(includePath + '/');
-    else
-        m_includePaths.push_back(includePath);
+    m_includePaths.push_back(OS::normalizeDirPath(includePath));
 }
 
 void CompilerOptions::addIncludePaths(const StringList& includePaths)
@@ -48,5 +46,17 @@ void CompilerOptions::addDefine(const std::string& define)
 void CompilerOptions::addCustomFlag(const std::string& customFlag)
 {
     m_customFlags.push_back(customFlag);
+}
+
+void CompilerOptions::normalize()
+{
+    // FIXME: Can't sort include paths or custom flags because this can cause compilation problems
+    //        on buggy projects.
+    m_includePaths.sort();
+    m_includePaths.erase(std::unique(m_includePaths.begin(), m_includePaths.end()), m_includePaths.end());
+    m_defines.sort();
+    m_defines.erase(std::unique(m_defines.begin(), m_defines.end()), m_defines.end());
+    m_customFlags.sort();
+    m_customFlags.erase(std::unique(m_customFlags.begin(), m_customFlags.end()), m_customFlags.end());
 }
 

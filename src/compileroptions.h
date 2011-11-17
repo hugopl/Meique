@@ -36,6 +36,7 @@ public:
     bool compileForLibrary() const { return m_compileForLibrary; }
     void enableDebugInfo() { m_debugInfoEnabled = true; }
     bool debugInfoEnabled() const { return m_debugInfoEnabled; }
+    void normalize();
 private:
     StringList m_includePaths;
     StringList m_defines;

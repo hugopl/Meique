@@ -258,6 +258,7 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
 
     // Add build dir in the include path
     m_compilerOptions->addIncludePath(script()->buildDir() + directory());
+    m_compilerOptions->normalize();
 }
 
 void CompilableTarget::clean()
