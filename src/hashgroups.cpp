@@ -40,12 +40,14 @@ bool HashGroups::isOutdated(const std::string& master, const StringList& deps)
     MutexLocker locker(&m_mutex);
 
     StringMap& map = m_fileHashes[master];
-    if (getFileHash(master) != map[master])
+    std::string masterHash = getFileHash(master);
+    if (!masterHash.empty() && masterHash != map[master])
         return true;
 
     StringList::const_iterator it = deps.begin();
     for (; it != deps.end(); ++it) {
-        if (getFileHash(*it) != map[*it])
+        std::string depHash = getFileHash(*it);
+        if (!depHash.empty() && depHash != map[*it])
             return true;
     }
     return false;

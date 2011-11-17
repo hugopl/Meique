@@ -395,6 +395,7 @@ int configureFile(lua_State* L)
 
     // Configure anything when in the help screen
     MeiqueScript* script = getMeiqueScriptObject(L);
+
 /*
     if (script->config().action() == MeiqueCache::ShowHelp) {
         lua_settop(L, 0);
@@ -402,8 +403,13 @@ int configureFile(lua_State* L)
         return 1;
     }
 */
-    std::string input = script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2);
-    std::string output = script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1);
+    std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
+    std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
+
+    if (!script->cache()->isHashGroupOutdated(output, input))
+        return 0;
+
+    OS::mkdir(OS::dirName(output));
 
     std::ifstream in(input.c_str());
     if (!in)
@@ -424,6 +430,8 @@ int configureFile(lua_State* L)
         out << line << std::endl;
     }
 
+    out.close();
+    script->cache()->updateHashGroup(output, input);
     return 0;
 }
 

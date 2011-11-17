@@ -38,7 +38,8 @@ std::string getFileHash(const std::string& fileName)
     if (it != computedHashes.end())
         return it->second;
     std::string hash = computeMd5(fileName);
-    computedHashes[fileName] = hash;
+    if (!hash.empty())
+        computedHashes[fileName] = hash;
     return hash;
 }
 
