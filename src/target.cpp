@@ -145,7 +145,6 @@ void Target::addFiles(const StringList& files)
     int pos = lua_objlen(L, -1) + 1;
     StringList::const_iterator it = files.begin();
     for (; it != files.end(); ++it) {
-        Warn() << "ADD file: " << *it;
         lua_pushstring(L, it->c_str());
         lua_rawseti(L, -2, pos);  /* t[pos] = v */
         ++pos;
