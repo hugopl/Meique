@@ -268,7 +268,7 @@ struct StrFilter
             if (!s)
                 break;
             if (token.find(m_garbage) == 0) {
-                token.erase(0, 2);
+                token.erase(0, m_garbage.size());
                 result += ' ';
                 result += token;
             } else {
@@ -344,9 +344,10 @@ int findPackage(lua_State* L)
                             };
 
         StrFilter libFilter("-l");
+        StrFilter libPathFilter("-L");
         StrFilter includeFilter("-I");
         StrFilter* filters[] = {
-                                0,
+                                &libPathFilter,
                                 &libFilter,
                                 0,
                                 &includeFilter,
