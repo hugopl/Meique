@@ -31,3 +31,7 @@ lvm.cpp
 lzio.cpp                                                                                                                                                                  )
 
 add_library(lua STATIC ${SRC})
+
+if (UNIX)
+    add_definitions("-DLUA_USE_POSIX")
+endif()

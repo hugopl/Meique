@@ -174,7 +174,14 @@ function CompilableTarget:new(name)
     o._incDirs = {}
     o._libDirs = {}
     o._linkLibraries = {}
-    o._packages = {}
+    -- Default package
+    o._packages = { {
+                    cflags = '',
+                    includePaths = '',
+                    libraryPaths = '',
+                    linkLibraries = '',
+                    linkerFlags = '',
+                      } }
     o._targets = {}
     return o
 end
@@ -195,6 +202,12 @@ function CompilableTarget:addLinkLibraries(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._linkLibraries, f) end)
     end
+end
+
+function CompilableTarget:addCustomFlags(flags)
+    local currentFlags = self._packages[1].cflags
+    local pkg = currentFlags..flags..' '
+    self._packages[1].cflags = pkg
 end
 
 function CompilableTarget:usePackage(package)

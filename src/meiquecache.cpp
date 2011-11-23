@@ -139,6 +139,8 @@ void MeiqueCache::saveCache()
     StringMap::const_iterator mapIt = m_userOptions.begin();
     for (; mapIt != m_userOptions.end(); ++mapIt) {
         std::string name(mapIt->first);
+        if (name.empty())
+            continue; // Default package doesn't need to be saved.
         stringReplace(name, "\"", "\\\"");
         std::string value(mapIt->second);
         stringReplace(name, "\"", "\\\"");

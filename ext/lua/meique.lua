@@ -28,4 +28,8 @@ ltablib.cpp
 ltm.cpp
 lundump.cpp
 lvm.cpp
-lzio.cpp                                                                                                                                                                  ]])
+lzio.cpp
+]])
+
+UNIX:lua:addCustomFlags("-DLUA_USE_POSIX")
+MACOSX:lua:addCustomFlags("-DLUA_USE_MACOSX")
