@@ -98,15 +98,11 @@ int Meique::lookForMeiqueLua()
 int Meique::configureProject()
 {
     std::string meiqueLuaPath = m_args.freeArg(0);
+    m_script->setSourceDir(OS::normalizeDirPath(meiqueLuaPath));
+    m_script->setBuildDir(OS::pwd());
     meiqueLuaPath.append("/meique.lua");
     m_script = new MeiqueScript(meiqueLuaPath, &m_args);
 
-    std::string sourceDir = m_args.freeArg(0);
-    const std::string pwd = OS::pwd();
-    if (sourceDir[0] != '/') // FIXME what about windows!?
-        sourceDir = pwd + sourceDir + '/';
-    m_script->setSourceDir(sourceDir);
-    m_script->setBuildDir(pwd);
     try {
         m_script->exec();
     } catch (MeiqueError& e) {
