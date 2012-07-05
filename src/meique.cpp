@@ -188,8 +188,13 @@ int Meique::testTargets()
 {
     TargetList targets = getChosenTargets();
     TargetList::const_iterator it = targets.begin();
+
+    bool thereIsATest = false;
     for (; it != targets.end(); ++it)
-        (*it)->test();
+        thereIsATest |= (*it)->test();
+
+    if (!thereIsATest)
+        Notice() << "No tests to run :-(";
     return 0;
 }
 
