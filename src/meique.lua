@@ -43,9 +43,8 @@ meique:addFiles(meique:buildDir().."meiqueapi.cpp")
 meiqueApi = CustomTarget:new("meiqueapi", function()
     local luaApi = meique:sourceDir().."meiqueapi.lua"
     local out = meique:buildDir().."meiqueapi.cpp"
-    local res = os.execute("echo \"extern const char meiqueApi[] = {\" > "..out.." &&"
-                        .."hexdump -v -e '16/1 \" 0x0%02x,\" \"\\n\"' "..luaApi.." >> "..out.." &&"
-                        .."echo \"};\" >> "..out)
+    local file2cBin = file2c:buildDir().."file2c"
+    local res = os.execute(file2cBin.." meiqueApi "..luaApi.." > "..out)
     abortIf(res ~= 0, "Error creating "..out..".")
 end)
 meiqueApi:addFiles("meiqueapi.lua")
