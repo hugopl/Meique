@@ -288,8 +288,8 @@ int findPackage(lua_State* L)
     if (nargs < 1 || nargs > 3)
         LuaError(L) << "findPackage(name [, version, flags]) called with wrong number of arguments.";
 
-    std::string pkgName = lua_tocpp<std::string>(L, 1);
-    std::string version = lua_tocpp<std::string>(L, 2);
+    const std::string pkgName = lua_tocpp<std::string>(L, 1);
+    const std::string version = lua_tocpp<std::string>(L, 2);
     bool optional = lua_tocpp<bool>(L, 3);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
@@ -325,7 +325,6 @@ int findPackage(lua_State* L)
         } else {
             Notice() << "-- " << pkgName << green() << " found!";
         }
-        args.pop_back();
 
         // Get config options
         const char* pkgConfigCmds[] = {"--libs-only-L",
