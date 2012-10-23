@@ -35,7 +35,7 @@ private:
     JobManager* m_jobManager;
     MeiqueScript* m_script;
 
-    void executeJobQueues(const MeiqueScript* script, Target* mainTarget);
+    void createJobQueues(const MeiqueScript* script, Target* mainTarget);
 
     TargetList getChosenTargets();
 

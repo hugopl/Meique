@@ -161,8 +161,9 @@ int Meique::buildTargets()
     TargetList targets = getChosenTargets();
     TargetList::iterator it = targets.begin();
     for (; it != targets.end(); ++it)
-        executeJobQueues(m_script, *it);
+        createJobQueues(m_script, *it);
 
+    m_jobManager->processJobs();
     return 0;
 }
 
@@ -279,10 +280,11 @@ int Meique::showHelp()
     return 0;
 }
 
-void Meique::executeJobQueues(const MeiqueScript* script, Target* mainTarget)
+void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
 {
     if (mainTarget->wasRan())
         return;
+
     TargetList aux = script->targets();
     std::vector<Target*> targets;
     std::copy(aux.begin(), aux.end(), std::back_inserter(targets));
@@ -335,6 +337,4 @@ void Meique::executeJobQueues(const MeiqueScript* script, Target* mainTarget)
         for (; it2 != deps.end(); ++it2)
             queues[*it]->addDependency(queues[nodeMap[*it2]]);
     }
-
-    m_jobManager->processJobs();
 }

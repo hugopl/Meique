@@ -56,12 +56,14 @@ JobQueue* Target::run(Compiler* compiler)
     }
     lua_pop(L, 1); // remove the table
 
-    Notice() << magenta() << "Getting jobs for target " << m_name;
+    Notice() <<  "Getting jobs for target " << m_name << "... " << nobreak();
     OS::mkdir(directory());
     OS::ChangeWorkingDirectory dirChanger(directory());
     JobQueue* queue = doRun(compiler);
     if (queue->isEmpty())
-        Notice() << "Nothing to do for " << m_name;
+        Notice() << "it's up to date!";
+    else
+        Notice() << queue->jobCount() << " found!";
     m_ran = true;
     return queue;
 }
