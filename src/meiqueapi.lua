@@ -86,7 +86,7 @@ MINGW = _meiqueNone
 -- Constants
 OPTIONAL = true
 
-function addSubDirectory(dir)
+function addSubdirectory(dir)
     local strDir = tostring(dir)
     table.insert(_meiqueCurrentDir, dir)
     local fileName = currentDir()..'meique.lua'
@@ -186,13 +186,13 @@ function CompilableTarget:new(name)
     return o
 end
 
-function CompilableTarget:addIncludeDirs(...)
+function CompilableTarget:addIncludePath(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._incDirs, f) end)
     end
 end
 
-function CompilableTarget:addLibIncludeDirs(...)
+function CompilableTarget:addLibIncludePath(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._libDirs, f) end)
     end
