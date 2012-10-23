@@ -1,2 +1,2 @@
-addSubDirectory("lua")
-addSubDirectory("file2c")
+addSubdirectory("lua")
+addSubdirectory("file2c")
