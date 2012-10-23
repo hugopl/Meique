@@ -59,7 +59,8 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
         std::string buildDir = OS::pwd();
         OSCommandJob* job = compiler->link(outputFileName(), objects, linkerOptions());
         job->setWorkingDirectory(buildDir);
-        job->setDescription("Linking library " + outputFileName());
+        job->setName(outputFileName());
+        job->setType(Job::Linking);
         job->setDependencies(queue->idleJobs());
         queue->addJob(job);
     }

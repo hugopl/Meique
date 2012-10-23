@@ -318,12 +318,12 @@ int findPackage(lua_State* L)
             if (!optional) {
                 LuaError(L) << pkgName << " package not found!";
             } else {
-                Notice() << "-- " << pkgName << red() << " not found!";
+                Notice() << "-- " << pkgName << Red << " not found!";
                 lua_getglobal(L, "_meiqueNone");
                 return 1;
             }
         } else {
-            Notice() << "-- " << pkgName << green() << " found!";
+            Notice() << "-- " << pkgName << Green << " found!";
         }
 
         // Get config options
@@ -604,7 +604,7 @@ int meiqueAutomoc(lua_State* L)
                     args.push_back("-o");
                     args.push_back(OS::normalizeFilePath(mocPath));
                     args.push_back(OS::normalizeFilePath(headerPath));
-                    Notice() << blue() << "Running moc for header of " << *it;
+                    Notice() << Blue << "Running moc for header of " << *it;
                     if (!OS::exec("moc", args))
                         script->cache()->updateHashGroup(headerPath);
                     else

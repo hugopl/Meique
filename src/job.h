@@ -34,11 +34,19 @@ public:
         FinishedButFailed
     };
 
+    enum Type {
+        Compilation,
+        Linking,
+        CustomTarget
+    };
+
     Job();
     virtual ~Job() {}
     void run();
-    void setDescription(const std::string& description) { m_description = description; }
-    std::string description() const { return m_description; }
+    void setName(const std::string& name) { m_name = name; }
+    std::string name() const { return m_name; }
+    void setType(Type type) { m_type = type; }
+    Type type() const { return m_type; }
     Status status() const;
     void setDependencies(const std::list<Job*>& jobList) { m_dependencies = jobList; }
     bool hasShowStoppers() const;
@@ -47,9 +55,10 @@ public:
 protected:
     virtual int doRun() = 0;
 private:
-    std::string m_description;
+    std::string m_name;
     std::list<Job*> m_dependencies;
     Status m_status;
+    Type m_type;
     mutable pthread_mutex_t m_statusMutex;
     pthread_t m_thread;
     std::list<JobListenner*> m_listenners;

@@ -20,7 +20,7 @@
 #include "joblistenner.h"
 #include "mutexlocker.h"
 
-Job::Job() : m_status(Idle), m_result(0)
+Job::Job() : m_status(Idle), m_type(Compilation), m_result(0)
 {
     pthread_mutex_init(&m_statusMutex, 0);
 }

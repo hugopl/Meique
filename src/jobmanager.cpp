@@ -42,6 +42,30 @@ void JobManager::addJobQueue(JobQueue* queue)
     m_queues.push_back(queue);
 }
 
+void JobManager::printReportLine(const Job* job) const
+{
+    int perc = int((100 * m_jobsNotIdle) / m_jobCount);
+    Manipulators color = NoColor;
+    const char* text = "";
+
+    switch (job->type()) {
+    case Job::Compilation:
+        color = Green;
+        text = "Compiling ";
+        break;
+    case Job::Linking:
+        color = Red;
+        text = "Linking ";
+        break;
+    case Job::CustomTarget:
+        color = Blue;
+        text = "Running custom target function for ";
+        break;
+    }
+
+    Notice() << '[' << perc << "%] " << color << text << job->name();
+}
+
 void JobManager::processJobs()
 {
     m_jobCount = 0;
@@ -74,7 +98,7 @@ void JobManager::processJobs()
             job->run();
             m_jobsRunning++;
             m_jobsNotIdle++;
-            Notice() << '[' << std::setw(3) << int(100*m_jobsNotIdle/m_jobCount) << "%] " << green() << job->description();
+            printReportLine(job);
         }
     }
     MutexLocker locker(&m_jobsRunningMutex);

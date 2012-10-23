@@ -21,7 +21,7 @@
     #define COLOR_WHITE "\033[1;37m"
     #define COLOR_YELLOW "\033[1;33m"
     #define COLOR_GREEN "\033[0;32m"
-    #define COLOR_RED "\033[0;31m"
+    #define COLOR_RED "\033[1;31m"
     #define COLOR_BLUE "\033[1;34m"
     #define COLOR_MAGENTA "\033[1;35m"
     #define COLOR_CYAN "\033[0;36m"
@@ -36,7 +36,6 @@
     #define COLOR_CYAN ""
 #endif
 
-
 #include "logger.h"
 
 LogWriter::LogWriter(const LogWriter& other) : m_stream(other.m_stream), m_options(other.m_options & Quiet)
@@ -47,7 +46,7 @@ LogWriter::~LogWriter()
 {
     if (m_options & Quiet)
         return;
-    *this << nocolor();
+    *this << NoColor;
     if (!(m_options & NoBreak))
         m_stream << std::endl;
 }
@@ -60,65 +59,14 @@ MeiqueError::MeiqueError()
 }
 
 template<>
-LogWriter& LogWriter::operator<<<green>(const green&)
+LogWriter& LogWriter::operator<<<Manipulators>(const Manipulators& manipulator)
 {
-    m_stream << COLOR_GREEN;
-    return *this;
-}
+    static const char* colors[] = { COLOR_END, COLOR_WHITE, COLOR_YELLOW, COLOR_GREEN, COLOR_RED, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN };
 
-template<>
-LogWriter& LogWriter::operator<<<red>(const red&)
-{
-    m_stream << COLOR_RED;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<yellow>(const yellow&)
-{
-    m_stream << COLOR_YELLOW;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<nocolor>(const nocolor&)
-{
-    m_stream << COLOR_END;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<blue>(const blue&)
-{
-    m_stream << COLOR_BLUE;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<cyan>(const cyan&)
-{
-    m_stream << COLOR_CYAN;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<magenta>(const magenta&)
-{
-    m_stream << COLOR_MAGENTA;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<white>(const white&)
-{
-    m_stream << COLOR_WHITE;
-    return *this;
-}
-
-template<>
-LogWriter& LogWriter::operator<<<nobreak>(const nobreak&)
-{
-    m_options |= NoBreak;
+    if (manipulator == ::NoBreak)
+        m_options |= NoBreak;
+    else
+        m_stream << colors[int(manipulator)];
     return *this;
 }
 

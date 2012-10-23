@@ -52,7 +52,8 @@ JobQueue* CustomTarget::doRun(Compiler* compiler)
         // Put the lua function on stack
         getLuaField("_func");
         LuaJob* job = new LuaJob(luaState(), 0);
-        job->setDescription("Running custom target function for " + name());
+        job->setName(name());
+        job->setType(Job::CustomTarget);
         job->addJobListenner(this);
         m_job2Sources[job] = files;
         queue->addJob(job);

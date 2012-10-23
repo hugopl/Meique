@@ -28,15 +28,17 @@
 // definied in config.cpp
 extern int verbosityLevel;
 
-struct green {};
-struct red {};
-struct yellow {};
-struct magenta {};
-struct white {};
-struct blue {};
-struct cyan {};
-struct nocolor {};
-struct nobreak {};
+enum Manipulators {
+    NoColor,
+    White,
+    Yellow,
+    Green,
+    Red,
+    Blue,
+    Magenta,
+    Cyan,
+    NoBreak
+};
 
 class LogWriter
 {
@@ -66,23 +68,7 @@ protected:
 };
 
 template<>
-LogWriter& LogWriter::operator<<<green>(const green&);
-template<>
-LogWriter& LogWriter::operator<<<red>(const red&);
-template<>
-LogWriter& LogWriter::operator<<<yellow>(const yellow&);
-template<>
-LogWriter& LogWriter::operator<<<magenta>(const magenta&);
-template<>
-LogWriter& LogWriter::operator<<<white>(const white&);
-template<>
-LogWriter& LogWriter::operator<<<blue>(const blue&);
-template<>
-LogWriter& LogWriter::operator<<<cyan>(const cyan&);
-template<>
-LogWriter& LogWriter::operator<<<nocolor>(const nocolor&);
-template<>
-LogWriter& LogWriter::operator<<<nobreak>(const nobreak&);
+LogWriter& LogWriter::operator<<<Manipulators>(const Manipulators& manipulator);
 
 template<typename T1, typename T2>
 inline std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& pair)
@@ -139,7 +125,7 @@ class Warn : public LogWriter
 public:
     Warn() : LogWriter(std::cout)
     {
-        *this << yellow() << "WARNING" << nocolor() << " :: ";
+        *this << Yellow << "WARNING" << NoColor << " :: ";
     }
 };
 
@@ -154,7 +140,7 @@ class Error : public LogWriter
 public:
     Error() : LogWriter(std::cerr)
     {
-        *this << red() << "ERROR" << nocolor() << " :: ";
+        *this << Red << "ERROR" << NoColor << " :: ";
     }
     ~Error()
     {

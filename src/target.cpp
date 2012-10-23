@@ -56,7 +56,7 @@ JobQueue* Target::run(Compiler* compiler)
     }
     lua_pop(L, 1); // remove the table
 
-    Notice() <<  "Getting jobs for target " << m_name << "... " << nobreak();
+    Notice() <<  "Getting jobs for target " << m_name << "... " << NoBreak;
     OS::mkdir(directory());
     OS::ChangeWorkingDirectory dirChanger(directory());
     JobQueue* queue = doRun(compiler);
@@ -156,10 +156,10 @@ void Target::addFiles(const StringList& files)
 
 static void writeTestResults(LogWriter& s, int result, unsigned long start, unsigned long end) {
     if (result)
-        s << red() << "FAILED";
+        s << Red << "FAILED";
     else
-        s << green() << "Passed";
-    s << nocolor() << ' ' << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
+        s << Green << "Passed";
+    s << NoColor << ' ' << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
 }
 
 int Target::test()
@@ -171,7 +171,7 @@ int Target::test()
     if (!numTests)
         return 0;
 
-    Notice() << magenta() << "Testing " << name() << "...";
+    Notice() << Magenta << "Testing " << name() << "...";
     Log log((script()->buildDir() + "meiquetest.log").c_str());
     bool verboseMode = verbosityLevel != 0;
 
@@ -191,12 +191,12 @@ int Target::test()
 
         // Write a nice output.
         if (!verboseMode) {
-            Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << nobreak();
-            Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << nobreak();
+            Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << NoBreak;
+            Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << NoBreak;
         }
 
         unsigned long start = OS::getTimeInMillis();
-        Debug() << i << ": Test Command: " << nobreak();
+        Debug() << i << ": Test Command: " << NoBreak;
         int res = OS::exec(testCmd, StringList(), &output, testDir);
         unsigned long end = OS::getTimeInMillis();
 
@@ -233,7 +233,7 @@ void Target::install()
 
     std::string buildType = cache()->buildType() == MeiqueCache::Release ? "release" : "debug";
 
-    Notice() << cyan() << "Install " << name() << " (" << buildType << ")...";
+    Notice() << Cyan << "Install " << name() << " (" << buildType << ")...";
 
     std::list<StringList> installDirectives;
     readLuaList(L, top, installDirectives);

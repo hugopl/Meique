@@ -48,6 +48,8 @@ private:
     pthread_cond_t m_needJobsCond;
     pthread_cond_t m_allDoneCond;
 
+    void printReportLine(const Job*) const;
+
     JobManager(const JobManager&);
     JobManager& operator=(const JobManager&);
 };

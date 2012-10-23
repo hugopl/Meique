@@ -86,7 +86,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
             job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
-            job->setDescription("Compiling " + *it);
+            job->setName(*it);
             queue->addJob(job);
             m_job2Sources[job] = std::make_pair(source, dependents);
         }

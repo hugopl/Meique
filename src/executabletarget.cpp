@@ -39,7 +39,8 @@ JobQueue* ExecutableTarget::doRun(Compiler* compiler)
         std::string exeName = compiler->nameForExecutable(name());
         OSCommandJob* job = compiler->link(exeName, objects, linkerOptions());
         job->setWorkingDirectory(buildDir);
-        job->setDescription("Linking executable " + exeName);
+        job->setName(exeName);
+        job->setType(Job::Linking);
         job->setDependencies(queue->idleJobs());
         queue->addJob(job);
     }
