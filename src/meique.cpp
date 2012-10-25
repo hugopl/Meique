@@ -251,7 +251,7 @@ int Meique::showHelp()
     std::cout << " --debug                            Create a debug build.\n";
     std::cout << " --release                          Create a release build.\n";
     std::cout << " --install-prefix                   Install directory used by install, this directory\n";
-    std::cout << "                                    is pre-pended onto all install directories.\n";
+    std::cout << "                                    is prepended onto all install directories.\n";
 
 /*
     if (options.size()) {
