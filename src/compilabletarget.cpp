@@ -108,7 +108,7 @@ void CompilableTarget::preprocessFile(const std::string& source,
                                       bool isSystemHeader,
                                       StringList* deps)
 {
-    static Regex regex("^[ \t]*#[ \t]*include[ \t]*([<\"])([^\">]+)[\">]");
+    static Regex regex("^\\s*#\\s*include\\s*([<\"])([^\">]+)[\">]");
 
     if (source.empty())
         return;
@@ -131,9 +131,9 @@ void CompilableTarget::preprocessFile(const std::string& source,
             }
         }
         // It's a normal file or a system header not found in the system directories
-        if (!fp && source[0] != '/') {
-            StringList::const_iterator it = systemIncludeDirs.begin();
-            for (; it != systemIncludeDirs.end(); ++it) {
+        if ((!fp || !fp.is_open()) && source[0] != '/') {
+            StringList::const_iterator it = userIncludeDirs.begin();
+            for (; it != userIncludeDirs.end(); ++it) {
                 absSource = *it + source;
                 fp.open(absSource.c_str());
                 if (fp)
@@ -142,15 +142,15 @@ void CompilableTarget::preprocessFile(const std::string& source,
         }
     }
 
-    if (fp) {
-        if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
-            return;
-        deps->push_back(absSource);
-    } else {
+    if (!fp || !fp.is_open()) {
         if (!isSystemHeader)
             Debug() << "Include file not found: " << source << " - " << userIncludeDirs.front();
         return;
     }
+
+    if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
+        return;
+    deps->push_back(absSource);
 
     std::string line;
 
