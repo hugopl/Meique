@@ -73,7 +73,7 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
 //         close(err2me[1]);
         char buffer[512];
         int bytes;
-        while((bytes = read(out2me[0], buffer, sizeof(buffer))) > 0) {
+        while((bytes = read(out2me[0], buffer, sizeof(buffer) - 1)) > 0) {
             buffer[bytes] = 0;
             *output += buffer;
         }
