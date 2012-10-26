@@ -53,8 +53,10 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
     args.push_back(fileName);
     args.push_back("-o");
     args.push_back(output);
-    if (options->compileForLibrary())
+    if (options->compileForLibrary()) {
         args.push_back("-fpic"); // FIXME: Check if the user added -fPIC on custom flags
+        args.push_back("-fvisibility=hidden");
+    }
     if (options->debugInfoEnabled())
         args.push_back("-ggdb");
 
