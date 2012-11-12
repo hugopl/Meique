@@ -122,6 +122,10 @@ function Target:buildDir()
     return meiqueBuildDir()..self._dir
 end
 
+function Target:addFile(file)
+    table.insert(self._files, file)
+end
+
 function Target:addFiles(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._files, f) end)
