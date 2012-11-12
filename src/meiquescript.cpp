@@ -52,6 +52,7 @@ enum TargetTypes {
 #define MEIQUEOPTIONS_KEY "MeiqueOptions"
 
 static int findPackage(lua_State* L);
+static int copyFile(lua_State* L);
 static int configureFile(lua_State* L);
 static int option(lua_State* L);
 static int meiqueAutomoc(lua_State* L);
@@ -167,6 +168,7 @@ void MeiqueScript::exportApi()
 
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
+    lua_register(m_L, "copyFile", &copyFile);
     lua_register(m_L, "option", &option);
     lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
@@ -380,6 +382,32 @@ int findPackage(lua_State* L)
     }
 
     return 1;
+}
+
+int copyFile(lua_State* L)
+{
+    int nargs = lua_gettop(L);
+    if (nargs != 2)
+        LuaError(L) << "copyFile(input, output) called with wrong number of arguments.";
+
+    lua_getglobal(L, "currentDir");
+    lua_call(L, 0, 1);
+    std::string currentDir = lua_tocpp<std::string>(L, -1);
+    lua_pop(L, 1);
+
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
+    std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
+
+    if (!script->cache()->isHashGroupOutdated(output, input))
+        return 0;
+
+    OS::mkdir(OS::dirName(output));
+    std::ifstream source(input.c_str(), std::ios::binary);
+    std::ofstream dest(output.c_str(), std::ios::binary);
+    dest << source.rdbuf();
+    script->cache()->updateHashGroup(output, input);
+    return 0;
 }
 
 int configureFile(lua_State* L)
