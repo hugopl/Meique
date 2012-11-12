@@ -48,8 +48,8 @@ private:
     LinkerOptions* m_linkerOptions;
     std::string m_outputFileName;
 
-    StringList getFileDependencies(const std::string& source, const StringList& systemIncludeDirs);
-    void preprocessFile(const std::string& source, StringList& userIncludeDirs, const StringList& systemIncludeDirs, bool isSystemHeader, StringList* deps);
+    StringList getFileDependencies(const std::string& source);
+    void preprocessFile(const std::string& source, StringList& userIncludeDirs, StringList* deps);
 };
 
 #endif

@@ -36,12 +36,6 @@ Gcc::Gcc() : m_isAvailable(false)
         std::string machine;
         OS::exec("g++", "-dumpmachine", &machine);
 
-        m_defaultIncludeDirs.push_back("/usr/local/include/");
-        m_defaultIncludeDirs.push_back("/usr/include/");
-        m_defaultIncludeDirs.push_back("/usr/include/c++/" + m_version + '/');
-        m_defaultIncludeDirs.push_back("/usr/include/c++/" + m_version + '/' + machine + '/');
-        m_defaultIncludeDirs.push_back("/usr/lib/gcc/" + machine +'/' + m_version + "/include/");
-
         m_isAvailable = true;
     }
 }

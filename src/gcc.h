@@ -32,12 +32,10 @@ public:
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;
-    StringList defaultIncludeDirs() const { return m_defaultIncludeDirs; }
 private:
     bool m_isAvailable;
     std::string m_fullName;
     std::string m_version;
-    StringList m_defaultIncludeDirs;
 };
 
 #endif

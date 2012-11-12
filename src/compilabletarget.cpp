@@ -78,7 +78,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         std::string output = OS::normalizeFilePath(*it + ".o");
 
         bool compileIt = !OS::fileExists(output);
-        StringList dependents = getFileDependencies(source, compiler->defaultIncludeDirs());
+        StringList dependents = getFileDependencies(source);
         if (!compileIt)
             compileIt = cache()->isHashGroupOutdated(source, dependents);
 
@@ -104,11 +104,9 @@ void CompilableTarget::jobFinished(Job* job)
 
 void CompilableTarget::preprocessFile(const std::string& source,
                                       StringList& userIncludeDirs,
-                                      const StringList& systemIncludeDirs,
-                                      bool isSystemHeader,
                                       StringList* deps)
 {
-    static Regex regex("^\\s*#\\s*include\\s*([<\"])([^\">]+)[\">]");
+    static Regex regex("^\\s*#\\s*include\\s*[<\"]([^\">]+)[\">]");
 
     if (source.empty())
         return;
@@ -120,16 +118,6 @@ void CompilableTarget::preprocessFile(const std::string& source,
         absSource = source;
         fp.open(source.c_str());
     } else {
-        // It's a system header
-        if (isSystemHeader) {
-            StringList::const_iterator it = systemIncludeDirs.begin();
-            for (; it != systemIncludeDirs.end(); ++it) {
-                absSource = *it + source;
-                fp.open(absSource.c_str());
-                if (fp)
-                    break;
-            }
-        }
         // It's a normal file or a system header not found in the system directories
         if ((!fp || !fp.is_open()) && source[0] != '/') {
             StringList::const_iterator it = userIncludeDirs.begin();
@@ -143,8 +131,6 @@ void CompilableTarget::preprocessFile(const std::string& source,
     }
 
     if (!fp || !fp.is_open()) {
-        if (!isSystemHeader)
-            Debug() << "Include file not found: " << source << " - " << userIncludeDirs.front();
         return;
     }
 
@@ -162,15 +148,14 @@ void CompilableTarget::preprocessFile(const std::string& source,
             continue;
 
         if (fp && regex.match(line)) {
-            bool isSystemInclude = regex.group(1, line) == "<";
             userIncludeDirs.pop_front();
             userIncludeDirs.push_front(OS::dirName(absSource));
-            preprocessFile(regex.group(2, line), userIncludeDirs, systemIncludeDirs, isSystemInclude, deps);
+            preprocessFile(regex.group(1, line), userIncludeDirs, deps);
         }
     }
 }
 
-StringList CompilableTarget::getFileDependencies(const std::string& source, const StringList& systemIncludeDirs)
+StringList CompilableTarget::getFileDependencies(const std::string& source)
 {
     std::string baseDir = script()->sourceDir() + directory();
     StringList dependents;
@@ -178,7 +163,7 @@ StringList CompilableTarget::getFileDependencies(const std::string& source, cons
     //        to avoid doing a lot of things twice.
     StringList includePaths = m_compilerOptions->includePaths();
     includePaths.push_front(baseDir);
-    preprocessFile(source, includePaths, systemIncludeDirs, false, &dependents);
+    preprocessFile(source, includePaths, &dependents);
 
     if (!dependents.empty())
         dependents.pop_front();
