@@ -306,9 +306,10 @@ int findPackage(lua_State* L)
 */
     // When building just check the cache for a package entry.
     StringMap pkgData;
-    if (script->isBuildMode()) {
+    if (script->isBuildMode())
         pkgData = cache->package(pkgName);
-    } else {
+
+    if (pkgData.empty()) {
         // Check if the package exists
         StringList args;
         args.push_back(pkgName);
@@ -321,6 +322,8 @@ int findPackage(lua_State* L)
                 LuaError(L) << pkgName << " package not found!";
             } else {
                 Notice() << "-- " << pkgName << Red << " not found!";
+                pkgData["NOT_FOUND"] = "NOT_FOUND"; // dummy data to avoid an empty map
+                cache->setPackage(pkgName, pkgData);
                 lua_getglobal(L, "_meiqueNone");
                 return 1;
             }
@@ -371,7 +374,7 @@ int findPackage(lua_State* L)
         cache->setPackage(pkgName, pkgData);
     }
 
-    if (pkgData.empty()) {
+    if (pkgData.size() < 2) { // optimal not found packages has size=1, a NOT_FOUND entry.
         lua_getglobal(L, "_meiqueNone");
     } else {
         lua_settop(L, 0);
