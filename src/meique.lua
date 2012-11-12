@@ -40,14 +40,14 @@ lualocker.cpp
 
 meique:addFiles(meique:buildDir().."meiqueapi.cpp")
 
-meiqueApi = CustomTarget:new("meiqueapi", function()
-    local luaApi = meique:sourceDir().."meiqueapi.lua"
+meiqueApi = CustomTarget:new("meiqueapi", function(modifiedFiles)
     local out = meique:buildDir().."meiqueapi.cpp"
     local file2cBin = file2c:buildDir().."file2c"
-    local res = os.execute(file2cBin.." meiqueApi "..luaApi.." > "..out)
+    local res = os.execute(file2cBin.." meiqueApi "..modifiedFiles[0].." > "..out)
     abortIf(res ~= 0, "Error creating "..out..".")
 end)
-meiqueApi:addFiles("meiqueapi.lua")
-meiqueApi:addFiles(meique:buildDir().."meiqueapi.cpp")
+meiqueApi:addFile("meiqueapi.lua")
+meiqueApi:addOutput("meiqueapi.cpp")
+
 meique:addDependency(meiqueApi)
 UNIX:meique:install("bin")

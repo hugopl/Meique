@@ -78,6 +78,7 @@ void readLuaTable(lua_State* L, int tableIndex, Map& map)
 }
 
 void createLuaTable(lua_State* L, const StringMap& map);
+void createLuaArray(lua_State* L, const StringList& list);
 
 template<typename List>
 void readLuaList(lua_State* L, int tableIndex, List& list)

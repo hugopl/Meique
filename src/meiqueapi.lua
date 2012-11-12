@@ -165,7 +165,18 @@ function CustomTarget:new(name, func)
     self.__index = self
     o._func = func
     o._type = 3
+    o._outputs = {}
     return o
+end
+
+function CustomTarget:addOutput(output)
+    table.insert(self._outputs, output)
+end
+
+function CustomTarget:addOutputs()
+    for i,file in ipairs(arg) do
+        string.gsub(file, '([^%s]+)', function(f) table.insert(self._outputs, f) end)
+    end
 end
 
 -- Compilable target

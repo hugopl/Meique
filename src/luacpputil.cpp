@@ -74,3 +74,13 @@ void createLuaTable(lua_State* L, const StringMap& map)
     }
 }
 
+void createLuaArray(lua_State* L, const StringList& list)
+{
+    lua_createtable(L, list.size(), 0);
+    StringList::const_iterator it = list.begin();
+    for (int i = 0; it != list.end(); ++it, ++i) {
+        lua_pushstring(L, it->c_str());
+        lua_rawseti(L, -2, i);
+    }
+}
+

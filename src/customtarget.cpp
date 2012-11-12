@@ -23,13 +23,30 @@
 #include "meiquecache.h"
 #include "logger.h"
 #include "meiquescript.h"
+#include "luacpputil.h"
 
 JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
     MeiqueCache* mcache = cache();
-    bool isOutdated = false;
     std::string sourceDir = script()->sourceDir() + directory();
+    std::string buildDir = script()->buildDir() + directory();
+
+    getLuaField("_outputs");
+    StringList outputs;
+    readLuaList(luaState(), lua_gettop(luaState()), outputs);
+
+    bool outputDoesntExist = false;
+    bool isOutdated = false;
+    for (StringList::const_iterator it = outputs.begin(); it != outputs.end(); ++it) {
+        if (!OS::fileExists(buildDir + *it)) {
+            outputDoesntExist = true;
+            isOutdated = true;
+            break;
+        }
+    }
+
     StringList files = this->files();
+    StringList outdatedFiles;
 
     // Check if we need to run this target.
     if (!files.empty()) {
@@ -38,20 +55,21 @@ JobQueue* CustomTarget::doRun(Compiler* compiler)
             if (it->empty())
                 continue;
             *it = it->at(0) == '/' ? *it : sourceDir + *it;
-            if (mcache->isHashGroupOutdated(*it)) {
+            if (outputDoesntExist || mcache->isHashGroupOutdated(*it)) {
                 isOutdated = true;
-                break;
+                outdatedFiles.push_back(*it);
             }
         }
-    } else {
-        isOutdated = true;
+    } else if (outputs.empty()) {
+        isOutdated = true; // custom targets without input and output always run
     }
 
     JobQueue* queue = new JobQueue;
     if (isOutdated) {
         // Put the lua function on stack
         getLuaField("_func");
-        LuaJob* job = new LuaJob(luaState(), 0);
+        createLuaArray(luaState(), outdatedFiles);
+        LuaJob* job = new LuaJob(luaState(), 1);
         job->setName(name());
         job->setType(Job::CustomTarget);
         job->addJobListenner(this);
