@@ -173,7 +173,7 @@ function CustomTarget:addOutput(output)
     table.insert(self._outputs, output)
 end
 
-function CustomTarget:addOutputs()
+function CustomTarget:addOutputs(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._outputs, f) end)
     end
