@@ -57,7 +57,7 @@ _meiqueNotNone.__index = function(table, key)
         return function() return _G[key] end
     end
 end
-_meiqueNone.__eval = function(table)
+_meiqueNotNone.__eval = function(table)
     return true
 end
 _meiqueNotNone.__not = function(table)
