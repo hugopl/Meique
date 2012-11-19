@@ -25,6 +25,7 @@
 #include <fstream>
 
 #include "meiquescript.h"
+#include "cmdline.h"
 #include "meiquecache.h"
 #include "logger.h"
 #include "luacpputil.h"
@@ -105,14 +106,18 @@ static int setUpToDate(lua_State* L)
     return 0;
 }
 
-MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache)
+MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
 {
+    m_cache->loadCache();
     m_scriptName = m_cache->sourceDir() + "meique.lua";
     m_isBuildMode = true;
 }
 
-MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache(cmdLine))
+MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache)
 {
+    m_cache->setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
+    m_cache->setInstallPrefix(cmdLine->arg("install-prefix"));
+
     m_scriptName = OS::normalizeFilePath(scriptName);
 }
 

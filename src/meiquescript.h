@@ -58,6 +58,8 @@ private:
     std::string m_scriptName;
     std::string m_buildDir;
 
+    CmdLine* m_cmdLine;
+
     bool m_isBuildMode; // If true we are in build mode, otherwise we are in configure mode
 
     // disable copy

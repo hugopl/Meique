@@ -36,10 +36,7 @@ public:
         Release
     };
 
-    /// Build a cache based on a meiquecache.lua file at the current directory.
     MeiqueCache();
-    /// Create a new cache based somehow on the given command line
-    MeiqueCache(const CmdLine* cmdLine);
     ~MeiqueCache();
 
     Compiler* compiler();
@@ -48,7 +45,9 @@ public:
     std::string userOption(const std::string& key) const;
 
     void saveCache();
+    void loadCache();
 
+    void setBuildType(BuildType value) { m_buildType = value; }
     BuildType buildType() const { return m_buildType; }
 
     bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep);
@@ -63,8 +62,11 @@ public:
 
     void setSourceDir(const std::string& dir);
     std::string sourceDir() const { return m_sourceDir; }
+
     void setAutoSave(bool value) { m_autoSave = value; }
     bool isAutoSaveEnabled() const { return m_autoSave; }
+
+    void setInstallPrefix(const std::string& value) { m_installPrefix = value; }
     std::string installPrefix();
 private:
     // Arguments
@@ -88,7 +90,6 @@ private:
     pthread_mutex_t m_configMutex;
     bool m_autoSave;
 
-    void loadCache();
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
     static int readHashGroup(lua_State* L);
@@ -98,7 +99,6 @@ private:
     // disable copy
     MeiqueCache(const MeiqueCache&);
     MeiqueCache& operator=(const MeiqueCache&);
-    void init();
 };
 
 #endif

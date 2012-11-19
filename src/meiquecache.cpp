@@ -33,7 +33,6 @@
 #include "filehash.h"
 #include "compilerfactory.h"
 #include "compiler.h"
-#include "cmdline.h"
 
 #define MEIQUECACHE "meiquecache.lua"
 #define CFG_SOURCE_DIR "sourceDir"
@@ -55,7 +54,7 @@ void handleCtrlC()
     std::exit(1);
 }
 
-void MeiqueCache::init()
+MeiqueCache::MeiqueCache()
 {
     assert(!currentCache);
     currentCache = this;
@@ -65,20 +64,6 @@ void MeiqueCache::init()
     pthread_mutex_init(&m_configMutex, 0);
     m_autoSave = true;
 }
-
-MeiqueCache::MeiqueCache()
-{
-    init();
-    loadCache();
-}
-
-MeiqueCache::MeiqueCache(const CmdLine* cmdLine)
-{
-    init();
-    m_buildType = cmdLine->boolArg("debug") ? Debug : Release;
-    m_installPrefix = cmdLine->arg("install-prefix");
-}
-
 
 MeiqueCache::~MeiqueCache()
 {
