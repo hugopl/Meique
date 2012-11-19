@@ -113,7 +113,7 @@ MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
     m_isBuildMode = true;
 }
 
-MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache)
+MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache), m_cmdLine(cmdLine)
 {
     m_cache->setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
     m_cache->setInstallPrefix(cmdLine->arg("install-prefix"));
@@ -546,19 +546,13 @@ int option(lua_State* L)
 
         // to options[name] = {description, defaultValue}
         lua_setfield(L, -2, name.c_str());
-/*
-        const StringMap& args = script->cache()->arguments();
-        StringMap::const_iterator it = args.find(name);
 
-        if (it == args.end()) {
-            // option not provided by the user, uses default value.
-            optionValue = lua_tocpp<std::string>(L, 3);
-        } else if (it->second.empty()) {
-            // option provided by the user but without a value, probably a boolean option, sets it to true.
+        bool valueFound;
+        optionValue = script->commandLine()->arg(name, lua_tocpp<std::string>(L, 3), &valueFound);
+        // option provided by the user but without a value, probably a boolean option, sets it to true.
+        if (valueFound && optionValue.empty())
             optionValue = "true";
-        } else {
-            optionValue = it->second;
-        }*/
+
         lua_settop(L, 0);
     }
 
@@ -571,13 +565,12 @@ int option(lua_State* L)
     // options setted to false
     std::transform(optionValue.begin(), optionValue.end(), optionValue.begin(), ::tolower);
 
-    if (optionValue == "false" || optionValue == "off" || optionValue.empty()) {
+    if (optionValue == "false" || optionValue == "off" || optionValue.empty())
         lua_getglobal(L, "_meiqueNone");
-        lua_setmetatable(L, -2);
-    } else {
+    else
         lua_getglobal(L, "_meiqueNotNone");
-        lua_setmetatable(L, -2);
-    }
+
+    lua_setmetatable(L, -2);
     script->cache()->setUserOptionValue(name, optionValue);
 
     return 1;

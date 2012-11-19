@@ -73,11 +73,16 @@ std::string CmdLine::freeArg(int idx) const
     return m_freeArgs[idx];
 }
 
-std::string CmdLine::arg(const std::string& name, const std::string& defaultValue) const
+std::string CmdLine::arg(const std::string& name, const std::string& defaultValue, bool* found) const
 {
     StringMap::const_iterator it = m_args.find(name);
-    if (it == m_args.end())
+    if (it == m_args.end()) {
+        if (found)
+            *found = false;
         return defaultValue;
+    }
+    if (found)
+        *found = true;
     return it->second;
 }
 

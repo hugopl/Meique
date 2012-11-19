@@ -26,7 +26,7 @@ class CmdLine
 {
 public:
     CmdLine(int argc, const char** argv);
-    std::string arg(const std::string& name, const std::string& defaultValue = std::string()) const;
+    std::string arg(const std::string& name, const std::string& defaultValue = std::string(), bool* found = 0) const;
     bool boolArg(const std::string& name) const;
     int intArg(const std::string& name, int defaultValue = 0) const;
     int numberOfFreeArgs() const;

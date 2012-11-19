@@ -48,6 +48,7 @@ public:
     std::string buildDir() const { return m_buildDir; }
 
     bool isBuildMode() { return m_isBuildMode; }
+    const CmdLine* commandLine() const { return m_cmdLine; }
 
 private:
     LuaState m_L;
@@ -58,7 +59,7 @@ private:
     std::string m_scriptName;
     std::string m_buildDir;
 
-    CmdLine* m_cmdLine;
+    const CmdLine* m_cmdLine;
 
     bool m_isBuildMode; // If true we are in build mode, otherwise we are in configure mode
 
