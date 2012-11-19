@@ -390,7 +390,7 @@ int findPackage(lua_State* L)
 int copyFile(lua_State* L)
 {
     int nargs = lua_gettop(L);
-    if (nargs != 2)
+    if (nargs < 1 || nargs > 2)
         LuaError(L) << "copyFile(input, output) called with wrong number of arguments.";
 
     lua_getglobal(L, "currentDir");
@@ -399,8 +399,9 @@ int copyFile(lua_State* L)
     lua_pop(L, 1);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
-    std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
+    std::string inputArg = lua_tocpp<std::string>(L, -nargs);
+    std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + inputArg);
+    std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + (nargs == 1 ? inputArg : lua_tocpp<std::string>(L, -1)));
 
     if (!script->cache()->isHashGroupOutdated(output, input))
         return 0;
