@@ -28,7 +28,7 @@ class Regex
 public:
     Regex(const char* pattern);
     ~Regex();
-    bool match(const std::string& str);
+    bool match(const std::string& str, int pos = 0);
     std::pair<int, int> group(int n) const;
     std::string group(int n, const std::string& str) const;
     bool isValid() const;

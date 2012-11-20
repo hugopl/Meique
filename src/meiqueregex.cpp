@@ -37,9 +37,9 @@ bool Regex::isValid() const
     return m_matches;
 }
 
-bool Regex::match(const std::string& str)
+bool Regex::match(const std::string& str, int pos)
 {
-    return !regexec(&m_regex, str.c_str(), m_regex.re_nsub + 1, m_matches, 0);
+    return !regexec(&m_regex, str.c_str() + pos, m_regex.re_nsub + 1, m_matches, 0);
 }
 
 std::pair<int, int> Regex::group(int n) const

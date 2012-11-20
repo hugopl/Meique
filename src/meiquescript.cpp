@@ -443,7 +443,7 @@ int configureFile(lua_State* L)
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
 
-    if (!script->cache()->isHashGroupOutdated(output, input))
+    if (!script->cache()->isHashGroupOutdated(input, output))
         return 0;
 
     OS::mkdir(OS::dirName(output));
@@ -453,16 +453,22 @@ int configureFile(lua_State* L)
         LuaError(L) << "Can't read file: " << input;
     std::ofstream out(output.c_str());
 
-    Regex regex("@(.+)@");
+    Regex regex("@([^@]+)@");
     std::string line;
     while (in) {
         std::getline(in, line);
-        if (regex.match(line)) {
-            std::pair<int, int> idx = regex.group(1);
-            lua_getglobal(L, line.substr(idx.first, idx.second) .c_str());
-            std::string value = lua_tocpp<std::string>(L, -1);
-            lua_pop(L, 1);
-            line.replace(idx.first - 1, idx.second + 2, value);
+        int pos = 0;
+        while (pos < line.size()) {
+            if (regex.match(line, pos)) {
+                std::pair<int, int> idx = regex.group(1);
+                lua_getglobal(L, line.substr(pos + idx.first, idx.second).c_str());
+                std::string value = lua_tocpp<std::string>(L, -1);
+                lua_pop(L, 1);
+                line.replace(pos + idx.first - 1, idx.second + 2, value);
+                pos += idx.first + value.size();
+            } else {
+                break;
+            }
         }
         out << line << std::endl;
     }
