@@ -207,7 +207,11 @@ function CompilableTarget:addIncludePath(...)
     end
 end
 
-function CompilableTarget:addLibIncludePath(...)
+function CompilableTarget:addLibraryPath(path)
+    table.insert(self._libDirs, path)
+end
+
+function CompilableTarget:addLibraryPaths(...)
     for i,file in ipairs(arg) do
         string.gsub(file, '([^%s]+)', function(f) table.insert(self._libDirs, f) end)
     end
