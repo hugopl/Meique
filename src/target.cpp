@@ -28,7 +28,7 @@
 #include <iomanip>
 #include "meiquecache.h"
 
-Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script)
+Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script), m_dependenciesCached(false)
 {
     // Self register on Lua registry
     lua_pushlightuserdata(luaState(), (void*) this);
