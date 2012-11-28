@@ -161,7 +161,7 @@ std::string dirName(const std::string& path)
 std::string baseName(const std::string& path)
 {
     char* str = strdup(path.c_str());
-    char* result = basename(str);
+    std::string result(basename(str));
     free(str);
     return result;
 }
