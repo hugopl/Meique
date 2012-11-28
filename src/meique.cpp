@@ -121,17 +121,17 @@ int Meique::reconfigureProject()
 
 int Meique::dumpProject()
 {
-    {
-        std::ifstream file(MEIQUECACHE);
-        if (!file)
-            return 0;
-    }
+    std::ifstream file(MEIQUECACHE);
+    if (!file)
+        Error() << MEIQUECACHE << " not found.";
+    file.close();
+
     m_script = new MeiqueScript;
     m_script->setBuildDir("./");
     m_script->exec();
 
     std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
-    
+
     TargetList targets = m_script->targets();
     for (TargetList::const_iterator it = targets.begin(); it != targets.end(); ++it) {
         Target* target = *it;
