@@ -46,6 +46,7 @@ namespace OS
     std::string getEnv(const std::string& variable);
 
     std::string dirName(const std::string& path);
+    std::string baseName(const std::string& path);
 
     StringList getOSType();
 

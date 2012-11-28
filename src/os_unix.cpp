@@ -29,6 +29,8 @@ extern "C" {
 #include "logger.h"
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
+#include <libgen.h>
 #include "stdstringsux.h"
 
 namespace OS
@@ -154,6 +156,14 @@ std::string dirName(const std::string& path)
 {
     size_t idx = path.find_last_of('/');
     return idx == std::string::npos ? "/" : path.substr(0, idx + 1);
+}
+
+std::string baseName(const std::string& path)
+{
+    char* str = strdup(path.c_str());
+    char* result = basename(str);
+    free(str);
+    return result;
 }
 
 StringList getOSType()

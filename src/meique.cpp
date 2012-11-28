@@ -37,6 +37,7 @@ enum {
     HasVersionArg = 1,
     HasHelpArg,
     NormalArgs,
+    DumpProject,
     Found,
     NotFound,
     Yes,
@@ -71,6 +72,8 @@ int Meique::checkArgs()
         return HasVersionArg;
     if (m_args.boolArg("help"))
         return HasHelpArg;
+    if (m_args.boolArg("meique-dump-project"))
+        return DumpProject;
     return NormalArgs;
 }
 
@@ -113,6 +116,35 @@ int Meique::configureProject()
 
 int Meique::reconfigureProject()
 {
+    return 0;
+}
+
+int Meique::dumpProject()
+{
+    {
+        std::ifstream file(MEIQUECACHE);
+        if (!file)
+            return 0;
+    }
+    m_script = new MeiqueScript;
+    m_script->setBuildDir("./");
+    m_script->exec();
+
+    std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
+    
+    TargetList targets = m_script->targets();
+    for (TargetList::const_iterator it = targets.begin(); it != targets.end(); ++it) {
+        Target* target = *it;
+        std::cout << "Target: " << target->name() << std::endl;
+        StringList files = target->files();
+        for (StringList::const_iterator it = files.begin(); it != files.end(); ++it) {
+            if (it->empty())
+                continue;
+            std::string absPath = (*it)[0] == '/' ? *it : m_script->sourceDir() + target->directory() + *it;
+            std::cout << "File: " << OS::normalizeFilePath(absPath) << std::endl;
+            // TODO: Defines, Includes
+        }
+    }
     return 0;
 }
 
@@ -211,6 +243,7 @@ void Meique::exec()
     machine[STATE(Meique::checkArgs)][HasHelpArg] = STATE(Meique::showHelp);
     machine[STATE(Meique::checkArgs)][HasVersionArg] = STATE(Meique::showVersion);
     machine[STATE(Meique::checkArgs)][NormalArgs] = STATE(Meique::lookForMeiqueCache);
+    machine[STATE(Meique::checkArgs)][DumpProject] = STATE(Meique::dumpProject);
 
     machine[STATE(Meique::lookForMeiqueCache)][Found] = STATE(Meique::isMeiqueCacheIsUpToDate);
     machine[STATE(Meique::lookForMeiqueCache)][NotFound] = STATE(Meique::lookForMeiqueLua);

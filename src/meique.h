@@ -44,6 +44,7 @@ private:
     int lookForMeiqueCache();
     int showVersion();
     int showHelp();
+    int dumpProject();
     int lookForMeiqueLua();
     int isMeiqueCacheIsUpToDate();
     int configureProject();
