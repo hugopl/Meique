@@ -26,12 +26,12 @@ echo "Generating meiqueapi.cpp..."
 
 # create meiqueversion.h
 version=`grep meiqueVersion\ =  ../src/meique.lua | /usr/bin/grep -o '[0-9.]\+'`
-`sed -e s/@meiqueVersion@/$version/ ../src/meiqueversion.h.in > meiqueversion.h`
+sed -e s/@meiqueVersion@/$version/ ../src/meiqueversion.h.in > meiqueversion.h
 
-srcs=("`ls -1 ../src/*.cpp ../ext/lua/*.cpp`")
+srcs="`ls -1 ../src/*.cpp ../ext/lua/*.cpp`"
 
 echo "Compiling meique in one go, this can take some minutes..."
-`g++ -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs`
+g++ -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs -I../ext/lua -lpthread
 
 if [ ! -r ./meique ]; then
     fatalError
