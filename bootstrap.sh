@@ -25,7 +25,7 @@ echo "Generating meiqueapi.cpp..."
 ./file2c meiqueApi ../src/meiqueapi.lua > meiqueapi.cpp
 
 # create meiqueversion.h
-version=`grep meiqueVersion\ =  ../src/meique.lua | /usr/bin/grep -o '[0-9.]\+'`
+version=`grep meiqueVersion\ =  ../src/meique.lua | grep -o '[0-9.]\+'`
 sed -e s/@meiqueVersion@/$version/ ../src/meiqueversion.h.in > meiqueversion.h
 
 srcs="`ls -1 ../src/*.cpp ../ext/lua/*.cpp`"
