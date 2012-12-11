@@ -147,8 +147,9 @@ int Meique::dumpProject()
             // TODO: Defines
         }
 
+        std::cout << "Include: " << OS::normalizeDirPath(m_script->sourceDir() + target->directory()) << std::endl;
         for (const std::string& inc : ctarget->includeDirectories())
-            std::cout << "Include: " << inc << std::endl;
+            std::cout << "Include: " << OS::normalizeDirPath(inc) << std::endl;
     }
     return 0;
 }
