@@ -54,8 +54,10 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
         }
         args.push_back("-fvisibility=hidden");
     }
-    if (options->debugInfoEnabled())
-        args.push_back("-ggdb");
+    if (options->debugInfoEnabled()) {
+        if (!contains(args, "-g") && !contains(args, "-ggdb"))
+            args.push_back("-ggdb");
+    }
 
     // custom flags
     StringList flags = options->customFlags();
