@@ -20,6 +20,7 @@
 #define STDSTRINGSUX_H
 
 #include <string>
+#include <algorithm>
 #include "basictypes.h"
 
 void stringReplace(std::string& str, const std::string& substr, const std::string& replace);
@@ -31,4 +32,13 @@ void trim(std::string& str);
 
 StringList split(const std::string& str, char sep = ' ');
 std::string join(const StringList& list, const std::string& sep);
+
+/**
+ * Why this function exists at all!? Simple, I hate STL iterators verbosity!!
+ */
+template<typename T>
+bool contains(T container, typename T::value_type value) {
+    return std::find(container.begin(), container.end(), value) != container.end();
+}
+
 #endif

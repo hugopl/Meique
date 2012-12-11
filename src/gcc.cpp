@@ -49,8 +49,7 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
     args.push_back("-o");
     args.push_back(output);
     if (options->compileForLibrary()) {
-        if (std::find(args.begin(), args.end(), "-fPIC") == args.end() &&
-            std::find(args.begin(), args.end(), "-fpic") == args.end()) {
+        if (!contains(args, "-fPIC") && !contains(args, "-fpic")) {
             args.push_back("-fPIC");
         }
         args.push_back("-fvisibility=hidden");
