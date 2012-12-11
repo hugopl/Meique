@@ -61,8 +61,6 @@ Meique::~Meique()
     delete m_jobManager;
 }
 
-int verbosityLevel = 0;
-
 int Meique::checkArgs()
 {
     std::string verboseValue = OS::getEnv("VERBOSE");

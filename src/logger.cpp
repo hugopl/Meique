@@ -38,6 +38,8 @@
 
 #include "logger.h"
 
+int verbosityLevel = 0;
+
 LogWriter::LogWriter(const LogWriter& other) : m_stream(other.m_stream), m_options(other.m_options & Quiet)
 {
 }
