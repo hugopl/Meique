@@ -67,6 +67,8 @@ int Meique::checkArgs()
     std::istringstream s(verboseValue);
     s >> ::verbosityLevel;
 
+    if (m_args.boolArg("d"))
+        ::coloredOutputEnabled = false;
     if (m_args.boolArg("version"))
         return HasVersionArg;
     if (m_args.boolArg("help"))
@@ -305,6 +307,7 @@ int Meique::showHelp()
 */
     std::cout << "Build mode options:\n";
     std::cout << " -jN                                Allow N jobs at once.\n";
+    std::cout << " -d                                 Disable colored output\n";
     std::cout << " -c [target [, target2 [, ...]]]    Clean a specific target or all targets if\n";
     std::cout << "                                    none was specified.\n";
     std::cout << " -i [target [, target2 [, ...]]]    Install a specific target or all targets if\n";

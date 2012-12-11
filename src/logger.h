@@ -25,8 +25,8 @@
 #include <fstream>
 #include "os.h"
 
-// definied in config.cpp
 extern int verbosityLevel;
+extern bool coloredOutputEnabled;
 
 enum Manipulators {
     NoColor,

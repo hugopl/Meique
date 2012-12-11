@@ -39,6 +39,7 @@
 #include "logger.h"
 
 int verbosityLevel = 0;
+bool coloredOutputEnabled = true;
 
 LogWriter::LogWriter(const LogWriter& other) : m_stream(other.m_stream), m_options(other.m_options & Quiet)
 {
@@ -67,7 +68,7 @@ LogWriter& LogWriter::operator<<<Manipulators>(const Manipulators& manipulator)
 
     if (manipulator == ::NoBreak)
         m_options |= NoBreak;
-    else
+    else if (coloredOutputEnabled)
         m_stream << colors[int(manipulator)];
     return *this;
 }
