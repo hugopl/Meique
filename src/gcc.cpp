@@ -23,6 +23,7 @@
 #include "os.h"
 #include "logger.h"
 #include "stdstringsux.h"
+#include <algorithm>
 
 Gcc::Gcc() : m_isAvailable(false)
 {
@@ -48,7 +49,10 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
     args.push_back("-o");
     args.push_back(output);
     if (options->compileForLibrary()) {
-        args.push_back("-fpic"); // FIXME: Check if the user added -fPIC on custom flags
+        if (std::find(args.begin(), args.end(), "-fPIC") == args.end() &&
+            std::find(args.begin(), args.end(), "-fpic") == args.end()) {
+            args.push_back("-fPIC");
+        }
         args.push_back("-fvisibility=hidden");
     }
     if (options->debugInfoEnabled())
