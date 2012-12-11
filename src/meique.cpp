@@ -182,9 +182,8 @@ TargetList Meique::getChosenTargets()
     if (targetNames.empty()) {
         targets = m_script->targets();
     } else {
-        StringList::const_iterator it = targetNames.begin();
-        for (; it != targetNames.end(); ++it)
-            targets.push_back(m_script->getTarget(*it));
+        for (const std::string& targetName : targetNames)
+            targets.push_back(m_script->getTarget(targetName));
     }
 
     if (targets.empty())
@@ -195,10 +194,8 @@ TargetList Meique::getChosenTargets()
 
 int Meique::buildTargets()
 {
-    TargetList targets = getChosenTargets();
-    TargetList::iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        createJobQueues(m_script, *it);
+    for (Target* target : getChosenTargets())
+        createJobQueues(m_script, target);
 
     m_jobManager->processJobs();
     return 0;
@@ -206,30 +203,23 @@ int Meique::buildTargets()
 
 int Meique::cleanTargets()
 {
-    TargetList targets = getChosenTargets();
-    TargetList::const_iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        (*it)->clean();
+    for (Target* target : getChosenTargets())
+        target->clean();
     return 0;
 }
 
 int Meique::installTargets()
 {
-    TargetList targets = getChosenTargets();
-    TargetList::const_iterator it = targets.begin();
-    for (; it != targets.end(); ++it)
-        (*it)->install();
+    for (Target* target : getChosenTargets())
+        target->install();
     return 0;
 }
 
 int Meique::testTargets()
 {
-    TargetList targets = getChosenTargets();
-    TargetList::const_iterator it = targets.begin();
-
     bool thereIsATest = false;
-    for (; it != targets.end(); ++it)
-        thereIsATest |= (*it)->test();
+    for (Target* target : getChosenTargets())
+        thereIsATest |= target->test();
 
     if (!thereIsATest)
         Notice() << "No tests to run :-(";
@@ -341,10 +331,8 @@ void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
     Graph graph(targets.size());
     for (size_t i = 0; i < targets.size(); ++i) {
         Target* target = targets[i];
-        TargetList deps = target->dependencies();
-        TargetList::const_iterator it = deps.begin();
-        for (; it != deps.end(); ++it)
-            graph.addEdge(i, nodeMap[*it]);
+        for (Target* dep : target->dependencies())
+            graph.addEdge(i, nodeMap[dep]);
     }
 
     // Try to find cyclic dependences
@@ -357,23 +345,21 @@ void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
     // get all job queues
     std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[mainTarget]);
     std::vector<JobQueue*> queues(targets.size());
-    for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
-        Target* target = targets[*it];
+    for(int depIdx : myDeps) {
+        Target* target = targets[depIdx];
         if (target->wasRan())
             continue;
         JobQueue* queue = target->run(m_script->cache()->compiler());
-        queues[*it] = queue;
+        queues[depIdx] = queue;
         m_jobManager->addJobQueue(queue);
     }
 
     // add dependency info to job queues
-    for(std::list<int>::const_iterator it = myDeps.begin(); it != myDeps.end(); ++it) {
-        Target* target = targets[*it];
+    for(int depIdx : myDeps) {
+        Target* target = targets[depIdx];
         if (target->wasRan())
             continue;
-        TargetList deps = target->dependencies();
-        TargetList::const_iterator it2 = deps.begin();
-        for (; it2 != deps.end(); ++it2)
-            queues[*it]->addDependency(queues[nodeMap[*it2]]);
+        for (Target* dep : target->dependencies())
+            queues[depIdx]->addDependency(queues[nodeMap[dep]]);
     }
 }
