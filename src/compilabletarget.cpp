@@ -206,7 +206,6 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     StringList list;
     // explicit include directories
     getLuaField("_incDirs");
-    list.clear();
     readLuaList(L, lua_gettop(L), list);
     lua_pop(L, 1);
     StringList::iterator it = list.begin();
@@ -244,6 +243,35 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     // Add build dir in the include path
     m_compilerOptions->addIncludePath(script()->buildDir() + directory());
     m_compilerOptions->normalize();
+}
+
+StringList CompilableTarget::includeDirectories()
+{
+    lua_State* L = luaState();
+
+    StringList list;
+    // explicit include directories
+    getLuaField("_incDirs");
+    readLuaList(L, lua_gettop(L), list);
+    lua_pop(L, 1);
+    list.sort();
+
+    getLuaField("_packages");
+    // loop on all used packages
+    int tableIndex = lua_gettop(L);
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, tableIndex) != 0) {
+        if (lua_istable(L, -1)) {
+            StringMap map;
+            readLuaTable(L, lua_gettop(L), map);
+            StringList incDirs(split(map["includePaths"]));
+            list.merge(incDirs);
+        }
+        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+    lua_pop(L, 1);
+
+    return list;
 }
 
 void CompilableTarget::clean()

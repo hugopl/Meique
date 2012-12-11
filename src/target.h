@@ -53,6 +53,7 @@ public:
     const std::string directory();
     /// Clean this target
     virtual void clean() {}
+    virtual bool isCompilableTarget() const { return false; }
     bool wasRan() const { return m_ran; }
     lua_State* luaState();
     MeiqueCache* cache();

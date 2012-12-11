@@ -36,6 +36,8 @@ public:
     const LinkerOptions* linkerOptions() const { return m_linkerOptions; }
     void setOutputFileName(const std::string& fileName) { m_outputFileName = fileName; }
     std::string outputFileName() const { return m_outputFileName; }
+    StringList includeDirectories();
+    virtual bool isCompilableTarget() const { return true; }
 protected:
     JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);

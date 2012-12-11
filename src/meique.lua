@@ -3,6 +3,7 @@ meiqueVersion = "0.9"
 configureFile("meiqueversion.h.in", "meiqueversion.h")
 
 meique = Executable:new("meique")
+GCC:meique:addCustomFlags("-std=c++11")
 meique:useTarget(lua)
 meique:addLinkLibraries("pthread")
 meique:addFiles([[

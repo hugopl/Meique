@@ -22,6 +22,7 @@
 #include "compiler.h"
 #include "compilerfactory.h"
 #include "target.h"
+#include "compilabletarget.h"
 #include "jobmanager.h"
 #include "jobqueue.h"
 #include "graph.h"
@@ -132,18 +133,22 @@ int Meique::dumpProject()
 
     std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
 
-    TargetList targets = m_script->targets();
-    for (TargetList::const_iterator it = targets.begin(); it != targets.end(); ++it) {
-        Target* target = *it;
-        std::cout << "Target: " << target->name() << std::endl;
-        StringList files = target->files();
-        for (StringList::const_iterator it = files.begin(); it != files.end(); ++it) {
-            if (it->empty())
+    for (Target* target : m_script->targets()) {
+        if (!target->isCompilableTarget())
+            continue;
+        CompilableTarget* ctarget = static_cast<CompilableTarget*>(target);
+
+        std::cout << "Target: " << ctarget->name() << std::endl;
+        for (const std::string& fileName : target->files()) {
+            if (fileName.empty())
                 continue;
-            std::string absPath = (*it)[0] == '/' ? *it : m_script->sourceDir() + target->directory() + *it;
+            std::string absPath = fileName[0] == '/' ? fileName : m_script->sourceDir() + target->directory() + fileName;
             std::cout << "File: " << OS::normalizeFilePath(absPath) << std::endl;
-            // TODO: Defines, Includes
+            // TODO: Defines
         }
+
+        for (const std::string& inc : ctarget->includeDirectories())
+            std::cout << "Include: " << inc << std::endl;
     }
     return 0;
 }
