@@ -109,9 +109,14 @@ function Target:new(name)
         o._tests = {}
         o._preTargetCompileHooks = {}
         o._installFiles = {}
+        abortIf(_meiqueAllTargets[tostring(name)], "You already have a target named "..name)
         _meiqueAllTargets[tostring(name)] = o
     end
     return o
+end
+
+function Target:name()
+    return self._name
 end
 
 function Target:sourceDir()
@@ -141,6 +146,7 @@ function Target:addTest(testCommand, testName)
     if instanceOf(testCommand, Executable) then
         table.insert(self._tests, {testCommand._name, testCommand:buildDir()..testCommand._name, currentDir()})
     else
+        abortIf(type(testCommand) ~= "string", "Missing test command!")
         testName = testName or self._name..'-test #'..#self._tests
         table.insert(self._tests, {testName, testCommand, currentDir()})
     end
