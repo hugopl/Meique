@@ -31,7 +31,7 @@ sed -e s/@meiqueVersion@/$version/ ../src/meiqueversion.h.in > meiqueversion.h
 srcs="`ls -1 ../src/*.cpp ../ext/lua/*.cpp`"
 
 echo "Compiling meique in one go, this can take some minutes..."
-g++ -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs -I../ext/lua -lpthread
+g++ -std=c++11 -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs -I../ext/lua -lpthread
 
 if [ ! -r ./meique ]; then
     fatalError
@@ -44,7 +44,7 @@ fi
 numJobs=`expr $numJobs + 1`
 
 echo "Compiling meique using bootstraped meique :-)"
-./meique .. && ./meique -j$numJobs
+./meique -j$numJobs ..
 
 if [ -r ./src/meique ]; then
     echo "All done! Go into build dir (cd build) and type \"./meique -i\" to install meique on /usr or \"DESTDIR=MYPREFIX ./meique -i\" to install meique on MYPREFIX."
