@@ -50,7 +50,7 @@ enum {
     CleanAction
 };
 
-Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0)
+Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0), m_firstRun(false)
 {
     m_jobManager->setJobCountLimit(m_args.intArg("j", 1));
 }
@@ -84,12 +84,6 @@ int Meique::lookForMeiqueCache()
     return file ? Found : NotFound;
 }
 
-int Meique::isMeiqueCacheIsUpToDate()
-{
-    // FIXME: Implement this!
-    return Yes;
-}
-
 int Meique::lookForMeiqueLua()
 {
     if (m_args.numberOfFreeArgs() != 1)
@@ -105,6 +99,7 @@ int Meique::configureProject()
     m_script = new MeiqueScript(meiqueLuaPath + "/meique.lua", &m_args);
     m_script->setSourceDir(meiqueLuaPath);
     m_script->setBuildDir(OS::pwd());
+    m_firstRun = true;
 
     try {
         m_script->exec();
@@ -112,11 +107,6 @@ int Meique::configureProject()
         m_script->cache()->setAutoSave(false);
         throw;
     }
-    return 0;
-}
-
-int Meique::reconfigureProject()
-{
     return 0;
 }
 
@@ -156,9 +146,11 @@ int Meique::dumpProject()
 
 int Meique::getBuildAction()
 {
-    m_script = new MeiqueScript;
-    m_script->setBuildDir("./");
-    m_script->exec();
+    if (!m_script) {
+        m_script = new MeiqueScript;
+        m_script->setBuildDir(OS::pwd());
+        m_script->exec();
+    }
 
     if (m_args.boolArg("c"))
         return CleanAction;
@@ -176,7 +168,7 @@ TargetList Meique::getChosenTargets()
 {
     int ntargets = m_args.numberOfFreeArgs();
     StringList targetNames;
-    for (int i = 0; i < ntargets; ++i)
+    for (int i = m_firstRun ? 1 : 0; i < ntargets; ++i)
         targetNames.push_back(m_args.freeArg(i));
 
     TargetList targets;
@@ -241,16 +233,13 @@ void Meique::exec()
     machine[STATE(Meique::checkArgs)][NormalArgs] = STATE(Meique::lookForMeiqueCache);
     machine[STATE(Meique::checkArgs)][DumpProject] = STATE(Meique::dumpProject);
 
-    machine[STATE(Meique::lookForMeiqueCache)][Found] = STATE(Meique::isMeiqueCacheIsUpToDate);
+    machine[STATE(Meique::lookForMeiqueCache)][Found] = STATE(Meique::getBuildAction);
     machine[STATE(Meique::lookForMeiqueCache)][NotFound] = STATE(Meique::lookForMeiqueLua);
 
     machine[STATE(Meique::lookForMeiqueLua)][Found] = STATE(Meique::configureProject);
     machine[STATE(Meique::lookForMeiqueLua)][NotFound] = STATE(Meique::showHelp);
 
-    machine[STATE(Meique::isMeiqueCacheIsUpToDate)][Yes] = STATE(Meique::getBuildAction);
-    machine[STATE(Meique::isMeiqueCacheIsUpToDate)][No] = STATE(Meique::reconfigureProject);
-
-    machine[STATE(Meique::reconfigureProject)][0] = STATE(Meique::getBuildAction);
+    machine[STATE(Meique::configureProject)][0] = STATE(Meique::getBuildAction);
 
     machine[STATE(Meique::getBuildAction)][TestAction] = STATE(Meique::testTargets);
     machine[STATE(Meique::getBuildAction)][InstallAction] = STATE(Meique::installTargets);

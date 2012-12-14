@@ -110,7 +110,6 @@ MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
 {
     m_cache->loadCache();
     m_scriptName = m_cache->sourceDir() + "meique.lua";
-    m_isBuildMode = true;
 }
 
 MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache), m_cmdLine(cmdLine)
@@ -309,11 +308,7 @@ int findPackage(lua_State* L)
         return 1;
     }
 */
-    // When building just check the cache for a package entry.
-    StringMap pkgData;
-    if (script->isBuildMode())
-        pkgData = cache->package(pkgName);
-
+    StringMap pkgData = cache->package(pkgName);
     if (pkgData.empty()) {
         // Check if the package exists
         StringList args;
@@ -497,10 +492,8 @@ void MeiqueScript::enableBuitinScopes()
     if (m_cache.action() == MeiqueCache::ShowHelp)
         return;
 */
-    StringList scopes;
-    if (m_isBuildMode) {
-        scopes = m_cache->scopes();
-    } else {
+    StringList scopes = m_cache->scopes();
+    if (scopes.empty()) {
         // Enable debug/release scope
         scopes.push_back(m_cache->buildType() == MeiqueCache::Debug ? "DEBUG" : "RELEASE");
         // Enable compiler scope
@@ -535,11 +528,9 @@ int option(lua_State* L)
         LuaError(L) << "Be nice and put a description for the option \"" << name << "\" :-).";
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    std::string optionValue;
+    std::string optionValue = script->cache()->userOption(name);
 
-    if (script->isBuildMode()) {
-        optionValue = script->cache()->userOption(name);
-    } else {
+    if (optionValue.empty()) {
         // get options table
         lua_getfield(L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
 

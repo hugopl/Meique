@@ -34,6 +34,7 @@ private:
     CmdLine m_args;
     JobManager* m_jobManager;
     MeiqueScript* m_script;
+    bool m_firstRun;
 
     void createJobQueues(const MeiqueScript* script, Target* mainTarget);
 
@@ -46,9 +47,7 @@ private:
     int showHelp();
     int dumpProject();
     int lookForMeiqueLua();
-    int isMeiqueCacheIsUpToDate();
     int configureProject();
-    int reconfigureProject();
     int getBuildAction();
     int testTargets();
     int installTargets();
