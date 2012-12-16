@@ -26,5 +26,6 @@ cp -rv $1 $2
 
 #run test
 cd $TESTDIR/build
+export VERBOSE=1
 source ../script.sh
 exit 0

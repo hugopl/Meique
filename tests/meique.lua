@@ -9,6 +9,7 @@ end
 
 local tests = [[
     twotargets_samename
+    two_targets_sharing_a_file
 ]]
 
 string.gsub(tests, '([^%s]+)', addTest)

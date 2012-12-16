@@ -49,9 +49,8 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
     args.push_back("-o");
     args.push_back(output);
     if (options->compileForLibrary()) {
-        if (!contains(args, "-fPIC") && !contains(args, "-fpic")) {
+        if (!contains(args, "-fPIC") && !contains(args, "-fpic"))
             args.push_back("-fPIC");
-        }
         args.push_back("-fvisibility=hidden");
     }
     if (options->debugInfoEnabled()) {
@@ -104,7 +103,8 @@ OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, co
             Error() << "Unsupported programming language sent to the linker!";
 
         if (options->linkType() == LinkerOptions::SharedLibrary) {
-            args.push_front("-fpic");
+            if (!contains(args, "-fPIC") && !contains(args, "-fpic"))
+                args.push_front("-fPIC");
             args.push_front("-shared");
             args.push_front("-Wl,-soname=" + output);
         }
