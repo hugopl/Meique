@@ -38,21 +38,17 @@ namespace OS
 
 int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir)
 {
+    enum { READ, WRITE };
+
     std::string cmdline(cmd);
-    StringList::const_iterator it = args.begin();
-    for (; it != args.end(); ++it) {
-        cmdline += ' ';
-        cmdline += *it;
-    }
+    if (args.size())
+        cmdline += ' ' + join(args, " ");
 
     Debug() << cmdline;
     int status;
     int out2me[2];  // pipe from external program stdout to meique
-//     int err2me[2];  // pipe from external program stderr to meique
-    if (output) {
-        if (pipe(out2me)/* || pipe(err2me)*/)
-            Error() << "Unable to create unix pipes!";
-    }
+    if (output && pipe(out2me))
+        Error() << "Unable to create unix pipes!";
 
     pid_t pid = fork();
     if (pid == -1) {
@@ -61,21 +57,19 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
         if (!workingDir.empty())
             OS::cd(workingDir);
         if (output) {
-            close(out2me[0]);
-//             close(err2me[0]);
-            dup2(out2me[1], 1);
-//             dup2(err2me[1], 2);
+            close(out2me[READ]);
+            dup2(out2me[WRITE], 1);
+            dup2(out2me[WRITE], 2);
         }
-        execl("/bin/sh", "sh", "-c", cmdline.c_str(), (char*)0);
+        execl("/usr/bin/env", "-i", "sh", "-c", cmdline.c_str(), (char*)0);
         Error() << "Fatal error: shell not found!";
     }
 
     if (output) {
-        close(out2me[1]);
-//         close(err2me[1]);
+        close(out2me[WRITE]);
         char buffer[512];
         int bytes;
-        while((bytes = read(out2me[0], buffer, sizeof(buffer) - 1)) > 0) {
+        while((bytes = read(out2me[READ], buffer, sizeof(buffer) - 1)) > 0) {
             buffer[bytes] = 0;
             *output += buffer;
         }
