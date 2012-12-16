@@ -86,9 +86,6 @@ int Meique::lookForMeiqueCache()
 
 int Meique::lookForMeiqueLua()
 {
-    if (m_args.numberOfFreeArgs() != 1)
-        return NotFound;
-
     std::string path = m_args.freeArg(0);
     return OS::fileExists(path + "/meique.lua") ? Found : NotFound;
 }
