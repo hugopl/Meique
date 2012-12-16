@@ -222,9 +222,11 @@ std::string normalizeDirPath(const std::string& path)
 
 void (*ctrlCHandler)();
 
-static void _handleCtrlC(int sig)
+extern "C" {
+static void _handleCtrlC(int)
 {
     ctrlCHandler();
+}
 }
 
 void setCTRLCHandler(void (*func)())
