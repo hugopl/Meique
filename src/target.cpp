@@ -245,7 +245,7 @@ void Target::install()
             continue;
 
         const std::string destDir = OS::normalizeDirPath(cache()->installPrefix() + it->front());
-        const std::string srcDir = cache()->sourceDir();
+        const std::string srcDir = cache()->sourceDir() + directory();
 
         if (directiveSize == 1) { // Target installation
             doTargetInstall(destDir);
