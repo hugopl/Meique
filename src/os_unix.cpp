@@ -242,6 +242,7 @@ void install(const std::string& sourceFile, const std::string& destDir)
     std::string sourceFileNoPath = idx == std::string::npos ? sourceFile : sourceFile.substr(idx + 1);
     Notice() << "-- Install " << destDir << sourceFileNoPath;
 
+    mkdir(destDir);
     // FIXME Use the install command or copy files by hand!?
     StringList args;
     args.push_back("-C");
