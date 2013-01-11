@@ -33,7 +33,7 @@ public:
     ~JobManager();
     void setJobCountLimit(int n) { m_maxJobsRunning = n; }
     void addJobQueue(JobQueue* queue);
-    void processJobs();
+    bool processJobs();
 
     void jobFinished(Job* job);
 private:

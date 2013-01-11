@@ -66,7 +66,7 @@ void JobManager::printReportLine(const Job* job) const
     Notice() << '[' << perc << "%] " << color << text << job->name();
 }
 
-void JobManager::processJobs()
+bool JobManager::processJobs()
 {
     m_jobCount = 0;
     m_jobsNotIdle = 0;
@@ -82,7 +82,7 @@ void JobManager::processJobs()
         while (queue->hasShowStoppers() || queue->isEmpty()) {
             queue = *(++queueIt);
             if (queueIt == m_queues.end())
-                return;
+                goto finish;
         }
 
         MutexLocker locker(&m_jobsRunningMutex);
@@ -101,11 +101,16 @@ void JobManager::processJobs()
             printReportLine(job);
         }
     }
+
+    finish:
+
     MutexLocker locker(&m_jobsRunningMutex);
     if (m_jobsRunning) {
         Notice() << "Waiting for unfinished jobs...";
         pthread_cond_wait(&m_allDoneCond, &m_jobsRunningMutex);
     }
+
+    return !m_errorOccured;
 }
 
 void JobManager::jobFinished(Job* job)

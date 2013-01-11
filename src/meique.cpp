@@ -189,7 +189,8 @@ int Meique::buildTargets()
     for (Target* target : getChosenTargets())
         createJobQueues(m_script, target);
 
-    m_jobManager->processJobs();
+    if (!m_jobManager->processJobs())
+        Error() << "Build error.";
     return 0;
 }
 
