@@ -220,7 +220,8 @@ static void writeTestResults(LogWriter& s, int result, unsigned long start, unsi
 
 int Meique::testTargets()
 {
-    auto tests = m_script->getTests();
+    bool hasRegex = m_args.numberOfFreeArgs() > 0;
+    auto tests = m_script->getTests(hasRegex ? m_args.freeArg(0) : std::string());
     if (tests.empty()) {
         Notice() << "No tests to run :-(";
         return 0;
@@ -347,8 +348,8 @@ int Meique::showHelp()
     std::cout << "                                    none was specified.\n";
     std::cout << " -u [target [, target2 [, ...]]]    Uninstall a specific target or all targets if\n";
     std::cout << "                                    none was specified.\n";
-    std::cout << " -t [target [, target2 [, ...]]]    Run tests for a specific target or all targets\n";
-    std::cout << "                                    if none was specified.\n";
+    std::cout << " -t [regex]                         Run tests matching a regular expression, all\n";
+    std::cout << "                                    tests if none was specified.\n";
     return 0;
 }
 

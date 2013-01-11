@@ -42,7 +42,7 @@ public:
     TargetList targets() const;
     lua_State* luaState() { return m_L; }
 
-    std::list<StringList> getTests();
+    std::list<StringList> getTests(const std::string& pattern);
 
     void setSourceDir(const std::string& sourceDir);
     void setBuildDir(const std::string& buildDir);

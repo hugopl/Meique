@@ -244,11 +244,20 @@ void MeiqueScript::extractTargets()
     }
 }
 
-std::list<StringList> MeiqueScript::getTests()
+std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
 {
     lua_getglobal(m_L, "_meiqueAllTests");
     std::list<StringList> tests;
     readLuaList(m_L, lua_gettop(m_L), tests);
+
+    if (!pattern.empty()) {
+        Regex regex(pattern.c_str());
+        if (!regex.isValid())
+            Error() << "Invalid regular expression.";
+        tests.remove_if([&](const StringList& value) {
+            return !regex.match(*value.begin());
+        });
+    }
     return tests;
 }
 
