@@ -31,6 +31,8 @@
 #include <sstream>
 #include "statemachine.h"
 #include "meiquecache.h"
+#include <fstream>
+#include <iomanip>
 
 #define MEIQUECACHE "meiquecache.lua"
 
@@ -208,14 +210,65 @@ int Meique::installTargets()
     return 0;
 }
 
+static void writeTestResults(LogWriter& s, int result, unsigned long start, unsigned long end) {
+    if (result)
+        s << Red << "FAILED";
+    else
+        s << Green << "Passed";
+    s << NoColor << ' ' << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
+}
+
 int Meique::testTargets()
 {
-    bool thereIsATest = false;
-    for (Target* target : getChosenTargets())
-        thereIsATest |= target->test();
-
-    if (!thereIsATest)
+    auto tests = m_script->getTests();
+    if (tests.empty()) {
         Notice() << "No tests to run :-(";
+        return 0;
+    }
+
+    Log log((m_script->buildDir() + "meiquetest.log").c_str());
+    bool verboseMode = ::verbosityLevel != 0;
+    int i = 1;
+    const int total = tests.size();
+    for (const StringList& testPieces : tests) {
+        StringList::const_iterator j = testPieces.begin();
+        const std::string& testName = *j;
+        const std::string& testCmd = *(++j);
+        const std::string& testDir = *(++j);
+
+        OS::mkdir(testDir);
+        std::string output;
+
+        // Write a nice output.
+        if (!verboseMode) {
+            Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << NoBreak;
+            Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << NoBreak;
+        }
+
+        unsigned long start = OS::getTimeInMillis();
+        Debug() << i << ": Test Command: " << NoBreak;
+        int res = OS::exec(testCmd, StringList(), &output, testDir);
+        unsigned long end = OS::getTimeInMillis();
+
+        if (verboseMode) {
+            std::istringstream in(output);
+            std::string line;
+            while (!in.eof()) {
+                std::getline(in, line);
+                Debug() << i << ": " << line;
+            }
+            Debug s;
+            s << i << ": Test result: ";
+            writeTestResults(s, res, start, end);
+            Debug();
+        } else {
+            Notice s;
+            writeTestResults(s, res, start, end);
+        }
+        log << ":: Running test: " << testName;
+        log << output;
+        ++i;
+    }
     return 0;
 }
 

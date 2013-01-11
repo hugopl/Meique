@@ -43,8 +43,6 @@ public:
     void addFiles(const StringList& files);
     /// Get the target job queue
     JobQueue* run(Compiler* compiler);
-    /// Execute the tests provided by this target
-    int test();
     /// Install all target files
     void install();
     /// Returns the target's name

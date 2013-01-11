@@ -244,6 +244,14 @@ void MeiqueScript::extractTargets()
     }
 }
 
+std::list<StringList> MeiqueScript::getTests()
+{
+    lua_getglobal(m_L, "_meiqueAllTests");
+    std::list<StringList> tests;
+    readLuaList(m_L, lua_gettop(m_L), tests);
+    return tests;
+}
+
 Target* MeiqueScript::getTarget(const std::string& name) const
 {
     TargetsMap::const_iterator it = m_targets.find(name);

@@ -96,6 +96,17 @@ function addSubdirectory(dir)
     table.remove(_meiqueCurrentDir)
 end
 
+_meiqueAllTests = {}
+function addTest(testCommand, testName)
+    if instanceOf(testCommand, Executable) then
+        table.insert(_meiqueAllTests, {testCommand._name, testCommand:buildDir()..testCommand._name, currentDir()})
+    else
+        abortIf(type(testCommand) ~= "string", "Missing test command!")
+        testName = testName or 'test-'..#_meiqueAllTests
+        table.insert(_meiqueAllTests, {testName, testCommand, currentDir()})
+    end
+end
+
 function Target:new(name)
     abortIf(name == nil and name ~= Target, 'Target name can\'t be nil')
     o = {}
@@ -106,7 +117,6 @@ function Target:new(name)
         o._files = {}
         o._deps = {}
         o._dir = currentDir()
-        o._tests = {}
         o._preTargetCompileHooks = {}
         o._installFiles = {}
         abortIf(_meiqueAllTargets[tostring(name)], "You already have a target named "..name)
@@ -140,16 +150,6 @@ end
 function Target:addDependency(target)
     abortIf(not instanceOf(target, Target), 'Expected a target, got something different.')
     table.insert(self._deps, target._name)
-end
-
-function Target:addTest(testCommand, testName)
-    if instanceOf(testCommand, Executable) then
-        table.insert(self._tests, {testCommand._name, testCommand:buildDir()..testCommand._name, currentDir()})
-    else
-        abortIf(type(testCommand) ~= "string", "Missing test command!")
-        testName = testName or self._name..'-test #'..#self._tests
-        table.insert(self._tests, {testName, testCommand, currentDir()})
-    end
 end
 
 function Target:install(srcs, destDir)

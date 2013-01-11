@@ -24,8 +24,6 @@
 #include "lua.h"
 #include "meiquescript.h"
 #include <stdlib.h>
-#include <fstream>
-#include <iomanip>
 #include "meiquecache.h"
 
 Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_ran(false), m_script(script), m_dependenciesCached(false)
@@ -152,74 +150,6 @@ void Target::addFiles(const StringList& files)
         ++pos;
     }
     setLuaField("_files");
-}
-
-static void writeTestResults(LogWriter& s, int result, unsigned long start, unsigned long end) {
-    if (result)
-        s << Red << "FAILED";
-    else
-        s << Green << "Passed";
-    s << NoColor << ' ' << std::setiosflags(std::ios::fixed) << std::setprecision(2) << (end - start)/1000.0 << "s";
-}
-
-int Target::test()
-{
-    getLuaField("_tests");
-    lua_State* L = luaState();
-    int top = lua_gettop(L);
-    int numTests = lua_objlen(L, top);
-    if (!numTests)
-        return 0;
-
-    Notice() << Magenta << "Testing " << name() << "...";
-    Log log((script()->buildDir() + "meiquetest.log").c_str());
-    bool verboseMode = verbosityLevel != 0;
-
-    std::list<StringList> tests;
-    readLuaList(L, top, tests);
-    std::list<StringList>::const_iterator it = tests.begin();
-    int i = 1;
-    const int total = tests.size();
-    for (; it != tests.end(); ++it) {
-        StringList::const_iterator j = it->begin();
-        const std::string& testName = *j;
-        const std::string& testCmd = *(++j);
-        const std::string& testDir = *(++j);
-
-        OS::mkdir(testDir);
-        std::string output;
-
-        // Write a nice output.
-        if (!verboseMode) {
-            Notice() << std::setw(3) << std::setfill(' ') << std::right << i << '/' << total << ": " << testName << NoBreak;
-            Notice() << ' ' << std::setw(48 - testName.size() + 1) << std::setfill('.') << ' ' << NoBreak;
-        }
-
-        unsigned long start = OS::getTimeInMillis();
-        Debug() << i << ": Test Command: " << NoBreak;
-        int res = OS::exec(testCmd, StringList(), &output, testDir);
-        unsigned long end = OS::getTimeInMillis();
-
-        if (verboseMode) {
-            std::istringstream in(output);
-            std::string line;
-            while (!in.eof()) {
-                std::getline(in, line);
-                Debug() << i << ": " << line;
-            }
-            Debug s;
-            s << i << ": Test result: ";
-            writeTestResults(s, res, start, end);
-            Debug();
-        } else {
-            Notice s;
-            writeTestResults(s, res, start, end);
-        }
-        log << ":: Running test: " << testName;
-        log << output;
-        ++i;
-    }
-    return tests.size();
 }
 
 void Target::install()
