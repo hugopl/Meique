@@ -8,7 +8,7 @@ function addMeiqueTest(testName)
 end
 
 local tests = [[
-    twotargets_samename
+    two_targets_samename
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)
