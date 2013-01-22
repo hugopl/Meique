@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -307,7 +307,7 @@ void Meique::exec()
 int Meique::showVersion()
 {
     std::cout << "Meique version " MEIQUE_VERSION << std::endl;
-    std::cout << "Copyright 2009-2011 Hugo Parente Lima <hugo.pl@gmail.com>\n";
+    std::cout << "Copyright 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>\n";
     return 0;
 }
 

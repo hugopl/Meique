@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2013 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
