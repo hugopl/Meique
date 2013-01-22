@@ -60,22 +60,22 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
     std::string sourceDir = script()->sourceDir() + directory();
     std::string buildDir = OS::pwd();
 
-    StringList::const_iterator it = files.begin();
-    Language lang = identifyLanguage(*it);
+    Language lang = files.size() ? identifyLanguage(*files.begin()) : UnsupportedLanguage;
     m_linkerOptions->setLanguage(lang);
-    for (; it != files.end(); ++it) {
-        if (it->empty())
+
+    for (const std::string& fileName : files) {
+        if (fileName.empty())
             continue;
 
-        if (lang != identifyLanguage(*it))
+        if (lang != identifyLanguage(fileName))
             Error() << "You can't mix two programming languages in the same target!";
 
         // Create necessary directories if needed.
-        if (it->find_first_of('/'))
-            OS::mkdir(OS::dirName(*it));
+        if (fileName.find_first_of('/'))
+            OS::mkdir(OS::dirName(fileName));
 
-        std::string source = OS::normalizeFilePath(it->at(0) == '/' ? *it : sourceDir + *it);
-        std::string output = OS::normalizeFilePath(*it + ".o");
+        std::string source = OS::normalizeFilePath(fileName.at(0) == '/' ? fileName : sourceDir + fileName);
+        std::string output = OS::normalizeFilePath(fileName + "." + name() + ".o");
 
         bool compileIt = OS::timestampCompare(source, output) < 0;
         StringList dependents = getFileDependencies(source);
@@ -86,7 +86,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
             job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
-            job->setName(*it);
+            job->setName(fileName);
             queue->addJob(job);
             m_job2Sources[job] = std::make_pair(source, dependents);
         }
