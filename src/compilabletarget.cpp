@@ -77,7 +77,8 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
         std::string source = OS::normalizeFilePath(fileName.at(0) == '/' ? fileName : sourceDir + fileName);
         std::string output = OS::normalizeFilePath(fileName + "." + name() + ".o");
 
-        bool compileIt = OS::timestampCompare(source, output) < 0;
+        bool compileIt = OS::timestampCompare(source, output) <= 0;
+
         StringList dependents = getFileDependencies(source);
         if (!compileIt)
             compileIt = cache()->isHashGroupOutdated(source, dependents);
