@@ -4,7 +4,7 @@ function addMeiqueTest(testName)
     local testPath = meique:sourceDir().."../tests/"..testName
     local testRunner = meique:sourceDir().."../tests/runtest.sh"
     local meiquePath = meique:buildDir()..meique:name()
-    addTest(string.format("%s %s %s %s", testRunner, testPath, testRunPath, meiquePath))
+    addTest(string.format("%s %s %s %s", testRunner, testPath, testRunPath, meiquePath), testName)
 end
 
 local tests = [[
