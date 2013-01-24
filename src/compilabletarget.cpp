@@ -281,9 +281,13 @@ void CompilableTarget::clean()
     getLuaField("_files");
     StringList files;
     readLuaList(luaState(), lua_gettop(luaState()), files);
-    StringList::const_iterator it = files.begin();
-    for (; it != files.end(); ++it)
-        OS::rm(directory() + *it + ".o");
+
+    for (std::string fileName : files) {
+        fileName += "." + name() + ".o";
+        if (fileName[0] != '/')
+            fileName.insert(0, directory());
+        OS::rm(fileName);
+    }
 }
 
 void CompilableTarget::doTargetInstall(const std::string& destDir)
