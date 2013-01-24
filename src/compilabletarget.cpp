@@ -234,11 +234,10 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     list.clear();
     getLuaField("_targets");
     readLuaList(L, lua_gettop(L), list);
-    it = list.begin();
-    for (; it != list.end(); ++it) {
-        CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(*it));
+    for (const std::string& targetName : list) {
+        CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
         if (target)
-            target->useIn(this, compilerOptions, linkerOptions);
+            target->useIn(compilerOptions, linkerOptions);
     }
 
     // Add build dir in the include path

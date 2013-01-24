@@ -10,6 +10,7 @@ end
 local tests = [[
     two_targets_samename
     two_targets_sharing_a_file
+    static_linker_flags
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

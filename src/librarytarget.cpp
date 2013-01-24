@@ -74,7 +74,7 @@ void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOption
     compilerOptions->setCompileForLibrary(true);
 }
 
-void LibraryTarget::useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions)
+void LibraryTarget::useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions)
 {
     std::string buildPath = script()->buildDir() + directory();
     std::string sourcePath = script()->sourceDir() + directory();
@@ -84,5 +84,16 @@ void LibraryTarget::useIn(CompilableTarget* other, CompilerOptions* otherCompile
         otherLinkerOptions->addLibrary(name());
     } else if (m_linkType == LinkerOptions::StaticLibrary) {
         otherLinkerOptions->addStaticLibrary(buildPath + outputFileName());
+
+        // go on all my target dependencies and do the same
+        lua_State* L = luaState();
+        StringList list;
+        getLuaField("_targets");
+        readLuaList(L, lua_gettop(L), list);
+        for (const std::string& targetName : list) {
+            CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
+            if (target)
+                target->useIn(otherCompilerOptions, otherLinkerOptions);
+        }
     }
 }

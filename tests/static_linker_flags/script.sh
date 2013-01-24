@@ -1,0 +1,1 @@
+$MEIQUE .. || fail "Failed to link?"

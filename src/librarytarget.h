@@ -26,7 +26,7 @@ class LibraryTarget : public CompilableTarget
 {
 public:
     LibraryTarget(const std::string& targetName, MeiqueScript* script);
-    void useIn(CompilableTarget* other, CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions);
+    void useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions);
 protected:
     JobQueue* doRun(Compiler* compiler);
     void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
