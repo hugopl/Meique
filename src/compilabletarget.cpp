@@ -119,24 +119,22 @@ void CompilableTarget::preprocessFile(const std::string& source,
         absSource = source;
         fp.open(source.c_str());
     } else {
-        // It's a normal file or a system header not found in the system directories
-        if ((!fp || !fp.is_open()) && source[0] != '/') {
-            StringList::const_iterator it = userIncludeDirs.begin();
-            for (; it != userIncludeDirs.end(); ++it) {
-                absSource = *it + source;
-                fp.open(absSource.c_str());
-                if (fp)
-                    break;
+        for (const std::string& dir : userIncludeDirs) {
+            absSource = dir + source;
+            fp.open(absSource.c_str());
+            if (fp) {
+                absSource = OS::normalizeFilePath(absSource);
+                break;
             }
         }
     }
 
-    if (!fp || !fp.is_open()) {
+    if (!fp || !fp.is_open())
         return;
-    }
 
     if (std::find(deps->begin(), deps->end(), absSource) != deps->end())
         return;
+
     deps->push_back(absSource);
 
     std::string line;
