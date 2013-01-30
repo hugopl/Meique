@@ -334,6 +334,8 @@ int findPackage(lua_State* L)
         if (!version.empty())
             args.push_back("--atleast-version="+version);
         int retval = OS::exec(PKGCONFIG, args);
+        if (!version.empty())
+            args.pop_back();
         if (retval) {
             if (!optional) {
                 LuaError(L) << pkgName << " package not found!";
