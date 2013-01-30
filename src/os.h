@@ -23,12 +23,17 @@
 
 namespace OS
 {
-    int exec(const std::string& cmd, const StringList& args = StringList(), std::string* output = 0, const std::string& workingDir = std::string());
-    inline int exec(const std::string& cmd, const std::string& arg, std::string* output = 0, const std::string& workingDir = std::string())
+    enum ExecOptions {
+        None,
+        MergeErr
+    };
+
+    int exec(const std::string& cmd, const StringList& args = StringList(), std::string* output = 0, const std::string& workingDir = std::string(), ExecOptions options = None);
+    inline int exec(const std::string& cmd, const std::string& arg, std::string* output = 0, const std::string& workingDir = std::string(), ExecOptions options = None)
     {
         StringList args;
         args.push_back(arg);
-        return exec(cmd, args, output, workingDir);
+        return exec(cmd, args, output, workingDir, options);
     }
     /// Like cd command.
     void cd(const std::string& dir);

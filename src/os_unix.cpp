@@ -36,7 +36,7 @@ extern "C" {
 namespace OS
 {
 
-int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir)
+int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir, ExecOptions options)
 {
     enum { READ, WRITE };
 
@@ -59,7 +59,8 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
         if (output) {
             close(out2me[READ]);
             dup2(out2me[WRITE], 1);
-            dup2(out2me[WRITE], 2);
+            if (options == OS::MergeErr)
+                dup2(out2me[WRITE], 2);
         }
         execl("/usr/bin/env", "-i", "sh", "-c", cmdline.c_str(), (char*)0);
         Error() << "Fatal error: shell not found!";
