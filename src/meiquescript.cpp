@@ -156,11 +156,8 @@ void MeiqueScript::exec()
 
 void MeiqueScript::exportApi()
 {
-    // load some libs.
-    luaopen_base(m_L);
-    luaopen_string(m_L);
-    luaopen_table(m_L);
-    luaopen_os(m_L);
+    // Opens all standard Lua libraries
+    luaL_openlibs(m_L);
 
     // export lua API
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
