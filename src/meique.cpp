@@ -134,7 +134,15 @@ int Meique::dumpProject()
             if (fileName.empty())
                 continue;
             std::string absPath = fileName[0] == '/' ? fileName : m_script->sourceDir() + target->directory() + fileName;
-            std::cout << "File: " << OS::normalizeFilePath(absPath) << std::endl;
+            absPath = OS::normalizeFilePath(absPath);
+            std::cout << "File: " << absPath << std::endl;
+            auto lastDot = absPath.find_last_of(".");
+            if (lastDot != std::string::npos) {
+                absPath.replace(lastDot, absPath.size() - lastDot, ".h");
+                if (OS::fileExists(absPath))
+                    std::cout << "File: " << absPath << std::endl;
+            }
+
             // TODO: Defines
         }
 
