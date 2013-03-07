@@ -70,31 +70,19 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
 void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
     CompilableTarget::fillCompilerAndLinkerOptions(compilerOptions, linkerOptions);
-    linkerOptions->setLinkType(m_linkType);
-    compilerOptions->setCompileForLibrary(true);
-}
 
-void LibraryTarget::useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions)
-{
-    std::string buildPath = script()->buildDir() + directory();
-    std::string sourcePath = script()->sourceDir() + directory();
-    otherCompilerOptions->addIncludePath(sourcePath);
-    if (m_linkType == LinkerOptions::SharedLibrary) {
-        otherLinkerOptions->addLibraryPath(buildPath);
-        otherLinkerOptions->addLibrary(name());
-    } else if (m_linkType == LinkerOptions::StaticLibrary) {
-        otherLinkerOptions->addStaticLibrary(buildPath + outputFileName());
+    const std::string buildPath = script()->buildDir() + directory();
 
-        // go on all my target dependencies and do the same
-        lua_State* L = luaState();
-        StringList list;
-        getLuaField("_targets");
-        readLuaList(L, lua_gettop(L), list);
-        lua_pop(L, 1);
-        for (const std::string& targetName : list) {
-            CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
-            if (target)
-                target->useIn(otherCompilerOptions, otherLinkerOptions);
+    // Add link options if filling linkerOptions for other targets.
+    if (m_linkerOptions != linkerOptions) {
+        if (m_linkType == LinkerOptions::SharedLibrary) {
+            linkerOptions->addLibraryPath(buildPath);
+            linkerOptions->addLibrary(name());
+        } else if (m_linkType == LinkerOptions::StaticLibrary) {
+            linkerOptions->addStaticLibrary(buildPath + outputFileName());
         }
     }
+
+    linkerOptions->setLinkType(m_linkType);
+    compilerOptions->setCompileForLibrary(true);
 }

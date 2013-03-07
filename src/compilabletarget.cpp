@@ -171,10 +171,10 @@ StringList CompilableTarget::getFileDependencies(const std::string& source)
 
 void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
-    const std::string baseDir = script()->sourceDir() + directory();
+    const std::string sourcePath = script()->sourceDir() + directory();
 
     // Add source dir in the include path
-    m_compilerOptions->addIncludePath(baseDir);
+    compilerOptions->addIncludePath(sourcePath);
 
     // Get the package info
     getLuaField("_packages");
@@ -210,7 +210,7 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     StringList::iterator it = list.begin();
     for (; it != list.end(); ++it) {
         if (!it->empty() && it->at(0) != '/')
-            *it = baseDir + *it;
+            *it = sourcePath + *it;
     }
     compilerOptions->addIncludePaths(list);
 
@@ -235,8 +235,8 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     lua_pop(L, 1);
     for (const std::string& targetName : list) {
         CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
-        if (target)
-            target->useIn(compilerOptions, linkerOptions);
+        if (target && target != this)
+            target->fillCompilerAndLinkerOptions(compilerOptions, linkerOptions);
     }
 
     // Add build dir in the include path

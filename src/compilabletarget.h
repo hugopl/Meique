@@ -38,16 +38,17 @@ public:
     std::string outputFileName() const { return m_outputFileName; }
     StringList includeDirectories();
     virtual bool isCompilableTarget() const { return true; }
-    virtual void useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions) = 0;
 protected:
     JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
     virtual void doTargetInstall(const std::string& destDir);
+
+    CompilerOptions* m_compilerOptions;
+    LinkerOptions* m_linkerOptions;
+
 private:
     // job => (master, [dep1, dep2, ...])
     std::map<Job*, std::pair<std::string, StringList> > m_job2Sources;
-    CompilerOptions* m_compilerOptions;
-    LinkerOptions* m_linkerOptions;
     std::string m_outputFileName;
 
     StringList getFileDependencies(const std::string& source);

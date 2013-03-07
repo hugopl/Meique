@@ -27,7 +27,6 @@ public:
 protected:
     JobQueue* doRun(Compiler* compiler);
     void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
-    void useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* otherLinkerOptions) {}
 };
 
 #endif // EXECUTABLETARGET_H
