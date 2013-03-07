@@ -31,9 +31,11 @@ JobQueue* CustomTarget::doRun(Compiler* compiler)
     std::string sourceDir = script()->sourceDir() + directory();
     std::string buildDir = script()->buildDir() + directory();
 
+    lua_State* L = luaState();
     getLuaField("_outputs");
     StringList outputs;
-    readLuaList(luaState(), lua_gettop(luaState()), outputs);
+    readLuaList(L, lua_gettop(L), outputs);
+    lua_pop(L, 1);
 
     bool outputDoesntExist = false;
     bool isOutdated = false;

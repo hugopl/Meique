@@ -195,6 +195,7 @@ MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
         Error() << "Expecting a lua table! Got " << lua_typename(L, lua_type(L, index));
     IntStrMap map;
     readLuaTable(L, index, map);
+    lua_pop(L, 1);
     return MeiqueOption(map[1], map[2]);
 }
 
@@ -206,6 +207,7 @@ OptionsMap MeiqueScript::options()
     lua_getfield(m_L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
     int tableIndex = lua_gettop(m_L);
     readLuaTable(m_L, tableIndex, m_options);
+    lua_pop(m_L, 1);
     return m_options;
 }
 
@@ -246,6 +248,7 @@ std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
     lua_getglobal(m_L, "_meiqueAllTests");
     std::list<StringList> tests;
     readLuaList(m_L, lua_gettop(m_L), tests);
+    lua_pop(m_L, 1);
 
     if (!pattern.empty()) {
         Regex regex(pattern.c_str());

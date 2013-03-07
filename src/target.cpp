@@ -76,8 +76,9 @@ TargetList Target::dependencies()
     if (!m_dependenciesCached) {
         getLuaField("_deps");
         StringList list;
-        readLuaList(luaState(), lua_gettop(luaState()), list);
-        lua_pop(luaState(), 1);
+        lua_State* L = luaState();
+        readLuaList(L, lua_gettop(L), list);
+        lua_pop(L, 1);
         StringList::iterator it = list.begin();
         for (; it != list.end(); ++it) {
             Target* target = script()->getTarget(*it);
@@ -133,7 +134,9 @@ StringList Target::files()
     // get sources
     getLuaField("_files");
     StringList files;
-    readLuaList(luaState(), lua_gettop(luaState()), files);
+    lua_State* L = luaState();
+    readLuaList(L, lua_gettop(L), files);
+    lua_pop(L, 1);
     return files;
 }
 
@@ -167,6 +170,7 @@ void Target::install()
 
     std::list<StringList> installDirectives;
     readLuaList(L, top, installDirectives);
+    lua_pop(L, 1);
 
     std::list<StringList>::const_iterator it = installDirectives.begin();
     for (; it != installDirectives.end(); ++it) {

@@ -218,20 +218,21 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     getLuaField("_linkLibraries");
     list.clear();
     readLuaList(L, lua_gettop(L), list);
-    linkerOptions->addLibraries(list);
     lua_pop(L, 1);
+    linkerOptions->addLibraries(list);
 
     // explicit library include dirs
     getLuaField("_libDirs");
     list.clear();
     readLuaList(L, lua_gettop(L), list);
-    linkerOptions->addLibraryPaths(list);
     lua_pop(L, 1);
+    linkerOptions->addLibraryPaths(list);
 
     // other targets
     list.clear();
     getLuaField("_targets");
     readLuaList(L, lua_gettop(L), list);
+    lua_pop(L, 1);
     for (const std::string& targetName : list) {
         CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
         if (target)
@@ -277,7 +278,9 @@ void CompilableTarget::clean()
     // get sources
     getLuaField("_files");
     StringList files;
-    readLuaList(luaState(), lua_gettop(luaState()), files);
+    lua_State* L = luaState();
+    readLuaList(L, lua_gettop(L), files);
+    lua_pop(L, 1);
 
     for (std::string fileName : files) {
         fileName += "." + name() + ".o";

@@ -90,6 +90,7 @@ void LibraryTarget::useIn(CompilerOptions* otherCompilerOptions, LinkerOptions* 
         StringList list;
         getLuaField("_targets");
         readLuaList(L, lua_gettop(L), list);
+        lua_pop(L, 1);
         for (const std::string& targetName : list) {
             CompilableTarget* target = dynamic_cast<CompilableTarget*>(script()->getTarget(targetName));
             if (target)

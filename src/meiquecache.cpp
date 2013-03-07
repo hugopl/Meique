@@ -186,6 +186,7 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     MeiqueCache* self = getSelf(L);
     StringMap opts;
     readLuaTable(L, lua_gettop(L), opts);
+    lua_pop(L, 1);
     try {
         self->m_sourceDir = OS::normalizeDirPath(opts.at(CFG_SOURCE_DIR));
         self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
@@ -252,6 +253,7 @@ int MeiqueCache::readPackage(lua_State* L)
 {
     StringMap pkgData;
     readLuaTable(L, lua_gettop(L), pkgData);
+    lua_pop(L, 1);
     std::string name = pkgData["name"];
     if (name.empty())
         LuaError(L) << "Package entry without name.";
@@ -274,6 +276,7 @@ int MeiqueCache::readScopes(lua_State* L)
 {
     MeiqueCache* self = getSelf(L);
     readLuaList(L, 1, self->m_scopes);
+    lua_pop(L, 1);
     return 0;
 }
 
