@@ -159,35 +159,60 @@ void Target::install()
 {
     getLuaField("_installFiles");
     lua_State* L = luaState();
-    int top = lua_gettop(L);
-    int numDirectives = lua_objlen(L, top);
-    if (!numDirectives)
-        return;
-
-    std::string buildType = cache()->buildType() == MeiqueCache::Release ? "release" : "debug";
-
-    Notice() << Cyan << "Install " << name() << " (" << buildType << ")...";
-
     std::list<StringList> installDirectives;
-    readLuaList(L, top, installDirectives);
+    readLuaList(L, lua_gettop(L), installDirectives);
     lua_pop(L, 1);
 
-    std::list<StringList>::const_iterator it = installDirectives.begin();
-    for (; it != installDirectives.end(); ++it) {
-        int directiveSize = it->size();
+    if (installDirectives.empty())
+        return;
+
+    Notice() << Cyan << "Installing " << name() << "...";
+
+    for (const StringList& directive : installDirectives) {
+        const int directiveSize = directive.size();
         if (!directiveSize)
             continue;
 
-        const std::string destDir = OS::normalizeDirPath(cache()->installPrefix() + it->front());
+        const std::string destDir = OS::normalizeDirPath(cache()->installPrefix() + directive.front());
         const std::string srcDir = cache()->sourceDir() + directory();
 
         if (directiveSize == 1) { // Target installation
             doTargetInstall(destDir);
         } else if (directiveSize > 1) { // custom file install
-            StringList::const_iterator it2 = it->begin();
-            for (++it2; it2 != it->end(); ++it2) {
+            StringList::const_iterator it2 = directive.begin();
+            for (++it2; it2 != directive.end(); ++it2)
                 OS::install(srcDir + *it2, destDir);
-            }
+        }
+    }
+}
+
+void Target::uninstall()
+{
+    getLuaField("_installFiles");
+    lua_State* L = luaState();
+    std::list<StringList> installDirectives;
+    readLuaList(L, lua_gettop(L), installDirectives);
+    lua_pop(L, 1);
+
+    if (installDirectives.empty())
+        return;
+
+    Notice() << Cyan << "Uninstalling " << name() << "...";
+
+    for (const StringList& directive : installDirectives) {
+        const int directiveSize = directive.size();
+        if (!directiveSize)
+            continue;
+
+        const std::string destDir = OS::normalizeDirPath(cache()->installPrefix() + directive.front());
+        const std::string srcDir = cache()->sourceDir() + directory();
+
+        if (directiveSize == 1) { // Target installation
+            doTargetUninstall(destDir);
+        } else if (directiveSize > 1) { // custom file install
+            StringList::const_iterator it2 = directive.begin();
+            for (++it2; it2 != directive.end(); ++it2)
+                OS::uninstall(destDir + OS::baseName(*it2));
         }
     }
 }

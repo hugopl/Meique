@@ -255,6 +255,13 @@ void install(const std::string& sourceFile, const std::string& destDir)
         Error() << "Error installing " << sourceFile << " into " << destDir;
 }
 
+void uninstall(const std::string &file)
+{
+    Notice() << "-- Uninstall " << file;
+    if (!rm(file))
+        Error() << "Error uninstalling " << file << ".";
+}
+
 std::string defaultInstallPrefix()
 {
     return "/usr/";

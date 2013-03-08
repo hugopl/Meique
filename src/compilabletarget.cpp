@@ -297,3 +297,11 @@ void CompilableTarget::doTargetInstall(const std::string& destDir)
     std::string targetFile = OS::normalizeFilePath(directory() + outputFileName());
     OS::install(targetFile, destDir);
 }
+
+void CompilableTarget::doTargetUninstall(const std::string& destDir)
+{
+    // FIXME: We need to write special version for this on Windows when using shared libraries...
+    //        or outputFileName() can return a list instead of a single entry.
+    std::string targetFile = OS::normalizeFilePath(directory() + outputFileName());
+    OS::uninstall(destDir + outputFileName());
+}

@@ -45,6 +45,7 @@ public:
     JobQueue* run(Compiler* compiler);
     /// Install all target files
     void install();
+    void uninstall();
     /// Returns the target's name
     const std::string& name() const { return m_name; }
     /// Returns the target directory (relative path to source root)
@@ -62,6 +63,7 @@ protected:
     /// Method executed to generate the target jobs.
     virtual JobQueue* doRun(Compiler* compiler);
     virtual void doTargetInstall(const std::string& destDir) {}
+    virtual void doTargetUninstall(const std::string& destDir) {}
 private:
     std::string m_name;
     bool m_ran;

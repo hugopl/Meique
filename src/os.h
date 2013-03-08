@@ -69,6 +69,7 @@ namespace OS
     void setCTRLCHandler(void (*func)());
 
     void install(const std::string& sourceFile, const std::string& destDir);
+    void uninstall(const std::string& file);
     std::string defaultInstallPrefix();
 
     class ChangeWorkingDirectory

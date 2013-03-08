@@ -283,6 +283,8 @@ int Meique::testTargets()
 
 int Meique::uninstallTargets()
 {
+    for (Target* target : getChosenTargets())
+        target->uninstall();
     return 0;
 }
 

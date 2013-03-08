@@ -42,6 +42,7 @@ protected:
     JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
     virtual void doTargetInstall(const std::string& destDir);
+    virtual void doTargetUninstall(const std::string& destDir);
 
     CompilerOptions* m_compilerOptions;
     LinkerOptions* m_linkerOptions;
