@@ -140,7 +140,7 @@ class Error : public LogWriter
 public:
     Error() : LogWriter(std::cerr)
     {
-        *this << Red << "ERROR" << NoColor << " :: ";
+        *this << Red;
     }
     ~Error()
     {

@@ -43,11 +43,10 @@ void translateLuaError(lua_State* L, int code, const std::string& scriptName)
         case 0:
             return;
         case LUA_ERRRUN:
-            Error() << "Runtime error: " << lua_tostring(L, -1);
+        case LUA_ERRSYNTAX:
+            Error() << lua_tostring(L, -1);
         case LUA_ERRFILE:
             Error() << '"' << scriptName << "\" not found";
-        case LUA_ERRSYNTAX:
-            Error() << "Syntax error: " << lua_tostring(L, -1);
         case LUA_ERRMEM:
             Error() << "Lua memory allocation error.";
         case LUA_ERRERR:
