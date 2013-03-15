@@ -55,6 +55,8 @@ namespace OS
 
     StringList getOSType();
 
+    int numberOfCPUCores();
+
     unsigned long getTimeInMillis();
     /// return -x, 0 or +x if file1 is older, same age or newer than file2.
     int timestampCompare(const std::string& file1, const std::string& file2);

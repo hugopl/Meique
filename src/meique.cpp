@@ -54,7 +54,7 @@ enum {
 
 Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0), m_firstRun(false)
 {
-    m_jobManager->setJobCountLimit(m_args.intArg("j", 1));
+    m_jobManager->setJobCountLimit(m_args.intArg("j", OS::numberOfCPUCores() + 1));
 }
 
 Meique::~Meique()
@@ -334,7 +334,6 @@ int Meique::showHelp()
     std::cout << " --release                          Create a release build.\n";
     std::cout << " --install-prefix                   Install directory used by install, this directory\n";
     std::cout << "                                    is prepended onto all install directories.\n";
-
 /*
     if (options.size()) {
         OptionsMap::const_iterator it = options.begin();
@@ -350,7 +349,8 @@ int Meique::showHelp()
     }
 */
     std::cout << "Build mode options:\n";
-    std::cout << " -jN                                Allow N jobs at once.\n";
+    std::cout << " -jN                                Allow N jobs at once, default to number of\n";
+    std::cout << "                                    cores + 1.\n";
     std::cout << " -d                                 Disable colored output\n";
     std::cout << " -c [target [, target2 [, ...]]]    Clean a specific target or all targets if\n";
     std::cout << "                                    none was specified.\n";

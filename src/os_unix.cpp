@@ -279,4 +279,9 @@ int timestampCompare(const std::string& file1, const std::string& file2)
 
     return file2Stat.st_mtime - file1Stat.st_mtime;
 }
+
+int numberOfCPUCores()
+{
+    return std::max(1l, sysconf(_SC_NPROCESSORS_ONLN));
+}
 }
