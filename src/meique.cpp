@@ -54,7 +54,10 @@ enum {
 
 Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0), m_firstRun(false)
 {
-    m_jobManager->setJobCountLimit(m_args.intArg("j", OS::numberOfCPUCores() + 1));
+    int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
+    if (jobLimit <= 0)
+        Error() << "You should use a number greater than zero in -j option.";
+    m_jobManager->setJobCountLimit(jobLimit);
 }
 
 Meique::~Meique()
