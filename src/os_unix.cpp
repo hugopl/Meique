@@ -271,11 +271,10 @@ int timestampCompare(const std::string& file1, const std::string& file2)
 {
     struct stat file1Stat;
     struct stat file2Stat;
-    int error1 = ::stat(file1.c_str(), &file1Stat) != 0;
-    int error2 = ::stat(file2.c_str(), &file2Stat) != 0;
-
-    if (error1 || error2)
-        return error1 - error2;
+    if (::stat(file1.c_str(), &file1Stat) != 0)
+        return -1;
+    if (::stat(file2.c_str(), &file2Stat) != 0)
+        return -1;
 
     return file2Stat.st_mtime - file1Stat.st_mtime;
 }
