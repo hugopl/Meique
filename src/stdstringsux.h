@@ -23,7 +23,10 @@
 #include <algorithm>
 #include "basictypes.h"
 
-void stringReplace(std::string& str, const std::string& substr, const std::string& replace);
+std::string& stringReplace(std::string& str, const std::string& substr, const std::string& replace);
+
+std::string escape(std::string str);
+
 /**
 *   Remove the left and right blank caracters of the string \p str
 *   \param  str The string that will be "trim'ed".

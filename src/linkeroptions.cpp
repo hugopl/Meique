@@ -18,6 +18,7 @@
 
 #include "linkeroptions.h"
 #include <algorithm>
+#include "stdstringsux.h"
 
 void LinkerOptions::addCustomFlag(const std::string& customFlag)
 {
@@ -55,4 +56,14 @@ void LinkerOptions::merge(const LinkerOptions& other)
     copy(m_staticLibraries, other.m_staticLibraries);
     copy(m_libraryPaths, other.m_libraryPaths);
     copy(m_customFlags, other.m_customFlags);
+}
+
+std::string LinkerOptions::hash() const
+{
+    return join(m_libraries, ":") + ','
+           + join(m_staticLibraries, ":") + ','
+           + join(m_libraryPaths, ":") + ','
+           + join(m_customFlags, ":") + ','
+           + char('0' + m_linkType) + ','
+           + char('0' + m_language) + ',';
 }

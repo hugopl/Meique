@@ -16,6 +16,7 @@ local tests = [[
     requires_meique
     basic_relink
     basic_header_dependence
+    change_compiler_flags
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

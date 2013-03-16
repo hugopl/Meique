@@ -168,7 +168,7 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     std::string output = OS::normalizeFilePath(absObjPath);
 
     m_depChecker.setWorkingDirectory(sourceDir);
-    if (!m_depChecker.shouldCompile(source, output)) {
+    if (!node->shouldBuild && !m_depChecker.shouldCompile(source, output)) {
         node->status = Node::Built;
         return nullptr;
     }
@@ -416,6 +416,12 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     }
 
     lua_pop(L, 1);
+
+    std::string targetHash = compilerOptions.hash() + linkerOptions.hash();
+    if (m_script.cache()->targetHash(node->name) != targetHash) {
+        node->shouldBuild = true;
+        m_script.cache()->setTargetHash(node->name, targetHash);
+    }
 }
 
 void JobFactory::mergeCompilerAndLinkerOptions(Node* node)

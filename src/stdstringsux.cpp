@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,7 +19,8 @@
 #include "stdstringsux.h"
 #include <sstream>
 
-void stringReplace(std::string& str, const std::string& substr, const std::string& replace) {
+std::string& stringReplace(std::string& str, const std::string& substr, const std::string& replace)
+{
     size_t n = 0;
     while (true) {
         n = str.find(substr, n);
@@ -28,6 +29,12 @@ void stringReplace(std::string& str, const std::string& substr, const std::strin
         str.replace(n, substr.length(), replace);
         n += substr.length()+1;
     }
+    return str;
+}
+
+std::string escape(std::string str)
+{
+    return std::move(stringReplace(str, "\"", "\\\""));
 }
 
 void trim(std::string& str)

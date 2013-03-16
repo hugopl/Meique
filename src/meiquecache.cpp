@@ -18,7 +18,6 @@
 
 #include "meiquecache.h"
 #include "logger.h"
-#include "luastate.h"
 #include "luacpputil.h"
 #include "stdstringsux.h"
 #include <fstream>
@@ -84,11 +83,12 @@ Compiler* MeiqueCache::compiler()
 
 void MeiqueCache::loadCache()
 {
-    LuaState L;
+    lua_State* L = luaL_newstate();
     lua_register(L, "userOption", &readOption);
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
     lua_register(L, "package", &readPackage);
     lua_register(L, "scopes", &readScopes);
+    lua_register(L, "TargetHash", &readTargetHash);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
     lua_pushlightuserdata(L, (void *)L);
     lua_pushlightuserdata(L, (void *)this);
@@ -164,6 +164,14 @@ void MeiqueCache::saveCache()
         }
         file << "}\n\n";
     }
+
+    // target hashes
+    for (auto& pair : m_targetHashes) {
+        file << "TargetHash {\n"
+                "    target = \"" << escape(pair.first) << "\",\n";
+        file << "    hash = \"" << escape(pair.second) << "\"\n";
+        file << "}\n\n";
+    }
 }
 
 int MeiqueCache::readOption(lua_State* L)
@@ -189,6 +197,16 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     } catch (std::out_of_range&) {
         throw Error(MEIQUECACHE " file corrupted, some fundamental entry is missing.");
     }
+    return 0;
+}
+
+int MeiqueCache::readTargetHash(lua_State* L)
+{
+    LuaLeakCheck(L);
+    MeiqueCache* self = getSelf(L);
+    std::string target = getField<std::string>(L, "target");
+    std::string hash = getField<std::string>(L, "hash");
+    self->m_targetHashes[target] = hash;
     return 0;
 }
 
@@ -254,3 +272,8 @@ std::string MeiqueCache::installPrefix()
     return m_installPrefix;
 }
 
+std::string MeiqueCache::targetHash(const std::string& target) const
+{
+    auto it = m_targetHashes.find(target);
+    return it != m_targetHashes.end() ? it->second : std::string();
+}

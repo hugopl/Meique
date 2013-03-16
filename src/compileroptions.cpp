@@ -19,6 +19,7 @@
 #include "compileroptions.h"
 #include <algorithm>
 #include "os.h"
+#include "stdstringsux.h"
 
 CompilerOptions::CompilerOptions() : m_compileForLibrary(false), m_debugInfoEnabled(false)
 {
@@ -65,4 +66,13 @@ void CompilerOptions::merge(const CompilerOptions& other)
     copy(m_includePaths, other.m_includePaths);
     copy(m_defines, other.m_defines);
     copy(m_customFlags, other.m_customFlags);
+}
+
+std::string CompilerOptions::hash() const
+{
+    return join(m_includePaths, ":") + ','
+           + join(m_defines, ":") + ','
+           + join(m_customFlags, ":") + ','
+           + (m_compileForLibrary ? '1' : '0')
+           + (m_debugInfoEnabled ? '1' : '0');
 }

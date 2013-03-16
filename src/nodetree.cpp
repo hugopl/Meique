@@ -126,6 +126,7 @@ void NodeTree::expandTargetNode(Node* target)
     readLuaList(m_L, lua_gettop(m_L), files);
     for (std::string& file : files) {
         Node* fileNode = new Node(file);
+        fileNode->shouldBuild = target->shouldBuild;
         fileNode->parents.push_back(target);
         target->children.push_back(fileNode);
         m_size++;

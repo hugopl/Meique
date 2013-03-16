@@ -48,6 +48,7 @@ public:
     Language language() const { return m_language; }
 
     void merge(const LinkerOptions& other);
+    std::string hash() const;
 private:
     StringList m_libraries;
     StringList m_staticLibraries;
@@ -56,8 +57,7 @@ private:
     LinkType m_linkType;
     Language m_language;
 
-    LinkerOptions(const LinkerOptions&);
-    LinkerOptions& operator=(const LinkerOptions&);
+    LinkerOptions(const LinkerOptions&) = delete;
 };
 
 #endif // LINKEROPTIONS_H

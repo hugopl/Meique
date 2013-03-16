@@ -39,6 +39,7 @@ public:
     void normalize();
 
     void merge(const CompilerOptions& other);
+    std::string hash() const;
 private:
     StringList m_includePaths;
     StringList m_defines;

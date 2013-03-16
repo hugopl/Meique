@@ -42,6 +42,9 @@ public:
     void setUserOptionsValues(const StringMap& options) { m_userOptions = options; }
     const StringMap& userOptionsValues() const { return m_userOptions; }
 
+    void setTargetHash(const std::string& target, const std::string& hash) { m_targetHashes[target] = hash; }
+    std::string targetHash(const std::string& target) const;
+
     void saveCache();
     void loadCache();
 
@@ -78,6 +81,8 @@ private:
     StringMap m_userOptions;
     std::string m_installPrefix;
 
+    StringMap m_targetHashes;
+
     // helper variables
     bool m_autoSave;
 
@@ -85,6 +90,7 @@ private:
     static int readMeiqueConfig(lua_State* L);
     static int readPackage(lua_State* L);
     static int readScopes(lua_State* L);
+    static int readTargetHash(lua_State* L);
 
     // disable copy
     MeiqueCache(const MeiqueCache&);
