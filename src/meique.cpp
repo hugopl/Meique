@@ -45,6 +45,7 @@ enum {
     NotFound,
     Yes,
     No,
+    Ok,
     TestAction,
     InstallAction,
     UninstallAction,
@@ -111,7 +112,7 @@ int Meique::configureProject()
         m_script->cache()->setAutoSave(false);
         throw;
     }
-    return 0;
+    return m_args.boolArg("s") ? 0 : Ok;
 }
 
 int Meique::dumpProject()
@@ -306,7 +307,7 @@ void Meique::exec()
     machine[STATE(Meique::lookForMeiqueLua)][Found] = STATE(Meique::configureProject);
     machine[STATE(Meique::lookForMeiqueLua)][NotFound] = STATE(Meique::showHelp);
 
-    machine[STATE(Meique::configureProject)][0] = STATE(Meique::getBuildAction);
+    machine[STATE(Meique::configureProject)][Ok] = STATE(Meique::getBuildAction);
 
     machine[STATE(Meique::getBuildAction)][TestAction] = STATE(Meique::testTargets);
     machine[STATE(Meique::getBuildAction)][InstallAction] = STATE(Meique::installTargets);
@@ -355,6 +356,7 @@ int Meique::showHelp()
     std::cout << " -jN                                Allow N jobs at once, default to number of\n";
     std::cout << "                                    cores + 1.\n";
     std::cout << " -d                                 Disable colored output\n";
+    std::cout << " -s                                 Stop after configure step.\n";
     std::cout << " -c [target [, target2 [, ...]]]    Clean a specific target or all targets if\n";
     std::cout << "                                    none was specified.\n";
     std::cout << " -i [target [, target2 [, ...]]]    Install a specific target or all targets if\n";
