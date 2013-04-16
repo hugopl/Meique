@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -16,21 +16,15 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <iostream>
 #include "meique.h"
 #include "logger.h"
 
 int main(int argc, const char** argv)
 {
-#ifndef NDEBUG
-    Meique meique(argc, argv);
-    meique.exec();
-#else
     try {
         Meique meique(argc, argv);
         meique.exec();
     } catch (MeiqueError&) {
         return 1;
     }
-#endif
 }
