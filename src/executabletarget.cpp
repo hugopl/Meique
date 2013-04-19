@@ -37,7 +37,7 @@ JobQueue* ExecutableTarget::doRun(Compiler* compiler)
     if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {
         std::string buildDir = OS::pwd();
         std::string exeName = compiler->nameForExecutable(name());
-        OSCommandJob* job = compiler->link(exeName, objects, linkerOptions());
+        OSCommandJob* job = new OSCommandJob(compiler->link(exeName, objects, linkerOptions()));
         job->setWorkingDirectory(buildDir);
         job->setName(exeName);
         job->setType(Job::Linking);

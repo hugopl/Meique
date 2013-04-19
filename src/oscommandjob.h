@@ -20,20 +20,19 @@
 #define OSCOMMANDJOB_H
 
 #include "job.h"
-
+#include "os.h"
 
 class OSCommandJob : public Job
 {
 public:
-    OSCommandJob(const std::string& command, const StringList& args);
+    OSCommandJob(const OS::Command& command);
     void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
     std::string workingDirectory() { return m_workingDir; }
 
 protected:
     virtual int doRun();
 private:
-    std::string m_command;
-    StringList m_args;
+    OS::Command m_command;
     std::string m_workingDir;
 };
 

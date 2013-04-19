@@ -19,12 +19,13 @@
 #include "oscommandjob.h"
 #include "os.h"
 
-OSCommandJob::OSCommandJob(const std::string& command, const StringList& args) : m_command(command), m_args(args)
+OSCommandJob::OSCommandJob(const OS::Command& command)
+    : m_command(command)
 {
 }
 
 int OSCommandJob::doRun()
 {
-    return OS::exec(m_command, m_args, 0, m_workingDir);
+    return OS::exec(m_command, 0, m_workingDir);
 }
 

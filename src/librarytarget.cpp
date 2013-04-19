@@ -57,7 +57,7 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
 
     if (!queue->isEmpty() || !OS::fileExists(outputFileName())) {
         std::string buildDir = OS::pwd();
-        OSCommandJob* job = compiler->link(outputFileName(), objects, linkerOptions());
+        OSCommandJob* job = new OSCommandJob(compiler->link(outputFileName(), objects, linkerOptions()));
         job->setWorkingDirectory(buildDir);
         job->setName(outputFileName());
         job->setType(Job::Linking);

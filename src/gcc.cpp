@@ -19,8 +19,6 @@
 #include "gcc.h"
 #include "compileroptions.h"
 #include "linkeroptions.h"
-#include "oscommandjob.h"
-#include "os.h"
 #include "logger.h"
 #include "stdstringsux.h"
 #include <algorithm>
@@ -41,7 +39,7 @@ Gcc::Gcc() : m_isAvailable(false)
     }
 }
 
-OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
+OS::Command Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
     StringList args;
     args.push_back("-c");
@@ -82,10 +80,10 @@ OSCommandJob* Gcc::compile(const std::string& fileName, const std::string& outpu
         compiler = "g++";
     else
         Error() << "Unknown programming language used for " << fileName;
-    return new OSCommandJob(compiler, args);
+    return { compiler, args };
 }
 
-OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
+OS::Command Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
     std::string linker;
@@ -136,7 +134,7 @@ OSCommandJob* Gcc::link(const std::string& output, const StringList& objects, co
             args.push_back("-Wl,-rpath=" + join(paths, ":"));
     }
 
-    return new OSCommandJob(linker, args);
+    return { linker, args };
 }
 
 std::string Gcc::nameForExecutable(const std::string& name) const

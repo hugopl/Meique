@@ -84,7 +84,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             compileIt = cache()->isHashGroupOutdated(source, dependents);
 
         if (compileIt) {
-            OSCommandJob* job = compiler->compile(source, output, m_compilerOptions);
+            OSCommandJob* job = new OSCommandJob(compiler->compile(source, output, m_compilerOptions));
             job->addJobListenner(this);
             job->setWorkingDirectory(buildDir);
             job->setName(fileName);

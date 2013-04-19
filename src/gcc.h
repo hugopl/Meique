@@ -27,8 +27,8 @@ public:
     const char* name() const { return "Gcc"; }
     std::string fullName() const { return m_fullName; }
     bool isAvailable() const { return m_isAvailable; }
-    OSCommandJob* compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
-    OSCommandJob* link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
+    OS::Command compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
+    OS::Command link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;
