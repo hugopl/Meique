@@ -51,4 +51,5 @@ meiqueApi:addFile("meiqueapi.lua")
 meiqueApi:addOutput("meiqueapi.cpp")
 
 meique:addDependency(meiqueApi)
+meiqueApi:addDependency(file2c)
 UNIX:meique:install("bin")
