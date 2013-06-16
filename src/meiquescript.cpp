@@ -87,7 +87,7 @@ static int isOutDated(lua_State* L)
 {
     std::string master = lua_tocpp<std::string>(L, 1);
     if (master.empty())
-        LuaError(L) << "isOutDated(filePath) called with wrong arguments.";
+        luaError(L, "isOutDated(filePath) called with wrong arguments.");
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     bool res = script->cache()->isHashGroupOutdated(master);
@@ -99,7 +99,7 @@ static int setUpToDate(lua_State* L)
 {
     std::string master = lua_tocpp<std::string>(L, 1);
     if (master.empty())
-        LuaError(L) << "setUpToDate(filePath) called with wrong arguments.";
+        luaError(L, "setUpToDate(filePath) called with wrong arguments.");
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     script->cache()->updateHashGroup(master);
@@ -309,7 +309,7 @@ int findPackage(lua_State* L)
     const char PKGCONFIG[] = "pkg-config";
     int nargs = lua_gettop(L);
     if (nargs < 1 || nargs > 3)
-        LuaError(L) << "findPackage(name [, version, flags]) called with wrong number of arguments.";
+        luaError(L, "findPackage(name [, version, flags]) called with wrong number of arguments.");
 
     const std::string pkgName = lua_tocpp<std::string>(L, 1);
     const std::string version = lua_tocpp<std::string>(L, 2);
@@ -338,7 +338,7 @@ int findPackage(lua_State* L)
             args.pop_back();
         if (retval) {
             if (!optional) {
-                LuaError(L) << pkgName << " package not found!";
+                luaError(L, pkgName + " package not found!");
             } else {
                 Notice() << "-- " << pkgName << Red << " not found!";
                 pkgData["NOT_FOUND"] = "NOT_FOUND"; // dummy data to avoid an empty map
@@ -410,7 +410,7 @@ int copyFile(lua_State* L)
 {
     int nargs = lua_gettop(L);
     if (nargs < 1 || nargs > 2)
-        LuaError(L) << "copyFile(input, output) called with wrong number of arguments.";
+        luaError(L, "copyFile(input, output) called with wrong number of arguments.");
 
     lua_getglobal(L, "currentDir");
     lua_call(L, 0, 1);
@@ -437,7 +437,7 @@ int configureFile(lua_State* L)
 {
     int nargs = lua_gettop(L);
     if (nargs != 2)
-        LuaError(L) << "configureFile(input, output) called with wrong number of arguments.";
+        luaError(L, "configureFile(input, output) called with wrong number of arguments.");
 
     lua_getglobal(L, "currentDir");
     lua_call(L, 0, 1);
@@ -464,7 +464,7 @@ int configureFile(lua_State* L)
 
     std::ifstream in(input.c_str());
     if (!in)
-        LuaError(L) << "Can't read file: " << input;
+        luaError(L, "Can't read file: " + input);
     std::ofstream out(output.c_str());
 
     Regex regex("@([^@]+)@");
@@ -534,7 +534,7 @@ int option(lua_State* L)
 {
     int nargs = lua_gettop(L);
     if (nargs < 2 || nargs > 3)
-        LuaError(L) << "option(name, description [, defaultValue]) called with wrong number of arguments.";
+        luaError(L, "option(name, description [, defaultValue]) called with wrong number of arguments.");
     if (nargs == 2)
         lua_pushnil(L);
 
@@ -542,9 +542,9 @@ int option(lua_State* L)
     std::string description = lua_tocpp<std::string>(L, 2);
 
     if (name.empty())
-        LuaError(L) << "An option MUST have a name.";
+        luaError(L, "An option MUST have a name.");
     if (description.empty())
-        LuaError(L) << "Be nice and put a description for the option \"" << name << "\" :-).";
+        luaError(L, "Be nice and put a description for the option \"" + name + "\" :-).");
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     std::string optionValue = script->cache()->userOption(name);
@@ -654,7 +654,7 @@ int meiqueAutomoc(lua_State* L)
                     if (!OS::exec("moc", args))
                         script->cache()->updateHashGroup(headerPath);
                     else
-                        LuaError(L) << "Error running moc for file " << headerPath;
+                        luaError(L, "Error running moc for file " + headerPath);
                 }
             }
         }
@@ -697,7 +697,7 @@ int meiqueQtResource(lua_State* L)
             if (!OS::exec("rcc", args))
                 script->cache()->updateHashGroup(qrcFile);
             else
-                LuaError(L) << "Error running rcc on file " << qrcFile;
+                luaError(L, "Error running rcc on file " + qrcFile);
         }
     }
     target->addFiles(cppFiles);

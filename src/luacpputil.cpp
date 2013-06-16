@@ -83,3 +83,9 @@ void createLuaArray(lua_State* L, const StringList& list)
     }
 }
 
+void luaError(lua_State* L, const std::string& msg)
+{
+    lua_pushstring(L, msg.c_str());
+    lua_error(L);
+}
+

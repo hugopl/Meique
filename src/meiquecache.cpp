@@ -256,7 +256,7 @@ int MeiqueCache::readPackage(lua_State* L)
     lua_pop(L, 1);
     std::string name = pkgData["name"];
     if (name.empty())
-        LuaError(L) << "Package entry without name.";
+        luaError(L, "Package entry without name.");
     MeiqueCache* self = getSelf(L);
     self->setPackage(name, pkgData);
     return 0;
