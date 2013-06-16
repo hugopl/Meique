@@ -52,7 +52,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
     StringList files = this->files();
 
     if (files.empty())
-        Error() << "Compilable target '" << name() << "' has no files!";
+        throw Error("Compilable target '" + name() + "' has no files!");
 
     fillCompilerAndLinkerOptions(m_compilerOptions, m_linkerOptions);
 
@@ -68,7 +68,7 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
             continue;
 
         if (lang != identifyLanguage(fileName))
-            Error() << "You can't mix two programming languages in the same target!";
+            throw Error("You can't mix two programming languages in the same target!");
 
         // Create necessary directories if needed.
         if (fileName.find_first_of('/'))

@@ -32,7 +32,7 @@ Compiler* CompilerFactory::createCompiler(const std::string& compiler)
     if (compiler == "Gcc")
         return new Gcc;
 
-    Error() << "Unable to create compiler wrapper for " << compiler;
+    throw Error("Unable to create compiler wrapper for " + compiler);
     return 0;
 }
 
@@ -47,6 +47,6 @@ Compiler* CompilerFactory::findCompiler()
         }
         delete compiler;
     }
-    Error() << "No usable compilers were found!";
+    throw Error("No usable compilers were found!");
     return 0;
 }

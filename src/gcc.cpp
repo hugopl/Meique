@@ -79,7 +79,7 @@ OS::Command Gcc::compile(const std::string& fileName, const std::string& output,
     else if (lang == CPlusPlusLanguage)
         compiler = "g++";
     else
-        Error() << "Unknown programming language used for " << fileName;
+        throw Error("Unknown programming language used for " + fileName);
     return { compiler, args };
 }
 
@@ -98,7 +98,7 @@ OS::Command Gcc::link(const std::string& output, const StringList& objects, cons
         else if (options->language() == CLanguage)
             linker = "gcc";
         else
-            Error() << "Unsupported programming language sent to the linker!";
+            throw Error("Unsupported programming language sent to the linker!");
 
         if (options->linkType() == LinkerOptions::SharedLibrary) {
             if (!contains(args, "-fPIC") && !contains(args, "-fpic"))

@@ -24,7 +24,8 @@ int main(int argc, const char** argv)
     try {
         Meique meique(argc, argv);
         meique.exec();
-    } catch (MeiqueError&) {
+    } catch (const Error& e) {
+        e.show();
         return 1;
     }
 }

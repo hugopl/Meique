@@ -57,7 +57,7 @@ Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(n
 {
     int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
     if (jobLimit <= 0)
-        Error() << "You should use a number greater than zero in -j option.";
+        throw Error("You should use a number greater than zero in -j option.");
     m_jobManager->setJobCountLimit(jobLimit);
 }
 
@@ -108,7 +108,7 @@ int Meique::configureProject()
 
     try {
         m_script->exec();
-    } catch (MeiqueError& e) {
+    } catch (const Error&) {
         m_script->cache()->setAutoSave(false);
         throw;
     }
@@ -119,7 +119,7 @@ int Meique::dumpProject()
 {
     std::ifstream file(MEIQUECACHE);
     if (!file)
-        Error() << MEIQUECACHE << " not found.";
+        throw Error(MEIQUECACHE " not found.");
     file.close();
 
     m_script = new MeiqueScript;
@@ -193,7 +193,7 @@ TargetList Meique::getChosenTargets()
     }
 
     if (targets.empty())
-        Error() << "There's no targets!";
+        throw Error("There's no targets!");
 
     return targets;
 }
@@ -204,7 +204,7 @@ int Meique::buildTargets()
         createJobQueues(m_script, target);
 
     if (!m_jobManager->processJobs())
-        Error() << "Build error.";
+        throw Error("Build error.");
     return 0;
 }
 
@@ -398,7 +398,7 @@ void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
     std::list<int> sortedNodes = graph.topologicalSort();
     if (sortedNodes.empty()) {
         graph.dumpDot(revMap, "cyclicDeps.dot");
-        Error() << "Cyclic dependency found in your targets! You can check the dot graph at ./cyclicDeps.dot.";
+        throw Error("Cyclic dependency found in your targets! You can check the dot graph at ./cyclicDeps.dot.");
     }
 
     // get all job queues

@@ -129,24 +129,17 @@ public:
     }
 };
 
-struct MeiqueError
-{
-    MeiqueError();
-    static bool errorAlreadyset;
-};
-
-class Error : public LogWriter
+class Error
 {
 public:
-    Error() : LogWriter(std::cerr)
+    Error(const std::string& description)
+        : m_description(description)
     {
-        *this << Red;
     }
-    ~Error()
-    {
-        if (!MeiqueError::errorAlreadyset)
-            throw MeiqueError();
-    }
+    std::string description() const { return m_description; }
+    void show() const;
+private:
+    std::string m_description;
 };
 
 class Notice : public LogWriter

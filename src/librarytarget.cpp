@@ -45,7 +45,7 @@ LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script
             outputFileName = cache()->compiler()->nameForStaticLibrary(name());
             break;
         default:
-            Error() << "Unknown library type! " << libType;
+            throw Error("Unknown library type! " + libType);
     }
     setOutputFileName(outputFileName);
 }

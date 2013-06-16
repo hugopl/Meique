@@ -25,7 +25,7 @@ LuaState::LuaState()
 {
     m_L = luaL_newstate();
     if (!m_L)
-        Error() << "Can't create lua state";
+        throw Error("Can't create lua state");
 
     pthread_mutex_init(&m_mutex, 0);
     lua_pushlightuserdata(m_L, (void*) m_L);

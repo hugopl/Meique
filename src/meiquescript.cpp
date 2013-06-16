@@ -192,7 +192,7 @@ template<>
 MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
 {
     if (!lua_istable(L, index))
-        Error() << "Expecting a lua table! Got " << lua_typename(L, lua_type(L, index));
+        throw Error("Expecting a lua table! Got " + std::string(lua_typename(L, lua_type(L, index))));
     IntStrMap map;
     readLuaTable(L, index, map);
     lua_pop(L, 1);
@@ -236,7 +236,7 @@ void MeiqueScript::extractTargets()
                 target = new CustomTarget(targetName, this);
                 break;
             default:
-                Error() << "Unknown target type for target " << targetName;
+                throw Error("Unknown target type for target " + targetName);
                 break;
         };
         m_targets[targetName] = target;
@@ -253,7 +253,7 @@ std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
     if (!pattern.empty()) {
         Regex regex(pattern.c_str());
         if (!regex.isValid())
-            Error() << "Invalid regular expression.";
+            throw Error("Invalid regular expression.");
         tests.remove_if([&](const StringList& value) {
             return !regex.match(*value.begin());
         });
@@ -265,7 +265,7 @@ Target* MeiqueScript::getTarget(const std::string& name) const
 {
     TargetsMap::const_iterator it = m_targets.find(name);
     if (it == m_targets.end())
-        Error() << "Target \"" << name << "\" not found!";
+        throw Error("Target \"" + name + "\" not found!");
     return it->second;
 }
 

@@ -54,8 +54,8 @@ int LuaJob::doRun()
     try {
         luaPCall(m_L, objlen - 1, 0);
         lua_pop(m_L, 2);
-    } catch (const MeiqueError&) {
-        MeiqueError::errorAlreadyset = false;
+    } catch (const Error& e) {
+        e.show();
         return 1;
     }
     return 0;

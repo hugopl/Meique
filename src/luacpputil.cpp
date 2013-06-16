@@ -39,19 +39,27 @@ static int meiqueErrorHandler(lua_State* L)
 
 void translateLuaError(lua_State* L, int code, const std::string& scriptName)
 {
+    std::string description;
     switch (code) {
         case 0:
             return;
         case LUA_ERRRUN:
         case LUA_ERRSYNTAX:
-            Error() << lua_tostring(L, -1);
+            description = lua_tostring(L, -1);
+            break;
         case LUA_ERRFILE:
-            Error() << '"' << scriptName << "\" not found";
+            description = '"' + scriptName + "\" not found";
+            break;
         case LUA_ERRMEM:
-            Error() << "Lua memory allocation error.";
+            description = "Lua memory allocation error.";
+            break;
         case LUA_ERRERR:
-            Error() << "Bizarre error: " << lua_tostring(L, -1);
+            description = "Bizarre error: " + std::string(lua_tostring(L, -1));
+            break;
+        default:
+            description = "???";
     };
+    throw Error(description);
 }
 
 void luaPCall(lua_State* L, int nargs, int nresults, const std::string& scriptName)

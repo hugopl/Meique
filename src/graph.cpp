@@ -123,7 +123,7 @@ void Graph::dumpDot(const std::map< int, std::string >& nodeNames, const std::st
 {
     std::ofstream output(fileName.c_str(), std::ios_base::out);
     if (!output)
-        Error() << "Error writing graph to " << fileName;
+        throw Error("Error writing graph to " + fileName);
     output << "digraph D {\n";
     for (size_t i = 0; i < m_d->edges.size(); ++i) {
         GraphPrivate::EdgeIterator it = m_d->edges[i].begin();

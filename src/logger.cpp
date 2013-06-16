@@ -54,11 +54,12 @@ LogWriter::~LogWriter()
         m_stream << std::endl;
 }
 
-bool MeiqueError::errorAlreadyset = false;
-
-MeiqueError::MeiqueError()
+void Error::show() const
 {
-    errorAlreadyset = true;
+    if (coloredOutputEnabled)
+        std::cerr << COLOR_RED << m_description << COLOR_END << std::endl;
+    else
+        std::cerr << m_description << std::endl;
 }
 
 template<>

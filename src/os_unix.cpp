@@ -48,11 +48,11 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
     int status;
     int out2me[2];  // pipe from external program stdout to meique
     if (output && pipe(out2me))
-        Error() << "Unable to create unix pipes!";
+        throw Error("Unable to create unix pipes!");
 
     pid_t pid = fork();
     if (pid == -1) {
-        Error() << "Error forking process to run: " << cmdline;
+        throw Error("Error forking process to run: " + cmdline);
     } else if (!pid) {
         if (!workingDir.empty())
             OS::cd(workingDir);
@@ -63,7 +63,7 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
                 dup2(out2me[WRITE], 2);
         }
         execl("/usr/bin/env", "-i", "sh", "-c", cmdline.c_str(), (char*)0);
-        Error() << "Fatal error: shell not found!";
+        throw Error("Fatal error: shell not found!");
     }
 
     if (output) {
@@ -83,14 +83,14 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
 void cd(const std::string& dir)
 {
     if (::chdir(dir.c_str()) == -1)
-        Error() << "Error changing to directory " << dir << '.';
+        throw Error("Error changing to directory " + dir + '.');
 }
 
 std::string pwd()
 {
     char buffer[512];
     if (!getcwd(buffer, sizeof(buffer)))
-        Error() << "Internal error getting the current working directory.";
+        throw Error("Internal error getting the current working directory.");
     std::string result(buffer);
     result += '/';
     return result;
@@ -105,10 +105,10 @@ static void meiqueMkdir(const std::string& dir)
     if (::mkdir(dir.c_str(), 0755) == -1 && errno != EEXIST) {
         size_t pos = dir.find_last_of('/');
         if (pos == std::string::npos)
-            Error() << ERROR_MSG << dir << '.';
+            throw Error(ERROR_MSG + dir + '.');
         meiqueMkdir(dir.substr(0, pos));
         if (::mkdir(dir.c_str(), 0755) == -1)
-            Error() << ERROR_MSG << dir << '.';
+            throw Error(ERROR_MSG + dir + '.');
     }
 }
 
@@ -200,8 +200,8 @@ static std::string normalizePath(const std::string& path)
             StringList::iterator start(it);
             pathParts.erase(start, ++it);
         } else if (part == "..") {
-            if  (it == pathParts.begin())
-                Error() << "Invalid path given: " << path;
+            if (it == pathParts.begin())
+                throw Error("Invalid path given: " + path);
 
             StringList::iterator start(it);
             pathParts.erase(--start, ++it);
@@ -252,14 +252,14 @@ void install(const std::string& sourceFile, const std::string& destDir)
     args.push_back(destDir);
     int status = OS::exec("install", args);
     if (status)
-        Error() << "Error installing " << sourceFile << " into " << destDir;
+        throw Error("Error installing " + sourceFile + " into " + destDir);
 }
 
 void uninstall(const std::string &file)
 {
     Notice() << "-- Uninstall " << file;
     if (!rm(file))
-        Error() << "Error uninstalling " << file << ".";
+        throw Error("Error uninstalling " + file + '.');
 }
 
 std::string defaultInstallPrefix()

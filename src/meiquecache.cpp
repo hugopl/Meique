@@ -100,9 +100,9 @@ void MeiqueCache::loadCache()
 
     int res = luaL_loadfile(L, MEIQUECACHE);
     if (res)
-        Error() << "Error loading " MEIQUECACHE ", this *should* never happen. A bug? maybe...";
+        throw Error("Error loading " MEIQUECACHE ", this *should* never happen. A bug? maybe...");
     if (lua_pcall(L, 0, 0, 0))
-        Error() << "Error loading " MEIQUECACHE ": " << lua_tostring(L, -1);
+        throw Error("Error loading " MEIQUECACHE ": " + std::string(lua_tostring(L, -1)));
 }
 
 // Retrieve the Config instance
@@ -119,7 +119,7 @@ void MeiqueCache::saveCache()
 {
     std::ofstream file(MEIQUECACHE);
     if (!file.is_open())
-        Error() << "Can't open " MEIQUECACHE " for write.";
+        throw Error("Can't open " MEIQUECACHE " for write.");
 
     StringMap::const_iterator mapIt = m_userOptions.begin();
     for (; mapIt != m_userOptions.end(); ++mapIt) {
@@ -192,8 +192,8 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
         self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
         self->m_compilerName = opts.at(CFG_COMPILER);
         self->m_installPrefix = opts[CFG_INSTALL_PREFIX];
-    } catch (std::out_of_range& e) {
-        Error() << MEIQUECACHE " file corrupted, some fundamental entry is missing.";
+    } catch (std::out_of_range&) {
+        throw Error(MEIQUECACHE " file corrupted, some fundamental entry is missing.");
     }
     return 0;
 }
