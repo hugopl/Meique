@@ -594,6 +594,16 @@ int option(lua_State* L)
 
 int meiqueAutomoc(lua_State* L)
 {
+    static std::string mocPath;
+    if (mocPath.empty()) {
+        const StringList args = {"--variable=moc_location", "QtCore"};
+        OS::exec("pkg-config", args, &mocPath);
+        if (mocPath.empty()) {
+            Warn() << "moc not found via pkg-config, trying to use \"rcc\".";
+            mocPath = "moc";
+        }
+    }
+
     // possible extensions for header files
     static const char* headerExts[] = {
         "h", "hpp", "hxx", "H", 0
@@ -643,15 +653,14 @@ int meiqueAutomoc(lua_State* L)
                     break;
                 }
 
-                std::string mocPath = binDir + regex.group(1, line);
-                if (!OS::fileExists(mocPath) || script->cache()->isHashGroupOutdated(headerPath)) {
-                    // TODO: the moc executable MUST be configurable
+                std::string mocFilePath = binDir + regex.group(1, line);
+                if (!OS::fileExists(mocFilePath) || script->cache()->isHashGroupOutdated(headerPath)) {
                     StringList args;
                     args.push_back("-o");
-                    args.push_back(OS::normalizeFilePath(mocPath));
+                    args.push_back(OS::normalizeFilePath(mocFilePath));
                     args.push_back(OS::normalizeFilePath(headerPath));
                     Notice() << Blue << "Running moc for header of " << *it;
-                    if (!OS::exec("moc", args))
+                    if (!OS::exec(mocPath, args))
                         script->cache()->updateHashGroup(headerPath);
                     else
                         luaError(L, "Error running moc for file " + headerPath);
