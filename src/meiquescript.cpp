@@ -664,6 +664,16 @@ int meiqueAutomoc(lua_State* L)
 
 int meiqueQtResource(lua_State* L)
 {
+    static std::string rccPath;
+    if (rccPath.empty()) {
+        const StringList args = {"--variable=rcc_location", "QtCore"};
+        OS::exec("pkg-config", args, &rccPath);
+        if (rccPath.empty()) {
+            Warn() << "rcc not found via pkg-config, trying to use \"rcc\".";
+            rccPath = "rcc";
+        }
+    }
+
     // get target name
     lua_getfield(L, -1, "_name");
     std::string targetName = lua_tocpp<std::string>(L, -1);
@@ -688,13 +698,12 @@ int meiqueQtResource(lua_State* L)
         cppFiles.push_back(cppFile);
 
         if (!OS::fileExists(cppFile) || script->cache()->isHashGroupOutdated(qrcFile)) {
-            // TODO: the rcc path MUST be configurable/auto detected
             StringList args;
             args.push_back("-o");
             args.push_back(OS::normalizeFilePath(cppFile));
             args.push_back(OS::normalizeFilePath(qrcFile));
 
-            if (!OS::exec("rcc", args))
+            if (!OS::exec(rccPath, args))
                 script->cache()->updateHashGroup(qrcFile);
             else
                 luaError(L, "Error running rcc on file " + qrcFile);
