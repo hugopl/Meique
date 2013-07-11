@@ -56,6 +56,16 @@ OS::Command Gcc::compile(const std::string& fileName, const std::string& output,
             args.push_back("-ggdb");
     }
 
+    bool addWall = true;
+    for (const std::string& arg : args) {
+        if (arg.find("-W") == 0) {
+            addWall = false;
+            break;
+        }
+    }
+    if (addWall)
+        args.push_back("-Wall");
+
     // custom flags
     StringList flags = options->customFlags();
     std::copy(flags.begin(), flags.end(), std::back_inserter(args));
