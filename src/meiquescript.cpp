@@ -346,8 +346,6 @@ int findPackage(lua_State* L)
                 lua_getglobal(L, "_meiqueNone");
                 return 1;
             }
-        } else {
-            Notice() << "-- " << pkgName << Green << " found!";
         }
 
         // Get config options
@@ -391,6 +389,7 @@ int findPackage(lua_State* L)
         }
         // Store pkg information
         cache->setPackage(pkgName, pkgData);
+        Notice() << "-- " << pkgName << Green << " found!" << NoColor << " (" << pkgData["version"] << ')';
     }
 
     if (pkgData.size() < 2) { // optimal not found packages has size=1, a NOT_FOUND entry.
