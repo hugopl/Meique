@@ -563,11 +563,13 @@ int option(lua_State* L)
         // to options[name] = {description, defaultValue}
         lua_setfield(L, -2, name.c_str());
 
-        bool valueFound;
-        optionValue = script->commandLine()->arg(name, lua_tocpp<std::string>(L, 3), &valueFound);
-        // option provided by the user but without a value, probably a boolean option, sets it to true.
-        if (valueFound && optionValue.empty())
-            optionValue = "true";
+        if (script->commandLine()) {
+            bool valueFound;
+            optionValue = script->commandLine()->arg(name, lua_tocpp<std::string>(L, 3), &valueFound);
+            // option provided by the user but without a value, probably a boolean option, sets it to true.
+            if (valueFound && optionValue.empty())
+                optionValue = "true";
+        }
 
         lua_settop(L, 0);
     }
