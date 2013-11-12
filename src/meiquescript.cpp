@@ -470,7 +470,7 @@ int configureFile(lua_State* L)
     std::string line;
     while (in) {
         std::getline(in, line);
-        int pos = 0;
+        unsigned pos = 0;
         while (pos < line.size()) {
             if (regex.match(line, pos)) {
                 std::pair<int, int> idx = regex.group(1);
