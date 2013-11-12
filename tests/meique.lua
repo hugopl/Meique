@@ -12,6 +12,7 @@ local tests = [[
     two_targets_sharing_a_file
     static_linker_flags
     cyclic_dependency
+    global_flags
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

@@ -188,6 +188,12 @@ end
 -- Compilable target
 CompilableTarget = Target:new(Target)
 
+_meiqueGlobalPackage = {cflags = '',
+                        includePaths = '',
+                        libraryPaths = '',
+                        linkLibraries = '',
+                        linkerFlags = ''}
+
 function CompilableTarget:new(name)
     o = Target:new(name)
     setmetatable(o, self)
@@ -229,11 +235,17 @@ function CompilableTarget:addLinkLibraries(...)
     end
 end
 
-function CompilableTarget:addCustomFlags(flags)
-    local currentFlags = self._packages[1].cflags
-    local pkg = currentFlags..flags..' '
-    self._packages[1].cflags = pkg
+function addCustomFlags(self, flags)
+    local pkg = nil
+    if instanceOf(self, CompilableTarget) then
+        pkg = self._packages[1]
+    else
+        pkg = _meiqueGlobalPackage
+        flags = self
+    end
+    pkg.cflags = pkg.cflags..flags..' '
 end
+CompilableTarget.addCustomFlags = addCustomFlags
 
 function CompilableTarget:usePackage(package)
     abortIf(type(package) ~= 'table', 'Package table expected, got '..type(package))

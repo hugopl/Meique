@@ -1,0 +1,5 @@
+exe = Executable:new("exe")
+_meiqueNotNone:addCustomFlags("-DTEST_WILL_PASS1=1")
+addCustomFlags("-DTEST_WILL_PASS2=1")
+exe:addCustomFlags("-DTEST_WILL_PASS3=1")
+exe:addFiles("main.cpp")

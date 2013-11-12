@@ -169,6 +169,18 @@ StringList CompilableTarget::getFileDependencies(const std::string& source)
     return dependents;
 }
 
+static void readMeiquePackageOnStack(lua_State* L, CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
+{
+    StringMap map;
+    readLuaTable(L, lua_gettop(L), map);
+
+    compilerOptions->addIncludePaths(split(map["includePaths"]));
+    compilerOptions->addCustomFlag(map["cflags"]);
+    linkerOptions->addCustomFlag(map["linkerFlags"]);
+    linkerOptions->addLibraryPaths(split(map["libraryPaths"]));
+    linkerOptions->addLibraries(split(map["linkLibraries"]));
+}
+
 void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {
     const std::string sourcePath = script()->sourceDir() + directory();
@@ -176,23 +188,19 @@ void CompilableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOpt
     // Add source dir in the include path
     compilerOptions->addIncludePath(sourcePath);
 
+    // Add info from global package
+    lua_State* L = luaState();
+    lua_getglobal(L, "_meiqueGlobalPackage");
+    readMeiquePackageOnStack(L, compilerOptions, linkerOptions);
+
     // Get the package info
     getLuaField("_packages");
-    lua_State* L = luaState();
     // loop on all used packages
     int tableIndex = lua_gettop(L);
     lua_pushnil(L);  /* first key */
     while (lua_next(L, tableIndex) != 0) {
-        if (lua_istable(L, -1)) {
-            StringMap map;
-            readLuaTable(L, lua_gettop(L), map);
-
-            compilerOptions->addIncludePaths(split(map["includePaths"]));
-            compilerOptions->addCustomFlag(map["cflags"]);
-            linkerOptions->addCustomFlag(map["linkerFlags"]);
-            linkerOptions->addLibraryPaths(split(map["libraryPaths"]));
-            linkerOptions->addLibraries(split(map["linkLibraries"]));
-        }
+        if (lua_istable(L, -1))
+            readMeiquePackageOnStack(L, compilerOptions, linkerOptions);
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
     lua_pop(L, 1);
