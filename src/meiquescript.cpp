@@ -722,3 +722,12 @@ int meiqueQtResource(lua_State* L)
     target->addFiles(cppFiles);
     return 0;
 }
+
+StringList MeiqueScript::projectFiles()
+{
+    StringList projectFiles;
+    projectFiles.push_back("meique.lua");
+    lua_getglobal(m_L, "_meiqueProjectFiles");
+    readLuaList(m_L, lua_gettop(m_L), projectFiles);
+    return projectFiles;
+}

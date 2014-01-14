@@ -128,6 +128,11 @@ int Meique::dumpProject()
 
     std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
 
+    // Project files
+    StringList projectFiles = m_script->projectFiles();
+    for (std::string& file : projectFiles)
+        std::cout << "ProjectFile: " << OS::normalizeFilePath(m_script->sourceDir() + file) << "\n";
+
     for (Target* target : m_script->targets()) {
         if (!target->isCompilableTarget())
             continue;

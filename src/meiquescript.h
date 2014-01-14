@@ -51,6 +51,8 @@ public:
 
     const CmdLine* commandLine() const { return m_cmdLine; }
 
+    StringList projectFiles();
+
 private:
     LuaState m_L;
     OptionsMap m_options;

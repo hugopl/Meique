@@ -22,6 +22,7 @@ end
 Target = { }
 _meiqueAllTargets = {}
 _meiqueCurrentDir = {'.'}
+_meiqueProjectFiles = {}
 
 function currentDir()
     if #_meiqueCurrentDir > 1 then
@@ -92,6 +93,7 @@ function addSubdirectory(dir)
     local fileName = currentDir()..'meique.lua'
     local func, error = loadfile(fileName, fileName)
     abortIf(func == nil, error)
+    table.insert(_meiqueProjectFiles, fileName)
     func()
     table.remove(_meiqueCurrentDir)
 end
