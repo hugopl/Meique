@@ -4,7 +4,7 @@ configureFile("meiqueversion.h.in", "meiqueversion.h")
 
 meique = Executable:new("meique")
 GCC:addCustomFlags("-std=c++0x")
-meique:useTarget(lua)
+meique:use(lua)
 meique:addLinkLibraries("pthread")
 meique:addFiles([[
 main.cpp

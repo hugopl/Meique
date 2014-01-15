@@ -4,16 +4,21 @@ function abortIf(var, message)
     end
 end
 
+-- Note: This function return false if the metatable of some object is itself in the metatable chain.
 function instanceOf(instance, desiredType)
     if type(instance) ~= 'table' then
         return false
     end
-    mt = getmetatable(instance)
+    local mt = getmetatable(instance)
     while mt ~= nil do
         if mt == desiredType then
             return true
         end
-        mt = getmetatable(mt)
+        local submt = getmetatable(mt)
+        if submt == mt then
+            return false
+        end
+        mt = submt
     end
     return false
 end
@@ -249,15 +254,15 @@ function addCustomFlags(self, flags)
 end
 CompilableTarget.addCustomFlags = addCustomFlags
 
-function CompilableTarget:usePackage(package)
-    abortIf(type(package) ~= 'table', 'Package table expected, got '..type(package))
-    table.insert(self._packages, package)
-end
-
-function CompilableTarget:useTarget(target)
-    abortIf(not instanceOf(target, Library), 'You can only use library targets on other targets.')
-    table.insert(self._targets, target._name)
-    self:addDependency(target)
+function CompilableTarget:use(object)
+    if instanceOf(object, Library) then
+        table.insert(self._targets, object._name)
+        self:addDependency(object)
+    elseif type(object) == 'table' then
+        table.insert(self._packages, object)
+    else
+        error('Unknow use of CompilableTarget:use()', 0)
+    end
 end
 
 -- Executable

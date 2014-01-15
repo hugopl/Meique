@@ -8,5 +8,5 @@ lib:addFiles("lib.cpp foo.cpp")
 lib:addCustomFlags("-DTARGET_NAME='\"LIBRARY\"'")
 
 libUser = Executable:new("libUser")
-libUser:useTarget(lib)
+libUser:use(lib)
 libUser:addFile("main.cpp")
