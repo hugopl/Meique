@@ -261,7 +261,7 @@ function CompilableTarget:use(object)
     elseif type(object) == 'table' then
         table.insert(self._packages, object)
     else
-        error('Unknow use of CompilableTarget:use()', 0)
+        error('Expecet package or Library target on CompilableTarget:use(), got \''..type(object)..'\'', 0)
     end
 end
 
