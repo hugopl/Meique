@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,18 @@
 #include <cassert>
 #include "lua.h"
 #include "basictypes.h"
+
+#define LuaLeakCheck(L) LuaLeakCheckImpl _luaLeakChecker(__PRETTY_FUNCTION__, (L))
+class LuaLeakCheckImpl
+{
+public:
+    LuaLeakCheckImpl(const char* func, lua_State* L);
+    ~LuaLeakCheckImpl();
+private:
+    const char* m_func;
+    lua_State* m_L;
+    int m_stackSize;
+};
 
 template<typename List>
 void readLuaList(lua_State* L, int tableIndex, List& list);

@@ -7,6 +7,8 @@ meique:addFiles([[
 main.cpp
 meiqueregex.cpp
 meique.cpp
+nodetree.cpp
+nodevisitor.cpp
 cmdline.cpp
 logger.cpp
 hashgroups.cpp

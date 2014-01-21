@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "jobqueue.h"
 #include "graph.h"
 #include "meiqueversion.h"
+#include "nodetree.h"
 #include <vector>
 #include <sstream>
 #include "statemachine.h"
@@ -205,6 +206,8 @@ TargetList Meique::getChosenTargets()
 
 int Meique::buildTargets()
 {
+//    NodeTree tree(m_script->luaState(), getChosenTargets().back()->name());
+//    tree.expandTargetNode();
     for (Target* target : getChosenTargets())
         createJobQueues(m_script, target);
 
