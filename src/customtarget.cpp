@@ -17,7 +17,6 @@
 */
 
 #include "customtarget.h"
-#include "jobqueue.h"
 #include "lua.h"
 #include "luajob.h"
 #include "meiquecache.h"
@@ -25,6 +24,7 @@
 #include "meiquescript.h"
 #include "luacpputil.h"
 
+#if 0
 JobQueue* CustomTarget::doRun(Compiler* compiler)
 {
     MeiqueCache* mcache = cache();
@@ -80,6 +80,7 @@ JobQueue* CustomTarget::doRun(Compiler* compiler)
     }
     return queue;
 }
+#endif
 
 void CustomTarget::jobFinished(Job* job)
 {

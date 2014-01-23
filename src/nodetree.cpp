@@ -21,6 +21,8 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <memory>
+#include <list>
 
 #include "nodevisitor.h"
 #include "luacpputil.h"
@@ -28,6 +30,12 @@
 
 Node::Node(const std::string& name)
     : name(strdup(name.c_str()))
+    , status(Pristine)
+    , targetType(0)
+    , isTarget(false)
+    , hasCachedCompilerFlags(false)
+    , shouldBuild(false)
+    , isFake(false)
 {
 }
 
@@ -36,7 +44,7 @@ Node::~Node()
     free(name);
 }
 
-NodeTree::NodeTree(lua_State* L, const std::string& root)
+NodeTree::NodeTree(lua_State* L)
     : m_L(L)
 {
     buildNotExpandedTree();
@@ -58,7 +66,7 @@ void NodeTree::dump(const char* fileName) const
     out << "digraph nodes {\n";
 
     EdgeVisitor(*this, [&](Node* parent, Node* child) {
-        out << parent->name << " -> " << child->name << "\n";
+        out << '"' << parent->name << "\" -> \"" << child->name << "\"\n";
     });
 
     out << "}\n";
@@ -74,24 +82,53 @@ NodeTree::Iterator NodeTree::end() const
     return NodeTree::Iterator(m_targetNodes.end());
 }
 
-void NodeTree::expandTargetNode(const std::string& /*target*/)
+void NodeTree::expandTargetNode(Node* target)
 {
     LuaLeakCheck(m_L);
 
-    // TODO: Use target to expand selected nodes instead of all nodes
-    for (Node* targetNode : *this) {
-        pushTarget(targetNode->name);
-        lua_getfield(m_L, -1, "_files");
-        StringList files;
-        readLuaList(m_L, lua_gettop(m_L), files);
-        for (std::string& file : files) {
-            Node* fileNode = new Node(file);
-            fileNode->parents.push_front(targetNode);
-            targetNode->children.push_front(fileNode);
-        }
-        lua_pop(m_L, 3);
+    if (target->status > Node::Pristine)
+        return;
+
+    target->status = Node::Expanded;
+
+    if (target->isFake) {
+        for (Node* child : target->children)
+            expandTargetNode(child);
+        return;
     }
-    dump();
+
+    // Expand the dependencies first
+    luaPushTarget(target);
+    lua_getfield(m_L, -1, "_deps");
+    StringList deps;
+    readLuaList(m_L, lua_gettop(m_L), deps);
+    lua_pop(m_L, 2);
+    for (std::string& dep : deps)
+        expandTargetNode(dep);
+
+    if (target->isCustomTarget())
+        return;
+
+    // populate the node
+    luaPushTarget(target);
+    lua_getfield(m_L, -1, "_files");
+    StringList files;
+    readLuaList(m_L, lua_gettop(m_L), files);
+    for (std::string& file : files) {
+        Node* fileNode = new Node(file);
+        fileNode->parents.push_back(target);
+        target->children.push_back(fileNode);
+    }
+    lua_pop(m_L, 2);
+}
+
+void NodeTree::expandTargetNode(const std::string& target)
+{
+    Node* targetNode = m_targetNodes[target];
+    if (!targetNode)
+        throw Error("Unknow target \"" + target + "\".");
+
+    expandTargetNode(targetNode);
 }
 
 void NodeTree::buildNotExpandedTree()
@@ -103,23 +140,33 @@ void NodeTree::buildNotExpandedTree()
     int tableIndex = lua_gettop(m_L);
     lua_pushnil(m_L);  /* first key */
     while (lua_next(m_L, tableIndex) != 0) {
-        // Get target type
+        // Get target name
         lua_getfield(m_L, -1, "_name");
         std::string targetName = lua_tocpp<std::string>(m_L, -1);
-        m_targetNodes[targetName] = new Node(targetName);
-        lua_pop(m_L, 2);
+        Node* node = new Node(targetName);
+        node->isTarget = true;
+
+        // Get target type
+        lua_getfield(m_L, -2, "_type");
+        node->targetType = lua_tocpp<int>(m_L, -1);
+
+        m_targetNodes[targetName] = node;
+        lua_pop(m_L, 3);
     }
     lua_pop(m_L, 1);
+
+    if (m_targetNodes.empty())
+        throw Error("No targets found in this meique.lua file.");
 
     // Connect the targets regarding their dependencies
     for (auto pair : m_targetNodes) {
         const std::string& target = pair.first;
-        pushTarget(target);
+        luaPushTarget(target);
         // Get dependencies
         lua_getfield(m_L, -1, "_deps");
         StringList deps;
         readLuaList(m_L, lua_gettop(m_L), deps);
-        lua_pop(m_L, 3);
+        lua_pop(m_L, 2);
 
         for (const std::string& dep : deps) {
             Node*& targetNode = m_targetNodes[target];
@@ -128,10 +175,60 @@ void NodeTree::buildNotExpandedTree()
             depNode->parents.push_front(targetNode);
         }
     }
+
+    // Connect trees to create a single tree
+    std::list<Node*> roots;
+    for (auto pair : m_targetNodes) {
+        Node*& node = pair.second;
+        if (node->parents.empty())
+            roots.push_back(node);
+    }
+
+    auto numRoots = roots.size();
+    // FIXME: Replace this by a proper circular dependency check!
+    if (!numRoots) {
+        throw Error("Circular dependency found!");
+    } else if (numRoots == 1) {
+        m_root = roots.front();
+    } else {
+        m_root = new Node("<fakeroot>");
+        m_root->isFake = true;
+        for (Node* root : roots) {
+            m_root->children.push_front(root);
+            root->parents.push_front(m_root);
+        }
+    }
 }
 
-void NodeTree::pushTarget(const std::string& target)
+void NodeTree::luaPushTarget(const Node* node)
+{
+    luaPushTarget(node->name);
+}
+
+void NodeTree::luaPushTarget(const std::string& target)
 {
     lua_getglobal(m_L, "_meiqueAllTargets");
     lua_getfield(m_L, -1, target.c_str());
+    lua_remove(m_L, -2);
+}
+
+NodeGuard* NodeTree::createNodeGuard(Node* node)
+{
+    return new NodeGuard(this, node, m_mutex);
+}
+
+NodeGuard::NodeGuard(NodeTree* tree, Node* node, std::mutex& mutex)
+    : m_tree(tree)
+    , m_node(node)
+    , m_mutex(mutex)
+{
+}
+
+NodeGuard::~NodeGuard()
+{
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        m_node->status = Node::Built;
+    }
+    m_tree->onTreeChange();
 }

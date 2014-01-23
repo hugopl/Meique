@@ -23,7 +23,6 @@
 class MeiqueCache;
 struct lua_State;
 class MeiqueScript;
-class JobQueue;
 class Compiler;
 
 /**
@@ -42,7 +41,7 @@ public:
     /// Add files to the target
     void addFiles(const StringList& files);
     /// Get the target job queue
-    JobQueue* run(Compiler* compiler);
+//    JobQueue* run(Compiler* compiler);
     /// Install all target files
     void install();
     void uninstall();
@@ -61,7 +60,7 @@ protected:
     void getLuaField(const char* field);
     void setLuaField(const char* field);
     /// Method executed to generate the target jobs.
-    virtual JobQueue* doRun(Compiler* compiler);
+//    virtual JobQueue* doRun(Compiler* compiler);
     virtual void doTargetInstall(const std::string& destDir) {}
     virtual void doTargetUninstall(const std::string& destDir) {}
 private:

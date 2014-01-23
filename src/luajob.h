@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,7 +25,7 @@ class LuaJob : public Job
 {
 public:
     /// Pops a lua_function from stack, store in the lua registry and execute them later
-    LuaJob(lua_State* L, int args);
+    LuaJob(NodeGuard* nodeGuard, lua_State* L, int args);
 protected:
     virtual int doRun();
 private:

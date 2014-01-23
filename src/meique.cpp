@@ -24,7 +24,7 @@
 #include "target.h"
 #include "compilabletarget.h"
 #include "jobmanager.h"
-#include "jobqueue.h"
+#include "jobfactory.h"
 #include "graph.h"
 #include "meiqueversion.h"
 #include "nodetree.h"
@@ -54,18 +54,16 @@ enum {
     CleanAction
 };
 
-Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0), m_firstRun(false)
+Meique::Meique(int argc, const char** argv)
+    : m_args(argc, argv)
+    , m_script(nullptr)
+    , m_firstRun(false)
 {
-    int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
-    if (jobLimit <= 0)
-        throw Error("You should use a number greater than zero in -j option.");
-    m_jobManager->setJobCountLimit(jobLimit);
 }
 
 Meique::~Meique()
 {
     delete m_script;
-    delete m_jobManager;
 }
 
 int Meique::checkArgs()
@@ -204,15 +202,31 @@ TargetList Meique::getChosenTargets()
     return targets;
 }
 
+StringList Meique::getChosenTargetNames()
+{
+    int ntargets = m_args.numberOfFreeArgs();
+    StringList targetNames;
+    for (int i = m_firstRun ? 1 : 0; i < ntargets; ++i)
+        targetNames.push_back(m_args.freeArg(i));
+    return targetNames;
+}
+
 int Meique::buildTargets()
 {
-//    NodeTree tree(m_script->luaState(), getChosenTargets().back()->name());
-//    tree.expandTargetNode();
-    for (Target* target : getChosenTargets())
-        createJobQueues(m_script, target);
+    int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
+    if (jobLimit <= 0)
+        throw Error("You should use a number greater than zero in -j option.");
 
-    if (!m_jobManager->processJobs())
+    NodeTree tree(m_script->luaState());
+    JobManager jobManager(jobLimit);
+    JobFactory jobFactory(*m_script, tree);
+
+    // FIXME: Remove unneeded targets from tree before set the fake root
+    jobFactory.setRoot(tree.root());
+    jobManager.onNeedMoreJobs = std::bind(&JobFactory::createJob, &jobFactory);
+    if (!jobManager.run())
         throw Error("Build error.");
+
     return 0;
 }
 
@@ -378,6 +392,7 @@ int Meique::showHelp()
 
 void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
 {
+#if 0
     if (mainTarget->wasRan())
         return;
 
@@ -429,4 +444,5 @@ void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
         for (Target* dep : target->dependencies())
             queues[depIdx]->addDependency(queues[nodeMap[dep]]);
     }
+#endif
 }

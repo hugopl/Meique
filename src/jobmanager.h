@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,30 +18,29 @@
 
 #ifndef JOBMANAGER_H
 #define JOBMANAGER_H
+
 #include <list>
-#include <pthread.h>
+#include <functional>
 #include <map>
-#include "joblistenner.h"
+#include <pthread.h>
 
 class Job;
 class JobQueue;
 
-class JobManager : public JobListenner
+class JobManager
 {
 public:
-    JobManager();
+    JobManager(unsigned maxJobRunning);
     ~JobManager();
-    void setJobCountLimit(int n) { m_maxJobsRunning = n; }
-    void addJobQueue(JobQueue* queue);
-    bool processJobs();
 
-    void jobFinished(Job* job);
+    std::function<Job*()> onNeedMoreJobs;
+
+    bool run();
 private:
-    std::list<JobQueue*> m_queues;
-    int m_maxJobsRunning;
-    int m_jobsRunning;
-    int m_jobsProcessed;
-    int m_jobCount;
+    unsigned m_maxJobsRunning;
+    unsigned m_jobsRunning;
+    unsigned m_jobsProcessed;
+    unsigned m_jobCount;
     int m_jobsNotIdle;
     bool m_errorOccured;
     pthread_mutex_t m_jobsRunningMutex;
@@ -49,6 +48,7 @@ private:
     pthread_cond_t m_allDoneCond;
 
     void printReportLine(const Job*) const;
+    void onJobFinished(int result);
 
     JobManager(const JobManager&);
     JobManager& operator=(const JobManager&);

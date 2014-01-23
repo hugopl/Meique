@@ -29,7 +29,6 @@
 #include "compileroptions.h"
 #include "linkeroptions.h"
 #include "stdstringsux.h"
-#include "jobqueue.h"
 #include "oscommandjob.h"
 #include "meiquescript.h"
 #include "meiqueregex.h"
@@ -47,6 +46,7 @@ CompilableTarget::~CompilableTarget()
     delete m_linkerOptions;
 }
 
+#if 0
 JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList* objects)
 {
     StringList files = this->files();
@@ -96,6 +96,8 @@ JobQueue* CompilableTarget::createCompilationJobs(Compiler* compiler, StringList
 
     return queue;
 }
+#endif
+
 void CompilableTarget::jobFinished(Job* job)
 {
     if (!job->result())

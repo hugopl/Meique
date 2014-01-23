@@ -20,15 +20,15 @@
 #define CUSTOMTARGET_H
 
 #include "target.h"
-#include "joblistenner.h"
+class Job;
 
-class CustomTarget : public Target, public JobListenner
+class CustomTarget : public Target
 {
 public:
     CustomTarget(const std::string& targetName, MeiqueScript* script) : Target(targetName, script) {}
     void jobFinished(Job* job);
 protected:
-    JobQueue* doRun(Compiler* compiler);
+//    JobQueue* doRun(Compiler* compiler);
 private:
     // job => [master1, master2, ...]
     std::map<Job*, StringList> m_job2Sources;

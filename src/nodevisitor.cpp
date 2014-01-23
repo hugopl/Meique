@@ -20,16 +20,22 @@
 
 #include "logger.h"
 
-NodeVisitor::NodeVisitor(const NodeTree &tree, std::function<void (Node *)> visitor)
-    : m_tree(tree)
-    , m_visitor(visitor)
+NodeVisitor::NodeVisitor(const NodeTree& tree, std::function<void (Node *)> visitor)
+    : m_visitor(visitor)
 {
-    for (Node* parentNode : m_tree) {
+    for (Node* parentNode : tree) {
         if (m_status[parentNode] == NotVisited) {
             visitNode(parentNode);
         }
     }
 }
+
+NodeVisitor::NodeVisitor(Node *root, std::function<void (Node *)> visitor)
+    : m_visitor(visitor)
+{
+    visitNode(root);
+}
+
 
 void NodeVisitor::visitNode(Node* node)
 {

@@ -27,6 +27,7 @@ class NodeVisitor
 {
 public:
     NodeVisitor(const NodeTree& tree, std::function<void(Node*)> visitor);
+    NodeVisitor(Node* root, std::function<void(Node*)> visitor);
 
 private:
     void visitNode(Node* node);
@@ -37,7 +38,6 @@ private:
         Visited
     };
 
-    const NodeTree& m_tree;
     std::function<void(Node*)> m_visitor;
     std::unordered_map<Node*, VisitStatus> m_status;
 };

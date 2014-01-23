@@ -19,7 +19,6 @@
 #include "target.h"
 #include "logger.h"
 #include "os.h"
-#include "jobqueue.h"
 #include "luacpputil.h"
 #include "lua.h"
 #include "meiquescript.h"
@@ -37,7 +36,7 @@ Target::Target(const std::string& name, MeiqueScript* script) : m_name(name), m_
 Target::~Target()
 {
 }
-
+#if 0
 JobQueue* Target::run(Compiler* compiler)
 {
     lua_State* L = luaState();
@@ -70,6 +69,7 @@ JobQueue* Target::doRun(Compiler*)
 {
     return new JobQueue;
 }
+#endif
 
 TargetList Target::dependencies()
 {

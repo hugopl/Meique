@@ -89,6 +89,20 @@ void readLuaTable(lua_State* L, int tableIndex, Map& map)
     }
 }
 
+template<typename List>
+void readLuaTableKeys(lua_State* L, int tableIndex, List& list)
+{
+    assert(tableIndex >= 0);
+    assert(lua_istable(L, tableIndex));
+
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, tableIndex) != 0) {
+        typename List::value_type key = lua_tocpp<typename List::value_type>(L, -2);
+        list.push_back(key);
+        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+}
+
 void createLuaTable(lua_State* L, const StringMap& map);
 void createLuaArray(lua_State* L, const StringList& list);
 

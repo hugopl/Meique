@@ -29,10 +29,10 @@ customtarget.cpp
 os_unix.cpp
 filehash.cpp
 job.cpp
+jobfactory.cpp
+jobmanager.cpp
 oscommandjob.cpp
 luajob.cpp
-jobqueue.cpp
-jobmanager.cpp
 graph.cpp
 luacpputil.cpp
 lualocker.cpp

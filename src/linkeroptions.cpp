@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -47,4 +47,12 @@ void LinkerOptions::addLibraryPath(const std::string& libraryPath)
 void LinkerOptions::addLibraryPaths(const StringList& libraryPaths)
 {
     std::copy(libraryPaths.begin(), libraryPaths.end(), std::back_inserter(m_libraryPaths));
+}
+
+void LinkerOptions::merge(const LinkerOptions& other)
+{
+    copy(m_libraries, other.m_libraries);
+    copy(m_staticLibraries, other.m_staticLibraries);
+    copy(m_libraryPaths, other.m_libraryPaths);
+    copy(m_customFlags, other.m_customFlags);
 }

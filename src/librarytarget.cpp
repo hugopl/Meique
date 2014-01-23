@@ -18,7 +18,6 @@
 
 #include "librarytarget.h"
 #include "os.h"
-#include "jobqueue.h"
 #include "compiler.h"
 #include "oscommandjob.h"
 #include "linkeroptions.h"
@@ -50,6 +49,7 @@ LibraryTarget::LibraryTarget(const std::string& targetName, MeiqueScript* script
     setOutputFileName(outputFileName);
 }
 
+#if 0
 JobQueue* LibraryTarget::doRun(Compiler* compiler)
 {
     StringList objects;
@@ -66,6 +66,7 @@ JobQueue* LibraryTarget::doRun(Compiler* compiler)
     }
     return queue;
 }
+#endif
 
 void LibraryTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {

@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@ public:
     void enableDebugInfo() { m_debugInfoEnabled = true; }
     bool debugInfoEnabled() const { return m_debugInfoEnabled; }
     void normalize();
+
+    void merge(const CompilerOptions& other);
 private:
     StringList m_includePaths;
     StringList m_defines;
@@ -44,7 +46,7 @@ private:
     bool m_compileForLibrary;
     bool m_debugInfoEnabled;
 
-    CompilerOptions(const CompilerOptions&);
+    CompilerOptions(const CompilerOptions&) = delete;
 };
 
 #endif // COMPILEROPTIONS_H

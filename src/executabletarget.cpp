@@ -17,7 +17,6 @@
 */
 
 #include "executabletarget.h"
-#include "jobqueue.h"
 #include "os.h"
 #include "compiler.h"
 #include "oscommandjob.h"
@@ -30,6 +29,7 @@ ExecutableTarget::ExecutableTarget(const std::string& targetName, MeiqueScript* 
     setOutputFileName(cache()->compiler()->nameForExecutable(name()));
 }
 
+#if 0
 JobQueue* ExecutableTarget::doRun(Compiler* compiler)
 {
     StringList objects;
@@ -46,6 +46,7 @@ JobQueue* ExecutableTarget::doRun(Compiler* compiler)
     }
     return queue;
 }
+#endif
 
 void ExecutableTarget::fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions)
 {

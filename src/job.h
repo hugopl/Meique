@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -19,55 +19,44 @@
 #ifndef JOB_H
 #define JOB_H
 #include "basictypes.h"
-#include <pthread.h>
+#include <functional>
 
-class JobListenner;
+class NodeGuard;
 
 class Job
 {
 public:
-    enum Status {
-        Idle,
-        Scheduled,
-        Running,
-        FinishedWithSuccess,
-        FinishedButFailed
-    };
-
     enum Type {
         Compilation,
         Linking,
         CustomTarget
     };
 
-    Job();
-    virtual ~Job() {}
+    Job(NodeGuard* nodeGuard);
+    virtual ~Job();
     void run();
     void setName(const std::string& name) { m_name = name; }
     std::string name() const { return m_name; }
-    void setType(Type type) { m_type = type; }
-    Type type() const { return m_type; }
-    Status status() const;
-    void setDependencies(const std::list<Job*>& jobList) { m_dependencies = jobList; }
-    bool hasShowStoppers() const;
-    void addJobListenner(JobListenner* listenner);
     int result() const { return m_result; }
+
+    void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
+    std::string workingDirectory() { return m_workingDir; }
+
+    std::function<void(int)> onFinished;
+
 protected:
     virtual int doRun() = 0;
 private:
     std::string m_name;
-    std::list<Job*> m_dependencies;
-    Status m_status;
-    Type m_type;
-    mutable pthread_mutex_t m_statusMutex;
-    pthread_t m_thread;
-    std::list<JobListenner*> m_listenners;
     int m_result;
+    std::string m_workingDir;
 
-    Job(const Job&);
-    Job& operator=(const Job&);
+    NodeGuard* m_nodeGuard;
 
-    friend void* initJobThread(void*);
+    Job(const Job&) = delete;
+    Job& operator=(const Job&) = delete;
+
+    friend void initJobThread(Job*);
 };
 
 #endif // JOB_H

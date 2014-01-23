@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ public:
     MeiqueCache* cache() { return m_cache; }
     Target* getTarget(const std::string& name) const;
     TargetList targets() const;
+    StringList targetNames();
     lua_State* luaState() { return m_L; }
 
     std::list<StringList> getTests(const std::string& pattern);

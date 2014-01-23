@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -41,6 +41,12 @@ void deleteAll(T& t)
     typename T::iterator it = t.begin();
     for (; it != t.end(); ++it)
         delete *it;
+}
+
+template<typename T>
+void copy(T& dest, const T& source)
+{
+    std::copy(source.begin(), source.end(), std::back_inserter(dest));
 }
 
 #endif

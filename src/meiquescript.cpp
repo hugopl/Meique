@@ -311,6 +311,17 @@ int requiresMeique(lua_State* L)
     return 0;
 }
 
+StringList MeiqueScript::targetNames()
+{
+    LuaLeakCheck(m_L);
+
+    lua_getglobal(m_L, "_meiqueAllTargets");
+    StringList targets;
+    readLuaTableKeys(m_L, lua_gettop(m_L), targets);
+    lua_pop(m_L, 1);
+    return targets;
+}
+
 struct StrFilter
 {
     StrFilter(const std::string& garbage) : m_garbage(garbage) {}

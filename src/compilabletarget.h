@@ -20,12 +20,12 @@
 #define COMPILABLETARGET_H
 
 #include "target.h"
-#include "joblistenner.h"
+#include "job.h"
 
 class LinkerOptions;
 class CompilerOptions;
 
-class CompilableTarget : public Target, public JobListenner
+class CompilableTarget : public Target
 {
 public:
     CompilableTarget(const std::string& targetName, MeiqueScript* script);
@@ -39,7 +39,7 @@ public:
     StringList includeDirectories();
     virtual bool isCompilableTarget() const { return true; }
 protected:
-    JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
+//    JobQueue* createCompilationJobs(Compiler* compiler, StringList* objects);
     virtual void fillCompilerAndLinkerOptions(CompilerOptions* compilerOptions, LinkerOptions* linkerOptions);
     virtual void doTargetInstall(const std::string& destDir);
     virtual void doTargetUninstall(const std::string& destDir);
