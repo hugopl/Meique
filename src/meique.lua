@@ -1,7 +1,4 @@
 
-meiqueVersion = "0.9"
-configureFile("meiqueversion.h.in", "meiqueversion.h")
-
 meique = Executable:new("meique")
 GCC:addCustomFlags("-std=c++0x")
 meique:use(lua)

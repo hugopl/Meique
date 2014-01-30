@@ -13,6 +13,7 @@ local tests = [[
     static_linker_flags
     cyclic_dependency
     global_flags
+    requires_meique
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

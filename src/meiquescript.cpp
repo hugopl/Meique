@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 #include <cassert>
 #include <algorithm>
 #include <fstream>
+#include <sstream>
 
 #include "meiquescript.h"
 #include "cmdline.h"
@@ -40,6 +41,7 @@
 #include "stdstringsux.h"
 #include "executabletarget.h"
 #include "meiqueregex.h"
+#include "meiqueversion.h"
 
 enum TargetTypes {
     EXECUTABLE_TARGET = 1,
@@ -52,6 +54,7 @@ enum TargetTypes {
 // Key used to store the meique options, see option function
 #define MEIQUEOPTIONS_KEY "MeiqueOptions"
 
+static int requiresMeique(lua_State* L);
 static int findPackage(lua_State* L);
 static int copyFile(lua_State* L);
 static int configureFile(lua_State* L);
@@ -167,6 +170,7 @@ void MeiqueScript::exportApi()
 
     enableBuitinScopes();
 
+    lua_register(m_L, "requiresMeique", &requiresMeique);
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
     lua_register(m_L, "copyFile", &copyFile);
@@ -276,6 +280,35 @@ TargetList MeiqueScript::targets() const
     for (; it != m_targets.end(); ++it)
         list.push_back(it->second);
     return list;
+}
+
+static bool checkVersion(const std::string& version)
+{
+    std::istringstream s(version);
+    int component;
+    s >> component;
+    if (component > MEIQUE_MAJOR_VERSION)
+        return false;
+    char dot;
+    s >> dot;
+    if (dot != '.')
+        return false;
+    s >> component;
+    if (component > MEIQUE_MINOR_VERSION)
+        return false;
+    return true;
+}
+
+int requiresMeique(lua_State* L)
+{
+    int nargs = lua_gettop(L);
+    if (nargs != 1)
+        luaError(L, "requiresMeique(version) called with wrong number of arguments.");
+
+    std::string requiredVersion = lua_tocpp<std::string>(L, -1);
+    if (!checkVersion(requiredVersion))
+        luaError(L, "This project requires a newer version of meique (" + requiredVersion + "), you are using version " MEIQUE_VERSION);
+    return 0;
 }
 
 struct StrFilter
