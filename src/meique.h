@@ -34,8 +34,6 @@ private:
     MeiqueScript* m_script;
     bool m_firstRun;
 
-    void createJobQueues(const MeiqueScript* script, Target* mainTarget);
-
     TargetList getChosenTargets();
     StringList getChosenTargetNames();
 
