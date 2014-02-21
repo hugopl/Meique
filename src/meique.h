@@ -28,13 +28,11 @@ public:
     Meique(int argc, const char** argv);
     ~Meique();
     void exec();
-    TargetList targets;
 private:
     CmdLine m_args;
     MeiqueScript* m_script;
     bool m_firstRun;
 
-    TargetList getChosenTargets();
     StringList getChosenTargetNames();
 
     // program states

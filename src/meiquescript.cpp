@@ -769,9 +769,215 @@ int meiqueQtResource(lua_State* L)
 
 StringList MeiqueScript::projectFiles()
 {
+    LuaLeakCheck(m_L);
+
     StringList projectFiles;
     projectFiles.push_back("meique.lua");
     lua_getglobal(m_L, "_meiqueProjectFiles");
     readLuaList(m_L, lua_gettop(m_L), projectFiles);
+    lua_pop(m_L, 1);
     return projectFiles;
+}
+
+void MeiqueScript::luaPushTarget(const std::string& target)
+{
+    lua_getglobal(m_L, "_meiqueAllTargets");
+    lua_getfield(m_L, -1, target.c_str());
+    lua_remove(m_L, -2);
+}
+
+void MeiqueScript::installTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+
+        lua_getfield(m_L, -1, "_installFiles");
+        std::list<StringList> installDirectives;
+        readLuaList(m_L, lua_gettop(m_L), installDirectives);
+        lua_pop(m_L, 1);
+
+        if (installDirectives.empty())
+            continue;
+
+        Notice() << Cyan << "Installing " << target << "...";
+
+        for (const StringList& directive : installDirectives) {
+            const int directiveSize = directive.size();
+            if (!directiveSize)
+                continue;
+
+            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            const std::string srcDir = m_cache->sourceDir() + directory;
+
+            if (directiveSize == 1) { // Target installation
+                lua_getfield(m_L, -1, "_output");
+                std::string output = lua_tocpp<std::string>(m_L, -1);
+                lua_pop(m_L, 1);
+
+                std::string targetFile = OS::normalizeFilePath(directory + output);
+                OS::install(targetFile, destDir);
+            } else if (directiveSize > 1) { // custom file install
+                for (const std::string& item : directive)
+                    OS::install(srcDir + item, destDir);
+            }
+        }
+    }
+}
+
+void MeiqueScript::uninstallTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_installFiles");
+        std::list<StringList> installDirectives;
+        readLuaList(m_L, lua_gettop(m_L), installDirectives);
+        lua_pop(m_L, 1);
+
+        if (installDirectives.empty())
+            continue;
+
+        Notice() << Cyan << "Uninstalling " << target << "...";
+
+        for (const StringList& directive : installDirectives) {
+            const int directiveSize = directive.size();
+            if (!directiveSize)
+                continue;
+
+            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+
+            if (directiveSize == 1) { // Target installation
+                lua_getfield(m_L, -1, "_output");
+                std::string output = lua_tocpp<std::string>(m_L, -1);
+                lua_pop(m_L, 1);
+                OS::uninstall(destDir + output);
+            } else if (directiveSize > 1) { // custom file install
+                for (const std::string& item : directive)
+                    OS::uninstall(destDir + OS::baseName(item));
+            }
+        }
+    }
+}
+
+void MeiqueScript::cleanTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+        // get sources
+        lua_getfield(m_L, -1, "_files");
+        StringList files;
+        readLuaList(m_L, lua_gettop(m_L), files);
+        lua_pop(m_L, 1);
+
+        for (std::string file : files) {
+            file += "." + target + ".o";
+            if (file[0] != '/')
+                file.insert(0, buildDir() + directory);
+            OS::rm(file);
+        }
+    }
+}
+
+StringList MeiqueScript::getTargetIncludeDirectories(const std::string& target)
+{
+    LuaLeakCheck(m_L);
+
+    luaPushTarget(target);
+    LuaAutoPop autoPop(m_L);
+
+    StringList list;
+    {
+        lua_getfield(m_L, -1, "_type");
+        LuaAutoPop autoPop(m_L);
+        if (lua_tocpp<int>(m_L, -1) == CUSTOM_TARGET)
+            return list;
+    }
+
+    // explicit include directories
+    lua_getfield(m_L, -1, "_incDirs");
+    readLuaList(m_L, lua_gettop(m_L), list);
+    lua_pop(m_L, 1);
+    list.sort();
+
+    lua_getfield(m_L, -1, "_packages");
+    // loop on all used packages
+    int tableIndex = lua_gettop(m_L);
+    lua_pushnil(m_L);  /* first key */
+    while (lua_next(m_L, tableIndex) != 0) {
+        if (lua_istable(m_L, -1)) {
+            StringMap map;
+            readLuaTable(m_L, lua_gettop(m_L), map);
+            StringList incDirs(split(map["includePaths"]));
+            list.merge(incDirs);
+        }
+        lua_pop(m_L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+    lua_pop(m_L, 1);
+
+    return list;
+}
+
+void MeiqueScript::dumpProject(std::ostream& output)
+{
+    LuaLeakCheck(m_L);
+
+    const std::string sourceDir = m_cache->sourceDir();
+    output << "Project: " << OS::baseName(sourceDir) << std::endl;
+
+    // Project files
+    for (std::string& file : projectFiles())
+        output << "ProjectFile: " << OS::normalizeFilePath(sourceDir + file) << "\n";
+
+    for (std::string& target : targetNames()) {
+        std::cout << "Target: " << target << std::endl;
+
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+        // get sources
+        lua_getfield(m_L, -1, "_files");
+        StringList files;
+        readLuaList(m_L, lua_gettop(m_L), files);
+        lua_pop(m_L, 1);
+
+        for (const std::string& fileName : files) {
+            if (fileName.empty())
+                continue;
+            std::string absPath = fileName[0] == '/' ? fileName : sourceDir + directory + fileName;
+            absPath = OS::normalizeFilePath(absPath);
+            output << "File: " << absPath << std::endl;
+            auto lastDot = absPath.find_last_of(".");
+            if (lastDot != std::string::npos) {
+                absPath.replace(lastDot, absPath.size() - lastDot, ".h");
+                if (OS::fileExists(absPath))
+                    output << "File: " << absPath << std::endl;
+            }
+
+//          TODO: Defines
+        }
+
+        output << "Include: " << OS::normalizeDirPath(sourceDir + directory) << std::endl;
+        for (const std::string& inc : getTargetIncludeDirectories(target))
+            output << "Include: " << OS::normalizeDirPath(inc) << std::endl;
+    }
 }

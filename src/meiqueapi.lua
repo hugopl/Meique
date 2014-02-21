@@ -272,6 +272,7 @@ function Executable:new(name)
     setmetatable(o, self)
     self.__index = self
     o._type = 1
+    o._output = name
     return o
 end
 
@@ -285,6 +286,11 @@ function Library:new(name, libType)
     self.__index = self
     o._libType = libType or SHARED
     o._type = 2
+    if o._libType == SHARED then
+        o._output = name..".so"
+    else
+        o._output = name..".a"
+    end
     return o
 end
 

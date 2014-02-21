@@ -21,8 +21,6 @@
 #include "meiquescript.h"
 #include "compiler.h"
 #include "compilerfactory.h"
-#include "target.h"
-#include "compilabletarget.h"
 #include "jobmanager.h"
 #include "jobfactory.h"
 #include "graph.h"
@@ -125,39 +123,7 @@ int Meique::dumpProject()
     m_script->setBuildDir("./");
     m_script->exec();
 
-    std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
-
-    // Project files
-    StringList projectFiles = m_script->projectFiles();
-    for (std::string& file : projectFiles)
-        std::cout << "ProjectFile: " << OS::normalizeFilePath(m_script->sourceDir() + file) << "\n";
-
-    for (Target* target : m_script->targets()) {
-        if (!target->isCompilableTarget())
-            continue;
-        CompilableTarget* ctarget = static_cast<CompilableTarget*>(target);
-
-        std::cout << "Target: " << ctarget->name() << std::endl;
-        for (const std::string& fileName : target->files()) {
-            if (fileName.empty())
-                continue;
-            std::string absPath = fileName[0] == '/' ? fileName : m_script->sourceDir() + target->directory() + fileName;
-            absPath = OS::normalizeFilePath(absPath);
-            std::cout << "File: " << absPath << std::endl;
-            auto lastDot = absPath.find_last_of(".");
-            if (lastDot != std::string::npos) {
-                absPath.replace(lastDot, absPath.size() - lastDot, ".h");
-                if (OS::fileExists(absPath))
-                    std::cout << "File: " << absPath << std::endl;
-            }
-
-            // TODO: Defines
-        }
-
-        std::cout << "Include: " << OS::normalizeDirPath(m_script->sourceDir() + target->directory()) << std::endl;
-        for (const std::string& inc : ctarget->includeDirectories())
-            std::cout << "Include: " << OS::normalizeDirPath(inc) << std::endl;
-    }
+    m_script->dumpProject(std::cout);
     return 0;
 }
 
@@ -179,27 +145,6 @@ int Meique::getBuildAction()
         return UninstallAction;
     else
         return BuildAction;
-}
-
-TargetList Meique::getChosenTargets()
-{
-    int ntargets = m_args.numberOfFreeArgs();
-    StringList targetNames;
-    for (int i = m_firstRun ? 1 : 0; i < ntargets; ++i)
-        targetNames.push_back(m_args.freeArg(i));
-
-    TargetList targets;
-    if (targetNames.empty()) {
-        targets = m_script->targets();
-    } else {
-        for (const std::string& targetName : targetNames)
-            targets.push_back(m_script->getTarget(targetName));
-    }
-
-    if (targets.empty())
-        throw Error("There's no targets!");
-
-    return targets;
 }
 
 StringList Meique::getChosenTargetNames()
@@ -232,15 +177,13 @@ int Meique::buildTargets()
 
 int Meique::cleanTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->clean();
+    m_script->cleanTargets(getChosenTargetNames());
     return 0;
 }
 
 int Meique::installTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->install();
+    m_script->installTargets(getChosenTargetNames());
     return 0;
 }
 
@@ -309,8 +252,7 @@ int Meique::testTargets()
 
 int Meique::uninstallTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->uninstall();
+    m_script->uninstallTargets(getChosenTargetNames());
     return 0;
 }
 

@@ -54,6 +54,15 @@ public:
 
     StringList projectFiles();
 
+    void luaPushTarget(const std::string& target);
+
+    void installTargets(const StringList& targets);
+    void uninstallTargets(const StringList& targets);
+    void cleanTargets(const StringList& targets);
+
+    void dumpProject(std::ostream& output);
+
+    StringList getTargetIncludeDirectories(const std::string& target);
 private:
     LuaState m_L;
     OptionsMap m_options;

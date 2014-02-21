@@ -38,6 +38,23 @@ private:
     int m_stackSize;
 };
 
+class LuaAutoPop final
+{
+public:
+    LuaAutoPop(lua_State* L, int n = 1)
+        : m_L(L)
+        , m_n(n)
+    {
+    }
+    ~LuaAutoPop()
+    {
+        lua_pop(m_L, m_n);
+    }
+private:
+    lua_State* m_L;
+    int m_n;
+};
+
 template<typename List>
 void readLuaList(lua_State* L, int tableIndex, List& list);
 
