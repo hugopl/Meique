@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,19 +17,21 @@
 */
 
 #include "lualocker.h"
-#include "lua.h"
+#include "luacpputil.h"
 
 LuaLocker::LuaLocker(lua_State* L)
 {
+    LuaLeakCheck(L);
+
     // get mutex.
     lua_pushlightuserdata(L, (void *)L);
     lua_gettable(L, LUA_REGISTRYINDEX);
-    m_mutex = reinterpret_cast<pthread_mutex_t*>(lua_touserdata(L, -1));
+    m_mutex = reinterpret_cast<std::mutex*>(lua_touserdata(L, -1));
     lua_pop(L, 1);
-    pthread_mutex_lock(m_mutex);
+    m_mutex->lock();
 }
 
 LuaLocker::~LuaLocker()
 {
-    pthread_mutex_unlock(m_mutex);
+    m_mutex->unlock();
 }
