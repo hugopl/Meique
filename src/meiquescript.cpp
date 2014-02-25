@@ -82,29 +82,6 @@ static int meiqueBuildDir(lua_State* L)
     return 1;
 }
 
-static int isOutDated(lua_State* L)
-{
-    std::string master = lua_tocpp<std::string>(L, 1);
-    if (master.empty())
-        luaError(L, "isOutDated(filePath) called with wrong arguments.");
-
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    bool res = script->cache()->isHashGroupOutdated(master);
-    lua_pushboolean(L, res);
-    return 1;
-}
-
-static int setUpToDate(lua_State* L)
-{
-    std::string master = lua_tocpp<std::string>(L, 1);
-    if (master.empty())
-        luaError(L, "setUpToDate(filePath) called with wrong arguments.");
-
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    script->cache()->updateHashGroup(master);
-    return 0;
-}
-
 MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
 {
     m_cache->loadCache();
@@ -169,8 +146,6 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "option", &option);
     lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
-    lua_register(m_L, "isOutdated", &isOutDated);
-    lua_register(m_L, "setUpToDate", &setUpToDate);
     lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
     lua_register(m_L, "_meiqueQtResource", &meiqueQtResource);
     lua_settop(m_L, 0);
@@ -408,14 +383,13 @@ int copyFile(lua_State* L)
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + inputArg);
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + (nargs == 1 ? inputArg : lua_tocpp<std::string>(L, -1)));
 
-    if (!script->cache()->isHashGroupOutdated(output, input))
+    if (OS::timestampCompare(output, input) > 0)
         return 0;
 
     OS::mkdir(OS::dirName(output));
     std::ifstream source(input.c_str(), std::ios::binary);
     std::ofstream dest(output.c_str(), std::ios::binary);
     dest << source.rdbuf();
-    script->cache()->updateHashGroup(output, input);
     return 0;
 }
 
@@ -443,7 +417,7 @@ int configureFile(lua_State* L)
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
 
-    if (!script->cache()->isHashGroupOutdated(input, output))
+    if (OS::timestampCompare(output, input) > 0)
         return 0;
 
     OS::mkdir(OS::dirName(output));
@@ -474,7 +448,6 @@ int configureFile(lua_State* L)
     }
 
     out.close();
-    script->cache()->updateHashGroup(output, input);
     return 0;
 }
 

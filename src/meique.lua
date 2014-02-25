@@ -11,7 +11,6 @@ nodetree.cpp
 nodevisitor.cpp
 cmdline.cpp
 logger.cpp
-hashgroups.cpp
 meiquescript.cpp
 meiquecache.cpp
 luastate.cpp
@@ -22,7 +21,6 @@ gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp
 os_unix.cpp
-filehash.cpp
 job.cpp
 jobfactory.cpp
 jobmanager.cpp

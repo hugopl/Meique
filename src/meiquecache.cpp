@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -30,7 +30,6 @@
 
 #include "os.h"
 #include "mutexlocker.h"
-#include "filehash.h"
 #include "compilerfactory.h"
 #include "compiler.h"
 
@@ -90,7 +89,6 @@ void MeiqueCache::loadCache()
     LuaState L;
     lua_register(L, "userOption", &readOption);
     lua_register(L, "meiqueConfig", &readMeiqueConfig);
-    lua_register(L, "hashGroup", &readHashGroup);
     lua_register(L, "package", &readPackage);
     lua_register(L, "scopes", &readScopes);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
@@ -160,7 +158,6 @@ void MeiqueCache::saveCache()
         stringReplace(name, "\"", "\\\"");
         file << "    name = \"" << name << "\",\n";
         // Write package data
-        // Write other files hashes
         StringMap::const_iterator it = mapMapIt->second.begin();
         for (; it != mapMapIt->second.end(); ++it) {
             std::string value(it->second);
@@ -169,7 +166,6 @@ void MeiqueCache::saveCache()
         }
         file << "}\n\n";
     }
-    m_hashGroups.serializeHashGroups(file);
 }
 
 int MeiqueCache::readOption(lua_State* L)
@@ -196,33 +192,6 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
         throw Error(MEIQUECACHE " file corrupted, some fundamental entry is missing.");
     }
     return 0;
-}
-
-int MeiqueCache::readHashGroup(lua_State* L)
-{
-    MeiqueCache* self = getSelf(L);
-    self->m_hashGroups.loadHashGroup(L);
-    return 0;
-}
-
-bool MeiqueCache::isHashGroupOutdated(const std::string& masterFile, const std::string& dep)
-{
-    return m_hashGroups.isOutdated(masterFile, dep);
-}
-
-bool MeiqueCache::isHashGroupOutdated(const std::string& masterFile, const StringList& deps)
-{
-    return m_hashGroups.isOutdated(masterFile, deps);
-}
-
-void MeiqueCache::updateHashGroup(const std::string& masterFile, const std::string& dep)
-{
-    m_hashGroups.updateHashGroup(masterFile, dep);
-}
-
-void MeiqueCache::updateHashGroup(const std::string& masterFile, const StringList& deps)
-{
-    m_hashGroups.updateHashGroup(masterFile, deps);
 }
 
 void MeiqueCache::setUserOptionValue(const std::string& key, const std::string& value)
