@@ -21,11 +21,6 @@ compiler.cpp
 gcc.cpp
 compileroptions.cpp
 linkeroptions.cpp
-target.cpp
-compilabletarget.cpp
-executabletarget.cpp
-librarytarget.cpp
-customtarget.cpp
 os_unix.cpp
 filehash.cpp
 job.cpp

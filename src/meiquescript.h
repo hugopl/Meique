@@ -26,7 +26,6 @@
 #include "meiqueoption.h"
 
 class CmdLine;
-class Target;
 class MeiqueCache;
 
 class MeiqueScript
@@ -38,8 +37,6 @@ public:
     void exec();
     OptionsMap options();
     MeiqueCache* cache() { return m_cache; }
-    Target* getTarget(const std::string& name) const;
-    TargetList targets() const;
     StringList targetNames();
     lua_State* luaState() { return m_L; }
 
@@ -66,7 +63,6 @@ public:
 private:
     LuaState m_L;
     OptionsMap m_options;
-    TargetsMap m_targets;
     MeiqueCache* m_cache;
 
     std::string m_scriptName;
@@ -79,7 +75,6 @@ private:
     MeiqueScript& operator=(const MeiqueScript&);
 
     void exportApi();
-    void extractTargets();
 
     void enableScope(const std::string& scopeName);
     void enableBuitinScopes();

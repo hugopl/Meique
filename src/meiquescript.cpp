@@ -27,19 +27,15 @@
 
 #include "meiquescript.h"
 #include "cmdline.h"
+#include "compiler.h"
 #include "meiquecache.h"
 #include "logger.h"
 #include "luacpputil.h"
 #include "lauxlib.h"
 #include "lualib.h"
 #include "lua.h"
-#include "target.h"
-#include "compilabletarget.h"
-#include "librarytarget.h"
-#include "customtarget.h"
 #include "os.h"
 #include "stdstringsux.h"
-#include "executabletarget.h"
 #include "meiqueregex.h"
 #include "meiqueversion.h"
 
@@ -125,9 +121,6 @@ MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine)
 
 MeiqueScript::~MeiqueScript()
 {
-    TargetsMap::const_iterator it = m_targets.begin();
-    for (; it != m_targets.end(); ++it)
-        delete it->second;
     delete m_cache;
 }
 
@@ -154,7 +147,6 @@ void MeiqueScript::exec()
     translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
 
     luaPCall(m_L, 0, 0, m_scriptName);
-    extractTargets();
 }
 
 void MeiqueScript::exportApi()
@@ -215,38 +207,6 @@ OptionsMap MeiqueScript::options()
     return m_options;
 }
 
-void MeiqueScript::extractTargets()
-{
-    lua_getglobal(m_L, "_meiqueAllTargets");
-    int tableIndex = lua_gettop(m_L);
-    lua_pushnil(m_L);  /* first key */
-    while (lua_next(m_L, tableIndex) != 0) {
-        // Get target type
-        lua_getfield(m_L, -1, "_type");
-        int targetType = lua_tocpp<int>(m_L, -1);
-        lua_pop(m_L, 1);
-
-        std::string targetName = lua_tocpp<std::string>(m_L, -2);
-
-        Target* target = 0;
-        switch (targetType) {
-            case EXECUTABLE_TARGET:
-                target = new ExecutableTarget(targetName, this);
-                break;
-            case LIBRARY_TARGET:
-                target = new LibraryTarget(targetName, this);
-                break;
-            case CUSTOM_TARGET:
-                target = new CustomTarget(targetName, this);
-                break;
-            default:
-                throw Error("Unknown target type for target " + targetName);
-                break;
-        };
-        m_targets[targetName] = target;
-    }
-}
-
 std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
 {
     lua_getglobal(m_L, "_meiqueAllTests");
@@ -263,23 +223,6 @@ std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
         });
     }
     return tests;
-}
-
-Target* MeiqueScript::getTarget(const std::string& name) const
-{
-    TargetsMap::const_iterator it = m_targets.find(name);
-    if (it == m_targets.end())
-        throw Error("Target \"" + name + "\" not found!");
-    return it->second;
-}
-
-TargetList MeiqueScript::targets() const
-{
-    TargetList list;
-    TargetsMap::const_iterator it = m_targets.begin();
-    for (; it != m_targets.end(); ++it)
-        list.push_back(it->second);
-    return list;
 }
 
 static bool checkVersion(const std::string& version)
@@ -639,6 +582,7 @@ int option(lua_State* L)
 
 int meiqueAutomoc(lua_State* L)
 {
+#if 0
     static std::string mocPath;
     if (mocPath.empty()) {
         const StringList args = {"--variable=moc_location", "QtCore"};
@@ -713,11 +657,13 @@ int meiqueAutomoc(lua_State* L)
             }
         }
     }
+#endif
     return 0;
 }
 
 int meiqueQtResource(lua_State* L)
 {
+#if 0
     static std::string rccPath;
     if (rccPath.empty()) {
         const StringList args = {"--variable=rcc_location", "QtCore"};
@@ -764,6 +710,7 @@ int meiqueQtResource(lua_State* L)
         }
     }
     target->addFiles(cppFiles);
+#endif
     return 0;
 }
 
