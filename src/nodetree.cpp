@@ -26,6 +26,7 @@
 #include <memory>
 #include <list>
 
+#include "meiquescript.h"
 #include "nodevisitor.h"
 #include "luacpputil.h"
 #include "logger.h"
@@ -46,8 +47,9 @@ Node::~Node()
     free(name);
 }
 
-NodeTree::NodeTree(lua_State* L, const StringList& targets)
-    : m_L(L)
+NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
+    : m_script(script)
+    , m_L(script.luaState())
 {
     buildNotExpandedTree();
     if (!targets.empty())
@@ -103,7 +105,7 @@ void NodeTree::expandTargetNode(Node* target)
     }
 
     // Expand the dependencies first
-    luaPushTarget(target);
+    m_script.luaPushTarget(target->name);
     lua_getfield(m_L, -1, "_deps");
     StringList deps;
     readLuaList(m_L, lua_gettop(m_L), deps);
@@ -115,7 +117,7 @@ void NodeTree::expandTargetNode(Node* target)
         return;
 
     // populate the node
-    luaPushTarget(target);
+    m_script.luaPushTarget(target->name);
     lua_getfield(m_L, -1, "_files");
     StringList files;
     readLuaList(m_L, lua_gettop(m_L), files);
@@ -200,7 +202,7 @@ void NodeTree::buildNotExpandedTree()
     // Connect the targets regarding their dependencies
     for (auto pair : m_targetNodes) {
         const std::string& target = pair.first;
-        luaPushTarget(target);
+        m_script.luaPushTarget(target);
         // Get dependencies
         lua_getfield(m_L, -1, "_deps");
         StringList deps;
@@ -240,18 +242,6 @@ void NodeTree::connectForest()
             root->parents.push_front(m_root);
         }
     }
-}
-
-void NodeTree::luaPushTarget(const Node* node)
-{
-    luaPushTarget(node->name);
-}
-
-void NodeTree::luaPushTarget(const std::string& target)
-{
-    lua_getglobal(m_L, "_meiqueAllTargets");
-    lua_getfield(m_L, -1, target.c_str());
-    lua_remove(m_L, -2);
 }
 
 NodeGuard* NodeTree::createNodeGuard(Node* node)

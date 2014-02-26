@@ -25,6 +25,7 @@
 #include <mutex>
 #include "basictypes.h"
 
+class MeiqueScript;
 class Node;
 class NodeTree;
 typedef std::list<Node*> NodeList;
@@ -85,7 +86,7 @@ class NodeTree
 {
     typedef std::unordered_map<std::string, Node*> TargetNodeMap;
 public:
-    explicit NodeTree(lua_State* L, const StringList& targets = StringList());
+    explicit NodeTree(MeiqueScript& script, const StringList& targets = StringList());
     ~NodeTree();
 
     class Iterator {
@@ -111,9 +112,6 @@ public:
     void dump(const char* fileName = 0) const;
     Node* root() const { return m_root; }
 
-    void luaPushTarget(const Node* target);
-    void luaPushTarget(const std::string& target);
-
     NodeGuard* createNodeGuard(Node* node);
 
     std::function<void ()> onTreeChange;
@@ -125,6 +123,7 @@ private:
     void removeUnusedTargets(const StringList& targets);
     void connectForest();
 
+    MeiqueScript& m_script;
     lua_State* m_L;
     TargetNodeMap m_targetNodes;
     Node* m_root;

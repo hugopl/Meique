@@ -238,7 +238,7 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     target->status = Node::Building;
 
     StringList files;
-    m_nodeTree.luaPushTarget(target);
+    m_script.luaPushTarget(target->name);
     lua_getfield(L, -1, "_files");
     readLuaList(L, lua_gettop(L), files);
     lua_pop(L, 1);
@@ -287,7 +287,7 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     lua_State* L = m_script.luaState();
     LuaLeakCheck(L);
 
-    m_nodeTree.luaPushTarget(node);
+    m_script.luaPushTarget(node->name);
 
     lua_getfield(L, -1, "_dir");
     options->targetDirectory = lua_tocpp<std::string>(L, -1);
@@ -395,7 +395,7 @@ void JobFactory::mergeCompilerAndLinkerOptions(Node* node)
     lua_State* L = m_script.luaState();
     LuaLeakCheck(L);
 
-    m_nodeTree.luaPushTarget(node);
+    m_script.luaPushTarget(node->name);
     // other targets
     StringList targets;
     lua_getfield(L, -1, "_targets");
