@@ -23,6 +23,15 @@
 #include <functional>
 #include <unordered_map>
 
+struct NodeGetChildren {
+    static NodeList& get(Node* n) { return n->children; }
+};
+
+struct NodeGetParent {
+    static NodeList& get(Node* n) { return n->parents; }
+};
+
+template<typename NextNodeGetter = NodeGetChildren>
 class NodeVisitor
 {
 public:

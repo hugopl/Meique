@@ -14,6 +14,7 @@ local tests = [[
     cyclic_dependency
     global_flags
     requires_meique
+    basic_relink
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

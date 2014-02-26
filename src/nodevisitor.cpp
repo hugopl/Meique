@@ -20,7 +20,8 @@
 
 #include "logger.h"
 
-NodeVisitor::NodeVisitor(const NodeTree& tree, std::function<void (Node *)> visitor)
+template<typename NextNodeGetter>
+NodeVisitor<NextNodeGetter>::NodeVisitor(const NodeTree& tree, std::function<void (Node *)> visitor)
     : m_visitor(visitor)
 {
     for (Node* parentNode : tree) {
@@ -30,17 +31,19 @@ NodeVisitor::NodeVisitor(const NodeTree& tree, std::function<void (Node *)> visi
     }
 }
 
-NodeVisitor::NodeVisitor(Node *root, std::function<void (Node *)> visitor)
+template<typename NextNodeGetter>
+NodeVisitor<NextNodeGetter>::NodeVisitor(Node *root, std::function<void (Node *)> visitor)
     : m_visitor(visitor)
 {
     visitNode(root);
 }
 
 
-void NodeVisitor::visitNode(Node* node)
+template<typename NextNodeGetter>
+void NodeVisitor<NextNodeGetter>::visitNode(Node* node)
 {
     m_status[node] = Visiting;
-    for (Node* child : node->children) {
+    for (Node* child : NextNodeGetter::get(node)) {
         VisitStatus& status = m_status[child];
         switch(status) {
         case NotVisited:
@@ -58,8 +61,11 @@ void NodeVisitor::visitNode(Node* node)
 
 EdgeVisitor::EdgeVisitor(const NodeTree& tree, std::function<void (Node*, Node*)> visitor)
 {
-    NodeVisitor(tree, [&](Node* node){
+    NodeVisitor<>(tree, [&](Node* node){
         for (Node* child : node->children)
             visitor(node, child);
     });
 }
+
+template class NodeVisitor<NodeGetChildren>;
+template class NodeVisitor<NodeGetParent>;

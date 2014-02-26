@@ -52,7 +52,7 @@ JobFactory::~JobFactory()
 void JobFactory::setRoot(Node* root)
 {
     m_root = root;
-    NodeVisitor(m_root, [&](Node* node){
+    NodeVisitor<>(m_root, [&](Node* node){
         cacheTargetCompilerOptions(node);
         mergeCompilerAndLinkerOptions(node);
     });
@@ -89,6 +89,12 @@ Job* JobFactory::createJob()
         {
             std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
             node = findAGoodNode(&target, m_root);
+            if (node && !node->isTarget) {
+                NodeVisitor<NodeGetParent>(node, [node](Node* parent) {
+                    if (node != parent)
+                        parent->shouldBuild = 1;
+                });
+            }
         }
         if (!node) {
             if (m_needToWait) {
@@ -174,7 +180,7 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     std::string source = OS::normalizeFilePath(absSourcePath);
     std::string output = OS::normalizeFilePath(absObjPath);
 
-    if (OS::timestampCompare(source, output) >= 0) {
+    if (OS::timestampCompare(source, output) > 0) {
         node->status = Node::Built;
         return nullptr;
     }

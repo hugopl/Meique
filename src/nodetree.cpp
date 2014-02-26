@@ -52,7 +52,7 @@ NodeTree::NodeTree(lua_State* L)
 
 NodeTree::~NodeTree()
 {
-    NodeVisitor(*this, std::default_delete<Node>());
+    NodeVisitor<>(*this, std::default_delete<Node>());
 }
 
 void NodeTree::dump(const char* fileName) const
