@@ -188,7 +188,7 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     Compiler* compiler = m_script.cache()->compiler();
     OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(node), compiler->compile(source, output, &options->compilerOptions));
     job->setWorkingDirectory(buildDir);
-    job->setName(fileName);
+    job->setName("Compiling " + OS::baseName(fileName));
 
     return job;
 }
@@ -230,7 +230,7 @@ Job* JobFactory::createTargetJob(Node* target)
 
     OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(target), compiler->link(outputName, objects, &options->linkerOptions));
     job->setWorkingDirectory(buildDir);
-    job->setName(outputName);
+    job->setName("Linking " + outputName);
 
     return job;
 }
@@ -255,7 +255,7 @@ Job* JobFactory::createCustomTargetJob(Node* target)
 
     Options* options = m_targetCompilerOptions[target];
     LuaJob* job = new LuaJob(m_nodeTree.createNodeGuard(target), L, 1);
-    job->setName(target->name);
+    job->setName("Running custom target " + std::string(target->name));
     job->setWorkingDirectory(m_script.sourceDir() + options->targetDirectory);
 
     lua_pop(L, 1);
