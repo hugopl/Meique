@@ -29,7 +29,6 @@
 #include "lauxlib.h"
 
 #include "os.h"
-#include "mutexlocker.h"
 #include "compilerfactory.h"
 #include "compiler.h"
 
@@ -60,7 +59,6 @@ MeiqueCache::MeiqueCache()
     OS::setCTRLCHandler(handleCtrlC);
 
     m_compiler = 0;
-    pthread_mutex_init(&m_configMutex, 0);
     m_autoSave = true;
 }
 

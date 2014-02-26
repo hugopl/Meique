@@ -19,10 +19,9 @@
 #ifndef JOBMANAGER_H
 #define JOBMANAGER_H
 
-#include <list>
 #include <functional>
-#include <map>
-#include <pthread.h>
+#include <mutex>
+#include <condition_variable>
 
 class Job;
 class JobQueue;
@@ -43,9 +42,9 @@ private:
     unsigned m_jobCount;
     int m_jobsNotIdle;
     bool m_errorOccured;
-    pthread_mutex_t m_jobsRunningMutex;
-    pthread_cond_t m_needJobsCond;
-    pthread_cond_t m_allDoneCond;
+    std::mutex m_jobStatsMutex;
+    std::condition_variable m_needJobsCond;
+    std::condition_variable m_allDoneCond;
 
     void printReportLine(const Job*) const;
     void onJobFinished(int result);

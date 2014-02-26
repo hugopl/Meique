@@ -80,7 +80,6 @@ private:
     std::string m_installPrefix;
 
     // helper variables
-    pthread_mutex_t m_configMutex;
     bool m_autoSave;
 
     static int readOption(lua_State* L);

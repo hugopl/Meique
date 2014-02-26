@@ -20,16 +20,12 @@
 #include "logger.h"
 #include "job.h"
 #include <iomanip>
-#include "mutexlocker.h"
 
 JobManager::JobManager(unsigned maxJobRunning)
     : m_maxJobsRunning(maxJobRunning)
     , m_jobsRunning(0)
     , m_errorOccured(false)
 {
-    pthread_mutex_init(&m_jobsRunningMutex, 0);
-    pthread_cond_init(&m_needJobsCond, 0);
-    pthread_cond_init(&m_allDoneCond, 0);
 }
 
 JobManager::~JobManager()
@@ -48,29 +44,31 @@ bool JobManager::run()
     m_jobsProcessed = 0;
 
     while (!m_errorOccured) {
-        MutexLocker locker(&m_jobsRunningMutex);
-        if (m_jobsRunning >= m_maxJobsRunning) {
-            pthread_cond_wait(&m_needJobsCond, &m_jobsRunningMutex);
+        {
+            std::unique_lock<std::mutex> lock(m_jobStatsMutex);
+            if (m_jobsRunning >= m_maxJobsRunning)
+                m_needJobsCond.wait(lock);
         }
 
         if (m_errorOccured)
             break;
 
-        // Now select a valid job
         Job* job = onNeedMoreJobs();
         if (!job)
             break;
         job->onFinished = [&](int result) { onJobFinished(result); };
         job->run();
+
+        std::lock_guard<std::mutex> lock(m_jobStatsMutex);
         m_jobsRunning++;
         m_jobsNotIdle++;
         printReportLine(job);
     }
 
-    MutexLocker locker(&m_jobsRunningMutex);
+    std::unique_lock<std::mutex> lock(m_jobStatsMutex);
     if (m_jobsRunning) {
         Notice() << "Waiting for unfinished jobs...";
-        pthread_cond_wait(&m_allDoneCond, &m_jobsRunningMutex);
+        m_allDoneCond.wait(lock);
     }
 
     return !m_errorOccured;
@@ -78,14 +76,14 @@ bool JobManager::run()
 
 void JobManager::onJobFinished(int result)
 {
-//    MutexLocker locker(&m_jobsRunningMutex);
+    std::lock_guard<std::mutex> lock(m_jobStatsMutex);
     m_jobsRunning--;
     m_jobsProcessed++;
     if (result)
         m_errorOccured = true;
     if (m_jobsRunning < m_maxJobsRunning)
-        pthread_cond_signal(&m_needJobsCond);
+        m_needJobsCond.notify_all();
     if (m_jobsRunning == 0)
-        pthread_cond_signal(&m_allDoneCond);
+        m_allDoneCond.notify_all();
 
 }

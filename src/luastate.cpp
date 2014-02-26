@@ -19,7 +19,6 @@
 #include "luastate.h"
 #include "logger.h"
 #include "lauxlib.h"
-#include "mutexlocker.h"
 
 LuaState::LuaState()
 {
