@@ -195,8 +195,10 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
 
 Job* JobFactory::createTargetJob(Node* target)
 {
+    lua_State* L = m_script.luaState();
+    LuaLeakCheck(L);
+
     target->status = Node::Building;
-    const std::string& targetName(target->name);
 
     Options* options = m_targetCompilerOptions[target];
     const std::string buildDir = m_script.buildDir() + options->targetDirectory;
@@ -207,20 +209,10 @@ Job* JobFactory::createTargetJob(Node* target)
         objects.push_back(objectFileFor(target, child));
     }
 
-    // Get target output name
-    Compiler* compiler = m_script.cache()->compiler();
-    std::string outputName;
-    switch (options->linkerOptions.linkType()) {
-    case LinkerOptions::Executable:
-        outputName = compiler->nameForExecutable(targetName);
-        break;
-    case LinkerOptions::SharedLibrary:
-        outputName = compiler->nameForSharedLibrary(targetName);
-        break;
-    case LinkerOptions::StaticLibrary:
-        outputName = compiler->nameForStaticLibrary(targetName);
-        break;
-    }
+    m_script.luaPushTarget(target->name);
+    lua_getfield(L, -1, "_output");
+    std::string outputName = lua_tocpp<std::string>(L, -1);
+    lua_pop(L, 2);
 
     // Check if the target must be build
     if (!target->shouldBuild && OS::fileExists(buildDir + outputName)) {
@@ -228,6 +220,7 @@ Job* JobFactory::createTargetJob(Node* target)
         return nullptr;
     }
 
+    Compiler* compiler = m_script.cache()->compiler();
     OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(target), compiler->link(outputName, objects, &options->linkerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Linking " + outputName);
