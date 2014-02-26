@@ -162,7 +162,7 @@ int Meique::buildTargets()
     if (jobLimit <= 0)
         throw Error("You should use a number greater than zero in -j option.");
 
-    NodeTree tree(m_script->luaState());
+    NodeTree tree(m_script->luaState(), getChosenTargetNames());
     JobManager jobManager(jobLimit);
     JobFactory jobFactory(*m_script, tree);
 

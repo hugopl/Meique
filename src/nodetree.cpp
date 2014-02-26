@@ -18,8 +18,10 @@
 
 #include "nodetree.h"
 
+#include <algorithm>
 #include <cstring>
 #include <iostream>
+#include <iterator>
 #include <fstream>
 #include <memory>
 #include <list>
@@ -44,10 +46,13 @@ Node::~Node()
     free(name);
 }
 
-NodeTree::NodeTree(lua_State* L)
+NodeTree::NodeTree(lua_State* L, const StringList& targets)
     : m_L(L)
 {
     buildNotExpandedTree();
+    if (!targets.empty())
+        removeUnusedTargets(targets);
+    connectForest();
 }
 
 NodeTree::~NodeTree()
@@ -131,6 +136,40 @@ void NodeTree::expandTargetNode(const std::string& target)
     expandTargetNode(targetNode);
 }
 
+void NodeTree::removeUnusedTargets(const StringList &targets)
+{
+    StringSet usedTargets;
+    for (const std::string& target : targets) {
+        TargetNodeMap::iterator it = m_targetNodes.find(target);
+        if (it != m_targetNodes.end()) {
+            NodeVisitor<>(it->second, [&](Node* node) {
+                usedTargets.insert(node->name);
+            });
+        }
+    }
+
+    StringSet allTargets;
+    for (auto pair: m_targetNodes)
+        allTargets.insert(pair.first);
+
+    StringSet targetsToBeRemoved;
+    std::set_difference(allTargets.begin(), allTargets.end(), usedTargets.begin(), usedTargets.end(),
+                        std::insert_iterator<StringSet>(targetsToBeRemoved, targetsToBeRemoved.begin()));
+
+    for (const std::string& target : targetsToBeRemoved) {
+        Node* node = m_targetNodes[target];
+        m_targetNodes.erase(target);
+
+        for (Node* child : node->children)
+            child->parents.remove(node);
+
+        for (Node* parent : node->parents)
+            parent->children.remove(node);
+
+        delete node;
+    }
+}
+
 void NodeTree::buildNotExpandedTree()
 {
     LuaLeakCheck(m_L);
@@ -175,7 +214,10 @@ void NodeTree::buildNotExpandedTree()
             depNode->parents.push_front(targetNode);
         }
     }
+}
 
+void NodeTree::connectForest()
+{
     // Connect trees to create a single tree
     std::list<Node*> roots;
     for (auto pair : m_targetNodes) {

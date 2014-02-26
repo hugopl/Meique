@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <lua.h>
 #include <mutex>
+#include "basictypes.h"
 
 class Node;
 class NodeTree;
@@ -84,7 +85,7 @@ class NodeTree
 {
     typedef std::unordered_map<std::string, Node*> TargetNodeMap;
 public:
-    explicit NodeTree(lua_State* L);
+    explicit NodeTree(lua_State* L, const StringList& targets = StringList());
     ~NodeTree();
 
     class Iterator {
@@ -121,6 +122,8 @@ public:
     void unlock() { m_mutex.unlock(); }
 private:
     void buildNotExpandedTree();
+    void removeUnusedTargets(const StringList& targets);
+    void connectForest();
 
     lua_State* m_L;
     TargetNodeMap m_targetNodes;
