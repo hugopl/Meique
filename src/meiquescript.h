@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -26,7 +26,6 @@
 #include "meiqueoption.h"
 
 class CmdLine;
-class Target;
 class MeiqueCache;
 
 class MeiqueScript
@@ -38,8 +37,7 @@ public:
     void exec();
     OptionsMap options();
     MeiqueCache* cache() { return m_cache; }
-    Target* getTarget(const std::string& name) const;
-    TargetList targets() const;
+    StringList targetNames();
     lua_State* luaState() { return m_L; }
 
     std::list<StringList> getTests(const std::string& pattern);
@@ -53,10 +51,18 @@ public:
 
     StringList projectFiles();
 
+    void luaPushTarget(const std::string& target);
+
+    void installTargets(const StringList& targets);
+    void uninstallTargets(const StringList& targets);
+    void cleanTargets(const StringList& targets);
+
+    void dumpProject(std::ostream& output);
+
+    StringList getTargetIncludeDirectories(const std::string& target);
 private:
     LuaState m_L;
     OptionsMap m_options;
-    TargetsMap m_targets;
     MeiqueCache* m_cache;
 
     std::string m_scriptName;
@@ -69,7 +75,6 @@ private:
     MeiqueScript& operator=(const MeiqueScript&);
 
     void exportApi();
-    void extractTargets();
 
     void enableScope(const std::string& scopeName);
     void enableBuitinScopes();

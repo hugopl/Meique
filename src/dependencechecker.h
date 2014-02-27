@@ -1,6 +1,6 @@
 /*
-    <one line to give the program's name and a brief idea of what it does.>
-    Copyright (C) <year>  <name of author>
+    This file is part of the Meique project
+    Copyright (C) 2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -14,26 +14,23 @@
 
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
 */
 
-#ifndef MUTEXLOCKER_H
-#define MUTEXLOCKER_H
-#include <pthread.h>
+#ifndef DEPENDENCECHECKER_H
+#define DEPENDENCECHECKER_H
 
-class MutexLocker
+#include "basictypes.h"
+
+class DependenceChecker
 {
 public:
-    MutexLocker(pthread_mutex_t* mutex) : m_mutex(mutex)
-    {
-        pthread_mutex_lock(m_mutex);
-    }
-    ~MutexLocker()
-    {
-        pthread_mutex_unlock(m_mutex);
-    }
+    void setWorkingDirectory(const std::string& cwd) { m_cwd = cwd; }
+    bool shouldCompile(const std::string& file, const std::string& output);
 private:
-    pthread_mutex_t* m_mutex;
+    std::string m_cwd;
+
+    StringList getDependencies(const std::string& file);
+    void preprocessFile(const std::string& source, StringList& includeDirs, StringList& deps);
 };
 
-#endif // MUTEXLOCKER_H
+#endif

@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 
 #include "basictypes.h"
 #include "meiqueoption.h"
-#include "hashgroups.h"
 
 class CmdLine;
 struct lua_State;
@@ -50,11 +49,6 @@ public:
     void setBuildType(BuildType value) { m_buildType = value; }
     BuildType buildType() const { return m_buildType; }
 
-    bool isHashGroupOutdated(const std::string& masterFile, const std::string& dep);
-    bool isHashGroupOutdated(const std::string& masterFile, const StringList& deps = StringList());
-    void updateHashGroup(const std::string& masterFile, const std::string& dep);
-    void updateHashGroup(const std::string& masterFile, const StringList& deps = StringList());
-
     StringMap package(const std::string& pkgName) const;
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
     StringList scopes() const;
@@ -80,19 +74,16 @@ private:
 
     // Stuff stored in meiquecache.lua by meique.lua
     std::map<std::string, StringMap> m_packages;
-    HashGroups m_hashGroups;
     StringList m_scopes;
     StringList m_targets;
     StringMap m_userOptions;
     std::string m_installPrefix;
 
     // helper variables
-    pthread_mutex_t m_configMutex;
     bool m_autoSave;
 
     static int readOption(lua_State* L);
     static int readMeiqueConfig(lua_State* L);
-    static int readHashGroup(lua_State* L);
     static int readPackage(lua_State* L);
     static int readScopes(lua_State* L);
 

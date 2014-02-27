@@ -27,19 +27,15 @@
 
 #include "meiquescript.h"
 #include "cmdline.h"
+#include "compiler.h"
 #include "meiquecache.h"
 #include "logger.h"
 #include "luacpputil.h"
 #include "lauxlib.h"
 #include "lualib.h"
 #include "lua.h"
-#include "target.h"
-#include "compilabletarget.h"
-#include "librarytarget.h"
-#include "customtarget.h"
 #include "os.h"
 #include "stdstringsux.h"
-#include "executabletarget.h"
 #include "meiqueregex.h"
 #include "meiqueversion.h"
 
@@ -86,29 +82,6 @@ static int meiqueBuildDir(lua_State* L)
     return 1;
 }
 
-static int isOutDated(lua_State* L)
-{
-    std::string master = lua_tocpp<std::string>(L, 1);
-    if (master.empty())
-        luaError(L, "isOutDated(filePath) called with wrong arguments.");
-
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    bool res = script->cache()->isHashGroupOutdated(master);
-    lua_pushboolean(L, res);
-    return 1;
-}
-
-static int setUpToDate(lua_State* L)
-{
-    std::string master = lua_tocpp<std::string>(L, 1);
-    if (master.empty())
-        luaError(L, "setUpToDate(filePath) called with wrong arguments.");
-
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    script->cache()->updateHashGroup(master);
-    return 0;
-}
-
 MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
 {
     m_cache->loadCache();
@@ -125,9 +98,6 @@ MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine)
 
 MeiqueScript::~MeiqueScript()
 {
-    TargetsMap::const_iterator it = m_targets.begin();
-    for (; it != m_targets.end(); ++it)
-        delete it->second;
     delete m_cache;
 }
 
@@ -154,7 +124,6 @@ void MeiqueScript::exec()
     translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
 
     luaPCall(m_L, 0, 0, m_scriptName);
-    extractTargets();
 }
 
 void MeiqueScript::exportApi()
@@ -177,8 +146,6 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "option", &option);
     lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
-    lua_register(m_L, "isOutdated", &isOutDated);
-    lua_register(m_L, "setUpToDate", &setUpToDate);
     lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
     lua_register(m_L, "_meiqueQtResource", &meiqueQtResource);
     lua_settop(m_L, 0);
@@ -215,38 +182,6 @@ OptionsMap MeiqueScript::options()
     return m_options;
 }
 
-void MeiqueScript::extractTargets()
-{
-    lua_getglobal(m_L, "_meiqueAllTargets");
-    int tableIndex = lua_gettop(m_L);
-    lua_pushnil(m_L);  /* first key */
-    while (lua_next(m_L, tableIndex) != 0) {
-        // Get target type
-        lua_getfield(m_L, -1, "_type");
-        int targetType = lua_tocpp<int>(m_L, -1);
-        lua_pop(m_L, 1);
-
-        std::string targetName = lua_tocpp<std::string>(m_L, -2);
-
-        Target* target = 0;
-        switch (targetType) {
-            case EXECUTABLE_TARGET:
-                target = new ExecutableTarget(targetName, this);
-                break;
-            case LIBRARY_TARGET:
-                target = new LibraryTarget(targetName, this);
-                break;
-            case CUSTOM_TARGET:
-                target = new CustomTarget(targetName, this);
-                break;
-            default:
-                throw Error("Unknown target type for target " + targetName);
-                break;
-        };
-        m_targets[targetName] = target;
-    }
-}
-
 std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
 {
     lua_getglobal(m_L, "_meiqueAllTests");
@@ -263,23 +198,6 @@ std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
         });
     }
     return tests;
-}
-
-Target* MeiqueScript::getTarget(const std::string& name) const
-{
-    TargetsMap::const_iterator it = m_targets.find(name);
-    if (it == m_targets.end())
-        throw Error("Target \"" + name + "\" not found!");
-    return it->second;
-}
-
-TargetList MeiqueScript::targets() const
-{
-    TargetList list;
-    TargetsMap::const_iterator it = m_targets.begin();
-    for (; it != m_targets.end(); ++it)
-        list.push_back(it->second);
-    return list;
 }
 
 static bool checkVersion(const std::string& version)
@@ -309,6 +227,17 @@ int requiresMeique(lua_State* L)
     if (!checkVersion(requiredVersion))
         luaError(L, "This project requires a newer version of meique (" + requiredVersion + "), you are using version " MEIQUE_VERSION);
     return 0;
+}
+
+StringList MeiqueScript::targetNames()
+{
+    LuaLeakCheck(m_L);
+
+    lua_getglobal(m_L, "_meiqueAllTargets");
+    StringList targets;
+    readLuaTableKeys(m_L, lua_gettop(m_L), targets);
+    lua_pop(m_L, 1);
+    return targets;
 }
 
 struct StrFilter
@@ -454,14 +383,13 @@ int copyFile(lua_State* L)
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + inputArg);
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + (nargs == 1 ? inputArg : lua_tocpp<std::string>(L, -1)));
 
-    if (!script->cache()->isHashGroupOutdated(output, input))
+    if (OS::timestampCompare(output, input) > 0)
         return 0;
 
     OS::mkdir(OS::dirName(output));
     std::ifstream source(input.c_str(), std::ios::binary);
     std::ofstream dest(output.c_str(), std::ios::binary);
     dest << source.rdbuf();
-    script->cache()->updateHashGroup(output, input);
     return 0;
 }
 
@@ -489,7 +417,7 @@ int configureFile(lua_State* L)
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
 
-    if (!script->cache()->isHashGroupOutdated(input, output))
+    if (OS::timestampCompare(output, input) > 0)
         return 0;
 
     OS::mkdir(OS::dirName(output));
@@ -520,7 +448,6 @@ int configureFile(lua_State* L)
     }
 
     out.close();
-    script->cache()->updateHashGroup(output, input);
     return 0;
 }
 
@@ -628,6 +555,7 @@ int option(lua_State* L)
 
 int meiqueAutomoc(lua_State* L)
 {
+#if 0
     static std::string mocPath;
     if (mocPath.empty()) {
         const StringList args = {"--variable=moc_location", "QtCore"};
@@ -702,11 +630,13 @@ int meiqueAutomoc(lua_State* L)
             }
         }
     }
+#endif
     return 0;
 }
 
 int meiqueQtResource(lua_State* L)
 {
+#if 0
     static std::string rccPath;
     if (rccPath.empty()) {
         const StringList args = {"--variable=rcc_location", "QtCore"};
@@ -753,14 +683,222 @@ int meiqueQtResource(lua_State* L)
         }
     }
     target->addFiles(cppFiles);
+#endif
     return 0;
 }
 
 StringList MeiqueScript::projectFiles()
 {
+    LuaLeakCheck(m_L);
+
     StringList projectFiles;
     projectFiles.push_back("meique.lua");
     lua_getglobal(m_L, "_meiqueProjectFiles");
     readLuaList(m_L, lua_gettop(m_L), projectFiles);
+    lua_pop(m_L, 1);
     return projectFiles;
+}
+
+void MeiqueScript::luaPushTarget(const std::string& target)
+{
+    lua_getglobal(m_L, "_meiqueAllTargets");
+    lua_getfield(m_L, -1, target.c_str());
+    lua_remove(m_L, -2);
+}
+
+void MeiqueScript::installTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+
+        lua_getfield(m_L, -1, "_installFiles");
+        std::list<StringList> installDirectives;
+        readLuaList(m_L, lua_gettop(m_L), installDirectives);
+        lua_pop(m_L, 1);
+
+        if (installDirectives.empty())
+            continue;
+
+        Notice() << Cyan << "Installing " << target << "...";
+
+        for (const StringList& directive : installDirectives) {
+            const int directiveSize = directive.size();
+            if (!directiveSize)
+                continue;
+
+            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            const std::string srcDir = m_cache->sourceDir() + directory;
+
+            if (directiveSize == 1) { // Target installation
+                lua_getfield(m_L, -1, "_output");
+                std::string output = lua_tocpp<std::string>(m_L, -1);
+                lua_pop(m_L, 1);
+
+                std::string targetFile = OS::normalizeFilePath(directory + output);
+                OS::install(targetFile, destDir);
+            } else if (directiveSize > 1) { // custom file install
+                for (const std::string& item : directive)
+                    OS::install(srcDir + item, destDir);
+            }
+        }
+    }
+}
+
+void MeiqueScript::uninstallTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_installFiles");
+        std::list<StringList> installDirectives;
+        readLuaList(m_L, lua_gettop(m_L), installDirectives);
+        lua_pop(m_L, 1);
+
+        if (installDirectives.empty())
+            continue;
+
+        Notice() << Cyan << "Uninstalling " << target << "...";
+
+        for (const StringList& directive : installDirectives) {
+            const int directiveSize = directive.size();
+            if (!directiveSize)
+                continue;
+
+            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+
+            if (directiveSize == 1) { // Target installation
+                lua_getfield(m_L, -1, "_output");
+                std::string output = lua_tocpp<std::string>(m_L, -1);
+                lua_pop(m_L, 1);
+                OS::uninstall(destDir + output);
+            } else if (directiveSize > 1) { // custom file install
+                for (const std::string& item : directive)
+                    OS::uninstall(destDir + OS::baseName(item));
+            }
+        }
+    }
+}
+
+void MeiqueScript::cleanTargets(const StringList& targets)
+{
+    LuaLeakCheck(m_L);
+
+    for (const std::string& target : (targets.empty() ? targetNames() : targets)) {
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+        // get sources
+        lua_getfield(m_L, -1, "_files");
+        StringList files;
+        readLuaList(m_L, lua_gettop(m_L), files);
+        lua_pop(m_L, 1);
+
+        Compiler* compiler = m_cache->compiler();
+        for (const std::string& file : files) {
+            std::string objFile = compiler->nameForObject(file, target);
+            if (objFile[0] != '/')
+                objFile.insert(0, m_buildDir + directory);
+            OS::rm(objFile);
+        }
+    }
+}
+
+StringList MeiqueScript::getTargetIncludeDirectories(const std::string& target)
+{
+    LuaLeakCheck(m_L);
+
+    luaPushTarget(target);
+    LuaAutoPop autoPop(m_L);
+
+    StringList list;
+    {
+        lua_getfield(m_L, -1, "_type");
+        LuaAutoPop autoPop(m_L);
+        if (lua_tocpp<int>(m_L, -1) == CUSTOM_TARGET)
+            return list;
+    }
+
+    // explicit include directories
+    lua_getfield(m_L, -1, "_incDirs");
+    readLuaList(m_L, lua_gettop(m_L), list);
+    lua_pop(m_L, 1);
+    list.sort();
+
+    lua_getfield(m_L, -1, "_packages");
+    // loop on all used packages
+    int tableIndex = lua_gettop(m_L);
+    lua_pushnil(m_L);  /* first key */
+    while (lua_next(m_L, tableIndex) != 0) {
+        if (lua_istable(m_L, -1)) {
+            StringMap map;
+            readLuaTable(m_L, lua_gettop(m_L), map);
+            StringList incDirs(split(map["includePaths"]));
+            list.merge(incDirs);
+        }
+        lua_pop(m_L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+    lua_pop(m_L, 1);
+
+    return list;
+}
+
+void MeiqueScript::dumpProject(std::ostream& output)
+{
+    LuaLeakCheck(m_L);
+
+    const std::string sourceDir = m_cache->sourceDir();
+    output << "Project: " << OS::baseName(sourceDir) << std::endl;
+
+    // Project files
+    for (std::string& file : projectFiles())
+        output << "ProjectFile: " << OS::normalizeFilePath(sourceDir + file) << "\n";
+
+    for (std::string& target : targetNames()) {
+        std::cout << "Target: " << target << std::endl;
+
+        luaPushTarget(target);
+        LuaAutoPop autoPop(m_L);
+
+        lua_getfield(m_L, -1, "_dir");
+        std::string directory = lua_tocpp<std::string>(m_L, -1);
+        lua_pop(m_L, 1);
+        // get sources
+        lua_getfield(m_L, -1, "_files");
+        StringList files;
+        readLuaList(m_L, lua_gettop(m_L), files);
+        lua_pop(m_L, 1);
+
+        for (const std::string& fileName : files) {
+            if (fileName.empty())
+                continue;
+            std::string absPath = fileName[0] == '/' ? fileName : sourceDir + directory + fileName;
+            absPath = OS::normalizeFilePath(absPath);
+            output << "File: " << absPath << std::endl;
+            auto lastDot = absPath.find_last_of(".");
+            if (lastDot != std::string::npos) {
+                absPath.replace(lastDot, absPath.size() - lastDot, ".h");
+                if (OS::fileExists(absPath))
+                    output << "File: " << absPath << std::endl;
+            }
+
+//          TODO: Defines
+        }
+
+        output << "Include: " << OS::normalizeDirPath(sourceDir + directory) << std::endl;
+        for (const std::string& inc : getTargetIncludeDirectories(target))
+            output << "Include: " << OS::normalizeDirPath(inc) << std::endl;
+    }
 }

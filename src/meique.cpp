@@ -21,10 +21,8 @@
 #include "meiquescript.h"
 #include "compiler.h"
 #include "compilerfactory.h"
-#include "target.h"
-#include "compilabletarget.h"
 #include "jobmanager.h"
-#include "jobqueue.h"
+#include "jobfactory.h"
 #include "graph.h"
 #include "meiqueversion.h"
 #include <vector>
@@ -53,18 +51,16 @@ enum {
     CleanAction
 };
 
-Meique::Meique(int argc, const char** argv) : m_args(argc, argv), m_jobManager(new JobManager), m_script(0), m_firstRun(false)
+Meique::Meique(int argc, const char** argv)
+    : m_args(argc, argv)
+    , m_script(nullptr)
+    , m_firstRun(false)
 {
-    int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
-    if (jobLimit <= 0)
-        throw Error("You should use a number greater than zero in -j option.");
-    m_jobManager->setJobCountLimit(jobLimit);
 }
 
 Meique::~Meique()
 {
     delete m_script;
-    delete m_jobManager;
 }
 
 int Meique::checkArgs()
@@ -126,39 +122,7 @@ int Meique::dumpProject()
     m_script->setBuildDir("./");
     m_script->exec();
 
-    std::cout << "Project: " << OS::baseName(m_script->sourceDir()) << std::endl;
-
-    // Project files
-    StringList projectFiles = m_script->projectFiles();
-    for (std::string& file : projectFiles)
-        std::cout << "ProjectFile: " << OS::normalizeFilePath(m_script->sourceDir() + file) << "\n";
-
-    for (Target* target : m_script->targets()) {
-        if (!target->isCompilableTarget())
-            continue;
-        CompilableTarget* ctarget = static_cast<CompilableTarget*>(target);
-
-        std::cout << "Target: " << ctarget->name() << std::endl;
-        for (const std::string& fileName : target->files()) {
-            if (fileName.empty())
-                continue;
-            std::string absPath = fileName[0] == '/' ? fileName : m_script->sourceDir() + target->directory() + fileName;
-            absPath = OS::normalizeFilePath(absPath);
-            std::cout << "File: " << absPath << std::endl;
-            auto lastDot = absPath.find_last_of(".");
-            if (lastDot != std::string::npos) {
-                absPath.replace(lastDot, absPath.size() - lastDot, ".h");
-                if (OS::fileExists(absPath))
-                    std::cout << "File: " << absPath << std::endl;
-            }
-
-            // TODO: Defines
-        }
-
-        std::cout << "Include: " << OS::normalizeDirPath(m_script->sourceDir() + target->directory()) << std::endl;
-        for (const std::string& inc : ctarget->includeDirectories())
-            std::cout << "Include: " << OS::normalizeDirPath(inc) << std::endl;
-    }
+    m_script->dumpProject(std::cout);
     return 0;
 }
 
@@ -182,48 +146,38 @@ int Meique::getBuildAction()
         return BuildAction;
 }
 
-TargetList Meique::getChosenTargets()
+StringList Meique::getChosenTargetNames()
 {
     int ntargets = m_args.numberOfFreeArgs();
     StringList targetNames;
     for (int i = m_firstRun ? 1 : 0; i < ntargets; ++i)
         targetNames.push_back(m_args.freeArg(i));
-
-    TargetList targets;
-    if (targetNames.empty()) {
-        targets = m_script->targets();
-    } else {
-        for (const std::string& targetName : targetNames)
-            targets.push_back(m_script->getTarget(targetName));
-    }
-
-    if (targets.empty())
-        throw Error("There's no targets!");
-
-    return targets;
+    return targetNames;
 }
 
 int Meique::buildTargets()
 {
-    for (Target* target : getChosenTargets())
-        createJobQueues(m_script, target);
+    int jobLimit = m_args.intArg("j", OS::numberOfCPUCores() + 1);
+    if (jobLimit <= 0)
+        throw Error("You should use a number greater than zero in -j option.");
 
-    if (!m_jobManager->processJobs())
+    JobFactory jobFactory(*m_script, getChosenTargetNames());
+    JobManager jobManager(jobFactory, jobLimit);
+    if (!jobManager.run())
         throw Error("Build error.");
+
     return 0;
 }
 
 int Meique::cleanTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->clean();
+    m_script->cleanTargets(getChosenTargetNames());
     return 0;
 }
 
 int Meique::installTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->install();
+    m_script->installTargets(getChosenTargetNames());
     return 0;
 }
 
@@ -292,8 +246,7 @@ int Meique::testTargets()
 
 int Meique::uninstallTargets()
 {
-    for (Target* target : getChosenTargets())
-        target->uninstall();
+    m_script->uninstallTargets(getChosenTargetNames());
     return 0;
 }
 
@@ -371,59 +324,4 @@ int Meique::showHelp()
     std::cout << " -t [regex]                         Run tests matching a regular expression, all\n";
     std::cout << "                                    tests if none was specified.\n";
     return 0;
-}
-
-void Meique::createJobQueues(const MeiqueScript* script, Target* mainTarget)
-{
-    if (mainTarget->wasRan())
-        return;
-
-    TargetList aux = script->targets();
-    std::vector<Target*> targets;
-    std::copy(aux.begin(), aux.end(), std::back_inserter(targets));
-
-    // Create and fill some collections to help with the graph manipulation
-    std::map<Target*, int> nodeMap;
-    std::map<int, std::string> revMap;
-    for (size_t i = 0; i < targets.size(); ++i) {
-        Target* target = targets[i];
-        nodeMap[target] = i;
-        revMap[i] = target->name();
-    }
-
-    // Create the dependency graph
-    Graph graph(targets.size());
-    for (size_t i = 0; i < targets.size(); ++i) {
-        Target* target = targets[i];
-        for (Target* dep : target->dependencies())
-            graph.addEdge(i, nodeMap[dep]);
-    }
-
-    // Try to find cyclic dependences
-    std::list<int> sortedNodes = graph.topologicalSort();
-    if (sortedNodes.empty()) {
-        graph.dumpDot(revMap, "cyclicDeps.dot");
-        throw Error("Cyclic dependency found in your targets! You can check the dot graph at ./cyclicDeps.dot.");
-    }
-
-    // get all job queues
-    std::list<int> myDeps = graph.topologicalSortDependencies(nodeMap[mainTarget]);
-    std::vector<JobQueue*> queues(targets.size());
-    for(int depIdx : myDeps) {
-        Target* target = targets[depIdx];
-        if (target->wasRan())
-            continue;
-        JobQueue* queue = target->run(m_script->cache()->compiler());
-        queues[depIdx] = queue;
-        m_jobManager->addJobQueue(queue);
-    }
-
-    // add dependency info to job queues
-    for(int depIdx : myDeps) {
-        Target* target = targets[depIdx];
-        if (target->wasRan())
-            continue;
-        for (Target* dep : target->dependencies())
-            queues[depIdx]->addDependency(queues[nodeMap[dep]]);
-    }
 }

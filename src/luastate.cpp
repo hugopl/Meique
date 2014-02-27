@@ -19,7 +19,6 @@
 #include "luastate.h"
 #include "logger.h"
 #include "lauxlib.h"
-#include "mutexlocker.h"
 
 LuaState::LuaState()
 {
@@ -27,7 +26,6 @@ LuaState::LuaState()
     if (!m_L)
         throw Error("Can't create lua state");
 
-    pthread_mutex_init(&m_mutex, 0);
     lua_pushlightuserdata(m_L, (void*) m_L);
     lua_pushlightuserdata(m_L, (void*) &m_mutex);
     lua_settable(m_L, LUA_REGISTRYINDEX);
@@ -36,6 +34,6 @@ LuaState::LuaState()
 LuaState::~LuaState()
 {
     // Be sure that nobody is waiting for the lua mutex.
-    MutexLocker locker(&m_mutex);
+    std::lock_guard<std::mutex> lock(m_mutex);
     lua_close(m_L);
 }

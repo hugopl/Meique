@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,6 +25,35 @@
 #include <cassert>
 #include "lua.h"
 #include "basictypes.h"
+
+#define LuaLeakCheck(L) LuaLeakCheckImpl _luaLeakChecker(__PRETTY_FUNCTION__, (L))
+class LuaLeakCheckImpl
+{
+public:
+    LuaLeakCheckImpl(const char* func, lua_State* L);
+    ~LuaLeakCheckImpl();
+private:
+    const char* m_func;
+    lua_State* m_L;
+    int m_stackSize;
+};
+
+class LuaAutoPop final
+{
+public:
+    LuaAutoPop(lua_State* L, int n = 1)
+        : m_L(L)
+        , m_n(n)
+    {
+    }
+    ~LuaAutoPop()
+    {
+        lua_pop(m_L, m_n);
+    }
+private:
+    lua_State* m_L;
+    int m_n;
+};
 
 template<typename List>
 void readLuaList(lua_State* L, int tableIndex, List& list);
@@ -73,6 +102,20 @@ void readLuaTable(lua_State* L, int tableIndex, Map& map)
         typename Map::key_type key = lua_tocpp<typename Map::key_type>(L, -2);
         typename Map::mapped_type value = lua_tocpp<typename Map::mapped_type>(L, lua_gettop(L));
         map[key] = value;
+        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
+    }
+}
+
+template<typename List>
+void readLuaTableKeys(lua_State* L, int tableIndex, List& list)
+{
+    assert(tableIndex >= 0);
+    assert(lua_istable(L, tableIndex));
+
+    lua_pushnil(L);  /* first key */
+    while (lua_next(L, tableIndex) != 0) {
+        typename List::value_type key = lua_tocpp<typename List::value_type>(L, -2);
+        list.push_back(key);
         lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 }

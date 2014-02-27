@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -17,59 +17,28 @@
 */
 
 #include "job.h"
-#include "joblistenner.h"
-#include "mutexlocker.h"
+#include "nodetree.h"
+#include <thread>
 
-Job::Job() : m_status(Idle), m_type(Compilation), m_result(0)
+Job::Job(NodeGuard* nodeGuard)
+    : m_result(0)
+    , m_nodeGuard(nodeGuard)
 {
-    pthread_mutex_init(&m_statusMutex, 0);
 }
 
-void* initJobThread(void* ptr)
+Job::~Job()
 {
-    Job* job = reinterpret_cast<Job*>(ptr);
+    delete m_nodeGuard;
+}
 
-    pthread_mutex_lock(&job->m_statusMutex);
-    job->m_status = Job::Running;
-    pthread_mutex_unlock(&job->m_statusMutex);
-
-    job->m_result = job->doRun();
-
-    pthread_mutex_lock(&job->m_statusMutex);
-    job->m_status = job->m_result ? Job::FinishedButFailed : Job::FinishedWithSuccess;
-    pthread_mutex_unlock(&job->m_statusMutex);
-
-    std::list<JobListenner*>::iterator it = job->m_listenners.begin();
-    for (; it != job->m_listenners.end(); ++it)
-        (*it)->jobFinished(job);
-
-    return 0;
+void initJobThread(Job* job)
+{
+    job->onFinished(job->doRun());
+    delete job;
 }
 
 void Job::run()
 {
-    pthread_mutex_lock(&m_statusMutex);
-    m_status = Scheduled;
-    pthread_mutex_unlock(&m_statusMutex);
-    pthread_create(&m_thread, 0, initJobThread, this);
-}
-
-Job::Status Job::status() const
-{
-    return m_status;
-}
-
-bool Job::hasShowStoppers() const
-{
-    std::list<Job*>::const_iterator it = m_dependencies.begin();
-    for (; it != m_dependencies.end(); ++it) {
-        if ((*it)->status() != FinishedWithSuccess || (*it)->hasShowStoppers())
-            return true;
-    }
-    return false;
-}
-
-void Job::addJobListenner(JobListenner* listenner)
-{
-    m_listenners.push_back(listenner);
+    std::thread t(initJobThread, this);
+    t.detach();
 }

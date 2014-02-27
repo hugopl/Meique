@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -25,15 +25,12 @@
 class OSCommandJob : public Job
 {
 public:
-    OSCommandJob(const OS::Command& command);
-    void setWorkingDirectory(const std::string& dir) { m_workingDir = dir; }
-    std::string workingDirectory() { return m_workingDir; }
+    OSCommandJob(NodeGuard* nodeGuard, const OS::Command& command);
 
 protected:
     virtual int doRun();
 private:
     OS::Command m_command;
-    std::string m_workingDir;
 };
 
 #endif // OSCOMMANDJOB_H

@@ -39,3 +39,7 @@ Language identifyLanguage(const std::string& fileName)
     return UnsupportedLanguage;
 }
 
+std::string Compiler::nameForObject(const std::string& name, const std::string& target) const
+{
+    return name + '.' + target + ".o";
+}

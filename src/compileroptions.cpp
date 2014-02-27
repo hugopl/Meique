@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -60,3 +60,9 @@ void CompilerOptions::normalize()
     m_customFlags.erase(std::unique(m_customFlags.begin(), m_customFlags.end()), m_customFlags.end());
 }
 
+void CompilerOptions::merge(const CompilerOptions& other)
+{
+    copy(m_includePaths, other.m_includePaths);
+    copy(m_defines, other.m_defines);
+    copy(m_customFlags, other.m_customFlags);
+}

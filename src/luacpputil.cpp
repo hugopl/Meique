@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -20,6 +20,20 @@
 #include <cstring>
 #include "logger.h"
 #include "lauxlib.h"
+
+LuaLeakCheckImpl::LuaLeakCheckImpl(const char* func, lua_State* L)
+    : m_func(func)
+    , m_L(L)
+{
+    m_stackSize = lua_gettop(m_L);
+}
+
+LuaLeakCheckImpl::~LuaLeakCheckImpl()
+{
+    int leak = lua_gettop(m_L) - m_stackSize;
+    if (leak != 0)
+        Warn() << m_func << "is leaking " << leak << " lua values on the stack!";
+}
 
 static int meiqueErrorHandler(lua_State* L)
 {

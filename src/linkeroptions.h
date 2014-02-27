@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,7 +45,9 @@ public:
     void setLinkType(LinkType linkType) { m_linkType = linkType; }
     LinkType linkType() const { return m_linkType; }
     void setLanguage(Language lang) { m_language = lang; }
-    Language language() const { return m_language; };
+    Language language() const { return m_language; }
+
+    void merge(const LinkerOptions& other);
 private:
     StringList m_libraries;
     StringList m_staticLibraries;

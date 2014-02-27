@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -22,7 +22,9 @@
 #include "luacpputil.h"
 #include "logger.h"
 
-LuaJob::LuaJob(lua_State* L, int args) : m_L(L)
+LuaJob::LuaJob(NodeGuard* nodeGuard, lua_State* L, int args)
+    : Job(nodeGuard)
+    , m_L(L)
 {
     assert(lua_type(L, -(args + 1)) == LUA_TFUNCTION);
     assert(lua_gettop(L) >= args + 1);
@@ -44,6 +46,7 @@ int LuaJob::doRun()
 {
     LuaLocker locker(m_L);
 
+    OS::ChangeWorkingDirectory dirChanger(workingDirectory());
     // Get the lua function and put it on lua stack
     lua_pushlightuserdata(m_L, this); // key
     lua_gettable(m_L, LUA_REGISTRYINDEX);

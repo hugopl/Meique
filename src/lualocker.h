@@ -19,7 +19,7 @@
 #ifndef LUALOCKER_H
 #define LUALOCKER_H
 
-#include <pthread.h>
+#include <mutex>
 
 struct lua_State;
 class LuaLocker
@@ -28,7 +28,7 @@ public:
     LuaLocker(lua_State* L);
     ~LuaLocker();
 private:
-    pthread_mutex_t* m_mutex;
+    std::mutex* m_mutex;
 };
 
 #endif // LUALOCKER_H

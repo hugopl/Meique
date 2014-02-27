@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010-2013 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2010-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -18,110 +18,82 @@
 
 #include "jobmanager.h"
 #include "logger.h"
-#include "jobqueue.h"
 #include "job.h"
-#include <iomanip>
-#include "mutexlocker.h"
+#include "jobfactory.h"
 
-JobManager::JobManager() : m_maxJobsRunning(1), m_jobsRunning(0), m_errorOccured(false)
+#include <functional>
+#include <iomanip>
+
+JobManager::JobManager(JobFactory& jobFactory, unsigned maxJobRunning)
+    : m_jobFactory(jobFactory)
+    , m_maxJobsRunning(maxJobRunning)
+    , m_jobsRunning(0)
+    , m_errorOccured(false)
 {
-    pthread_mutex_init(&m_jobsRunningMutex, 0);
-    pthread_cond_init(&m_needJobsCond, 0);
-    pthread_cond_init(&m_allDoneCond, 0);
 }
 
 JobManager::~JobManager()
 {
-    std::list<JobQueue*>::iterator it = m_queues.begin();
-    for (; it != m_queues.end(); ++it)
-        delete *it;
-}
-
-void JobManager::addJobQueue(JobQueue* queue)
-{
-    m_queues.push_back(queue);
 }
 
 void JobManager::printReportLine(const Job* job) const
 {
-    int perc = int((100 * m_jobsNotIdle) / m_jobCount);
-    Manipulators color = NoColor;
-    const char* text = "";
-
-    switch (job->type()) {
-    case Job::Compilation:
+    Manipulators color;
+    switch (job->name().empty() ? 0 : job->name()[0]) {
+    case 'C':
         color = Green;
-        text = "Compiling ";
         break;
-    case Job::Linking:
-        color = Red;
-        text = "Linking ";
+    case 'L':
+        color = Magenta;
         break;
-    case Job::CustomTarget:
+    case 'R':
         color = Blue;
-        text = "Running custom target function for ";
         break;
     }
 
-    Notice() << '[' << perc << "%] " << color << text << job->name();
+    Notice() << '[' << m_jobFactory.processedNodes() << '/' << m_jobFactory.nodeCount() << "] " << color << job->name();
 }
 
-bool JobManager::processJobs()
+bool JobManager::run()
 {
-    m_jobCount = 0;
-    m_jobsNotIdle = 0;
-    std::list<JobQueue*>::const_iterator it = m_queues.begin();
-    for (; it != m_queues.end(); ++it)
-        m_jobCount += (*it)->jobCount();
-
-    m_jobsProcessed = 0;
-    while (!m_errorOccured && m_jobsProcessed < m_jobCount) {
-        // Select a valid queue
-        std::list<JobQueue*>::iterator queueIt = m_queues.begin();
-        JobQueue* queue = *queueIt;
-        while (queue->hasShowStoppers() || queue->isEmpty()) {
-            queue = *(++queueIt);
-            if (queueIt == m_queues.end())
-                goto finish;
+    while (!m_errorOccured) {
+        {
+            std::unique_lock<std::mutex> lock(m_jobsRunningMutex);
+            if (m_jobsRunning >= m_maxJobsRunning)
+                m_needJobsCond.wait(lock);
         }
-
-        MutexLocker locker(&m_jobsRunningMutex);
-        if (m_jobsRunning >= m_maxJobsRunning)
-            pthread_cond_wait(&m_needJobsCond, &m_jobsRunningMutex);
 
         if (m_errorOccured)
             break;
 
-        // Now select a valid job
-        if (Job* job = queue->getNextJob()) {
-            job->addJobListenner(this);
-            job->run();
-            m_jobsRunning++;
-            m_jobsNotIdle++;
-            printReportLine(job);
-        }
+        Job* job = m_jobFactory.createJob();
+        if (!job)
+            break;
+        job->onFinished = [&](int result) { onJobFinished(result); };
+        job->run();
+
+        std::lock_guard<std::mutex> lock(m_jobsRunningMutex);
+        m_jobsRunning++;
+        printReportLine(job);
     }
 
-    finish:
-
-    MutexLocker locker(&m_jobsRunningMutex);
+    std::unique_lock<std::mutex> lock(m_jobsRunningMutex);
     if (m_jobsRunning) {
         Notice() << "Waiting for unfinished jobs...";
-        pthread_cond_wait(&m_allDoneCond, &m_jobsRunningMutex);
+        m_allDoneCond.wait(lock);
     }
 
     return !m_errorOccured;
 }
 
-void JobManager::jobFinished(Job* job)
+void JobManager::onJobFinished(int result)
 {
-    MutexLocker locker(&m_jobsRunningMutex);
+    std::lock_guard<std::mutex> lock(m_jobsRunningMutex);
     m_jobsRunning--;
-    m_jobsProcessed++;
-    if (job->result())
+    if (result)
         m_errorOccured = true;
     if (m_jobsRunning < m_maxJobsRunning)
-        pthread_cond_signal(&m_needJobsCond);
+        m_needJobsCond.notify_all();
     if (m_jobsRunning == 0)
-        pthread_cond_signal(&m_allDoneCond);
+        m_allDoneCond.notify_all();
 }
