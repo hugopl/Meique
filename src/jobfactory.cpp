@@ -81,20 +81,14 @@ Job* JobFactory::createJob()
     assert(m_root);
 
     Job* job = nullptr;
+    Node* target;
+    Node* node;
+
     do {
         m_needToWait = false;
-        Node* target;
-        Node* node;
-
         {
             std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
             node = findAGoodNode(&target, m_root);
-            if (node && !node->isTarget) {
-                NodeVisitor<NodeGetParent>(node, [node](Node* parent) {
-                    if (node != parent)
-                        parent->shouldBuild = 1;
-                });
-            }
         }
         if (!node) {
             if (m_needToWait) {
@@ -117,6 +111,15 @@ Job* JobFactory::createJob()
         else
             job = createTargetJob(target);
     } while(!job);
+
+    if (job) {
+        std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
+        NodeVisitor<NodeGetParent>(node, [node](Node* parent) {
+            if (node != parent)
+                parent->shouldBuild = 1;
+        });
+    }
+
     return job;
 }
 
@@ -243,30 +246,33 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     readLuaList(L, lua_gettop(L), files);
     lua_pop(L, 1);
 
-    StringList outputs;
-    lua_getfield(L, -1, "_outputs");
-    readLuaList(L, lua_gettop(L), outputs);
-    lua_pop(L, 1);
-
     Options* options = m_targetCompilerOptions[target];
-    const std::string buildDir = m_script.buildDir() + options->targetDirectory;
-    const std::string sourceDir = m_script.sourceDir() + options->targetDirectory;
 
-    if (!outputs.empty()) {
-        bool shouldRun = false;
-        for (const std::string& file : files) {
-            for (const std::string& output : outputs) {
-                if (OS::timestampCompare(sourceDir + file, buildDir + output) < 0) {
-                    shouldRun = true;
-                    break;
+    if (!target->shouldBuild) {
+        StringList outputs;
+        lua_getfield(L, -1, "_outputs");
+        readLuaList(L, lua_gettop(L), outputs);
+        lua_pop(L, 1);
+
+        const std::string buildDir = m_script.buildDir() + options->targetDirectory;
+        const std::string sourceDir = m_script.sourceDir() + options->targetDirectory;
+
+        if (!outputs.empty()) {
+            bool shouldRun = false;
+            for (const std::string& file : files) {
+                for (const std::string& output : outputs) {
+                    if (OS::timestampCompare(sourceDir + file, buildDir + output) < 0) {
+                        shouldRun = true;
+                        break;
+                    }
                 }
+                if (shouldRun)
+                    break;
             }
-            if (shouldRun)
-                break;
-        }
-        if (!shouldRun) {
-            target->status = Node::Built;
-            return nullptr;
+            if (!shouldRun) {
+                target->status = Node::Built;
+                return nullptr;
+            }
         }
     }
 
