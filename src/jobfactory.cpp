@@ -233,25 +233,50 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     lua_State* L = m_script.luaState();
     LuaLeakCheck(L);
 
-    // TODO: Check if the input files are newer than the output files instead of always send all output files
-    // and write a test for it.
     target->status = Node::Building;
 
-    StringList files;
     m_script.luaPushTarget(target->name);
+    LuaAutoPop autoPop(L);
+
+    StringList files;
     lua_getfield(L, -1, "_files");
     readLuaList(L, lua_gettop(L), files);
     lua_pop(L, 1);
 
+    StringList outputs;
+    lua_getfield(L, -1, "_outputs");
+    readLuaList(L, lua_gettop(L), outputs);
+    lua_pop(L, 1);
+
+    Options* options = m_targetCompilerOptions[target];
+    const std::string buildDir = m_script.buildDir() + options->targetDirectory;
+    const std::string sourceDir = m_script.sourceDir() + options->targetDirectory;
+
+    if (!outputs.empty()) {
+        bool shouldRun = false;
+        for (const std::string& file : files) {
+            for (const std::string& output : outputs) {
+                if (OS::timestampCompare(sourceDir + file, buildDir + output) < 0) {
+                    shouldRun = true;
+                    break;
+                }
+            }
+            if (shouldRun)
+                break;
+        }
+        if (!shouldRun) {
+            target->status = Node::Built;
+            return nullptr;
+        }
+    }
+
     lua_getfield(L, -1, "_func");
     createLuaArray(L, files);
 
-    Options* options = m_targetCompilerOptions[target];
     LuaJob* job = new LuaJob(m_nodeTree.createNodeGuard(target), L, 1);
     job->setName("Running custom target " + std::string(target->name));
     job->setWorkingDirectory(m_script.sourceDir() + options->targetDirectory);
 
-    lua_pop(L, 1);
     return job;
 }
 
