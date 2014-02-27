@@ -42,7 +42,6 @@ public:
     void setRoot(Node* root);
 
     Job* createJob();
-    void cacheTargetCompilerOptions(Node* node);
 private:
     JobFactory(const JobFactory&) = delete;
 
@@ -58,6 +57,7 @@ private:
     Job* createCustomTargetJob(Node* target);
     void fillTargetOptions(Node* node, Options* options);
     void mergeCompilerAndLinkerOptions(Node* node);
+    void cacheTargetCompilerOptions(Node* node);
 
     MeiqueScript& m_script;
     NodeTree& m_nodeTree;
