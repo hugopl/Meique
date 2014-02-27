@@ -75,7 +75,6 @@ void JobFactory::setRoot(Node* root)
     lua_pop(L, 1); // remove the table
 #endif
     m_nodeTree.expandTargetNode(m_root);
-    m_nodeTree.dump("/tmp/tree.dot");
 }
 
 Job* JobFactory::createJob()
