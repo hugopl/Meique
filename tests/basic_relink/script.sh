@@ -1,5 +1,6 @@
 $MEIQUE .. || fail "Basic compilation failed."
 
+sleep 1
 echo -e "#include <iostream>\\n"\
 "int main() { std::cout << \"MODIFIED\"; }" > ../main.cpp;
 

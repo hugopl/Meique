@@ -4,6 +4,7 @@ GCC:addCustomFlags("-std=c++0x")
 meique:use(lua)
 meique:addLinkLibraries("pthread")
 meique:addFiles([[
+dependencechecker.cpp
 main.cpp
 meiqueregex.cpp
 meique.cpp

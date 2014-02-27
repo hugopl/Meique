@@ -161,11 +161,6 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
     return node;
 }
 
-static std::string objectFileFor(Node* target, Node* node)
-{
-    return std::string(node->name) + '.' + target->name + ".o";
-}
-
 Job* JobFactory::createCompilationJob(Node* target, Node* node)
 {
     node->status = Node::Building;
@@ -176,14 +171,15 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     const std::string& fileName = node->name;
 
     const std::string absSourcePath = fileName.at(0) == '/' ? fileName : sourceDir + fileName;
-    std::string absObjPath = objectFileFor(target, node);
+    std::string absObjPath = m_script.cache()->compiler()->nameForObject(node->name, target->name);
     if (absObjPath.at(0) != '/')
         absObjPath.insert(0, buildDir);
 
     std::string source = OS::normalizeFilePath(absSourcePath);
     std::string output = OS::normalizeFilePath(absObjPath);
 
-    if (OS::timestampCompare(source, output) > 0) {
+    m_depChecker.setWorkingDirectory(sourceDir);
+    if (!m_depChecker.shouldCompile(source, output)) {
         node->status = Node::Built;
         return nullptr;
     }
@@ -203,13 +199,14 @@ Job* JobFactory::createTargetJob(Node* target)
 
     target->status = Node::Building;
 
+    Compiler* compiler = m_script.cache()->compiler();
     Options* options = m_targetCompilerOptions[target];
     const std::string buildDir = m_script.buildDir() + options->targetDirectory;
 
     StringList objects;
     for (Node* child : target->children) {
         if (!child->isTarget)
-        objects.push_back(objectFileFor(target, child));
+        objects.push_back(compiler->nameForObject(child->name, target->name));
     }
 
     m_script.luaPushTarget(target->name);
@@ -223,7 +220,6 @@ Job* JobFactory::createTargetJob(Node* target)
         return nullptr;
     }
 
-    Compiler* compiler = m_script.cache()->compiler();
     OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(target), compiler->link(outputName, objects, &options->linkerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Linking " + outputName);

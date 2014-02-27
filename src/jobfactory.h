@@ -25,6 +25,7 @@
 #include <condition_variable>
 
 #include "compileroptions.h"
+#include "dependencechecker.h"
 #include "linkeroptions.h"
 
 class MeiqueScript;
@@ -66,6 +67,7 @@ private:
     std::mutex m_treeChangedMutex;
     std::condition_variable m_treeChanged;
 
+    DependenceChecker m_depChecker;
     typedef std::unordered_map<Node*, Options*> CompilerOptionsMap;
     CompilerOptionsMap m_targetCompilerOptions;
 };

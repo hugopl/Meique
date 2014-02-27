@@ -68,7 +68,8 @@ namespace OS
     int numberOfCPUCores();
 
     unsigned long getTimeInMillis();
-    /// return -x, 0 or +x if file1 is older, same age or newer than file2.
+    /// return -x, 0 or +x if file1 is newer, same age or older than file2.
+    /// i.e. file2.timestamp - file1.timestamp
     int timestampCompare(const std::string& file1, const std::string& file2);
 
     /// Path separator used in the current platform, / on unices and \ on MS Windows

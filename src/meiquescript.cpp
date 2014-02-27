@@ -806,11 +806,12 @@ void MeiqueScript::cleanTargets(const StringList& targets)
         readLuaList(m_L, lua_gettop(m_L), files);
         lua_pop(m_L, 1);
 
-        for (std::string file : files) {
-            file += "." + target + ".o";
-            if (file[0] != '/')
-                file.insert(0, buildDir() + directory);
-            OS::rm(file);
+        Compiler* compiler = m_cache->compiler();
+        for (const std::string& file : files) {
+            std::string objFile = compiler->nameForObject(file, target);
+            if (objFile[0] != '/')
+                objFile.insert(0, m_buildDir + directory);
+            OS::rm(objFile);
         }
     }
 }
