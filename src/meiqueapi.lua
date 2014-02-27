@@ -287,9 +287,9 @@ function Library:new(name, libType)
     o._libType = libType or SHARED
     o._type = 2
     if o._libType == SHARED then
-        o._output = name..".so"
+        o._output = "lib"..name..".so"
     else
-        o._output = name..".a"
+        o._output = "lib"..name..".a"
     end
     return o
 end
