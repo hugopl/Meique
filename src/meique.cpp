@@ -25,7 +25,6 @@
 #include "jobfactory.h"
 #include "graph.h"
 #include "meiqueversion.h"
-#include "nodetree.h"
 #include <vector>
 #include <sstream>
 #include "statemachine.h"
@@ -162,11 +161,8 @@ int Meique::buildTargets()
     if (jobLimit <= 0)
         throw Error("You should use a number greater than zero in -j option.");
 
-    NodeTree tree(*m_script, getChosenTargetNames());
-    JobFactory jobFactory(*m_script, tree);
+    JobFactory jobFactory(*m_script, getChosenTargetNames());
     JobManager jobManager(jobFactory, jobLimit);
-
-    jobFactory.setRoot(tree.root());
     if (!jobManager.run())
         throw Error("Build error.");
 

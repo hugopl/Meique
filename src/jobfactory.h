@@ -27,19 +27,16 @@
 #include "compileroptions.h"
 #include "dependencechecker.h"
 #include "linkeroptions.h"
+#include "nodetree.h"
 
 class MeiqueScript;
-class Node;
-class NodeTree;
 class Job;
 
 class JobFactory
 {
 public:
-    JobFactory(MeiqueScript& script, NodeTree& nodeTree);
+    JobFactory(MeiqueScript& script, const StringList& targets);
     ~JobFactory();
-
-    void setRoot(Node* root);
 
     Job* createJob();
     unsigned processedNodes() const { return m_processedNodes; }
@@ -53,6 +50,8 @@ private:
         LinkerOptions linkerOptions;
     };
 
+    void setRoot(Node* root);
+
     Node* findAGoodNode(Node** target, Node* node);
     Job* createCompilationJob(Node* target, Node* node);
     Job* createTargetJob(Node* target);
@@ -62,7 +61,7 @@ private:
     void cacheTargetCompilerOptions(Node* node);
 
     MeiqueScript& m_script;
-    NodeTree& m_nodeTree;
+    NodeTree m_nodeTree;
     Node* m_root;
 
     bool m_needToWait;

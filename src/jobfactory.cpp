@@ -32,9 +32,9 @@
 #include "luajob.h"
 #include <cassert>
 
-JobFactory::JobFactory(MeiqueScript& script, NodeTree& nodeTree)
+JobFactory::JobFactory(MeiqueScript& script, const StringList& targets)
     : m_script(script)
-    , m_nodeTree(nodeTree)
+    , m_nodeTree(script, targets)
     , m_root(nullptr)
     , m_needToWait(false)
     , m_processedNodes(0)
@@ -42,6 +42,7 @@ JobFactory::JobFactory(MeiqueScript& script, NodeTree& nodeTree)
     m_nodeTree.onTreeChange = [&]() {
         m_treeChanged.notify_all();
     };
+    setRoot(m_nodeTree.root());
 }
 
 JobFactory::~JobFactory()
