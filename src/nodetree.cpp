@@ -55,6 +55,7 @@ NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
     if (!targets.empty())
         removeUnusedTargets(targets);
     connectForest();
+    m_size = m_targetNodes.size();
 }
 
 NodeTree::~NodeTree()
@@ -125,6 +126,7 @@ void NodeTree::expandTargetNode(Node* target)
         Node* fileNode = new Node(file);
         fileNode->parents.push_back(target);
         target->children.push_back(fileNode);
+        m_size++;
     }
     lua_pop(m_L, 2);
 }

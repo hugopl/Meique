@@ -19,10 +19,14 @@
 #include "jobmanager.h"
 #include "logger.h"
 #include "job.h"
+#include "jobfactory.h"
+
+#include <functional>
 #include <iomanip>
 
-JobManager::JobManager(unsigned maxJobRunning)
-    : m_maxJobsRunning(maxJobRunning)
+JobManager::JobManager(JobFactory& jobFactory, unsigned maxJobRunning)
+    : m_jobFactory(jobFactory)
+    , m_maxJobsRunning(maxJobRunning)
     , m_jobsRunning(0)
     , m_errorOccured(false)
 {
@@ -34,18 +38,27 @@ JobManager::~JobManager()
 
 void JobManager::printReportLine(const Job* job) const
 {
-    Notice() << job->name();
+    Manipulators color;
+    switch (job->name().empty() ? 0 : job->name()[0]) {
+    case 'C':
+        color = Green;
+        break;
+    case 'L':
+        color = Magenta;
+        break;
+    case 'R':
+        color = Blue;
+        break;
+    }
+
+    Notice() << '[' << m_jobFactory.processedNodes() << '/' << m_jobFactory.nodeCount() << "] " << color << job->name();
 }
 
 bool JobManager::run()
 {
-    m_jobCount = 0;
-    m_jobsNotIdle = 0;
-    m_jobsProcessed = 0;
-
     while (!m_errorOccured) {
         {
-            std::unique_lock<std::mutex> lock(m_jobStatsMutex);
+            std::unique_lock<std::mutex> lock(m_jobsRunningMutex);
             if (m_jobsRunning >= m_maxJobsRunning)
                 m_needJobsCond.wait(lock);
         }
@@ -53,19 +66,18 @@ bool JobManager::run()
         if (m_errorOccured)
             break;
 
-        Job* job = onNeedMoreJobs();
+        Job* job = m_jobFactory.createJob();
         if (!job)
             break;
         job->onFinished = [&](int result) { onJobFinished(result); };
         job->run();
 
-        std::lock_guard<std::mutex> lock(m_jobStatsMutex);
+        std::lock_guard<std::mutex> lock(m_jobsRunningMutex);
         m_jobsRunning++;
-        m_jobsNotIdle++;
         printReportLine(job);
     }
 
-    std::unique_lock<std::mutex> lock(m_jobStatsMutex);
+    std::unique_lock<std::mutex> lock(m_jobsRunningMutex);
     if (m_jobsRunning) {
         Notice() << "Waiting for unfinished jobs...";
         m_allDoneCond.wait(lock);
@@ -76,14 +88,12 @@ bool JobManager::run()
 
 void JobManager::onJobFinished(int result)
 {
-    std::lock_guard<std::mutex> lock(m_jobStatsMutex);
+    std::lock_guard<std::mutex> lock(m_jobsRunningMutex);
     m_jobsRunning--;
-    m_jobsProcessed++;
     if (result)
         m_errorOccured = true;
     if (m_jobsRunning < m_maxJobsRunning)
         m_needJobsCond.notify_all();
     if (m_jobsRunning == 0)
         m_allDoneCond.notify_all();
-
 }

@@ -42,6 +42,8 @@ public:
     void setRoot(Node* root);
 
     Job* createJob();
+    unsigned processedNodes() const { return m_processedNodes; }
+    unsigned nodeCount() const;
 private:
     JobFactory(const JobFactory&) = delete;
 
@@ -66,6 +68,8 @@ private:
     bool m_needToWait;
     std::mutex m_treeChangedMutex;
     std::condition_variable m_treeChanged;
+
+    unsigned m_processedNodes;
 
     DependenceChecker m_depChecker;
     typedef std::unordered_map<Node*, Options*> CompilerOptionsMap;

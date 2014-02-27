@@ -99,6 +99,8 @@ public:
         TargetNodeMap::const_iterator m_it;
     };
 
+    unsigned size() const { return m_size; }
+
     // Iterate over target nodes
     NodeTree::Iterator begin() const;
     NodeTree::Iterator end() const;
@@ -127,6 +129,8 @@ private:
     lua_State* m_L;
     TargetNodeMap m_targetNodes;
     Node* m_root;
+
+    unsigned m_size;
 
     std::mutex m_mutex;
 };

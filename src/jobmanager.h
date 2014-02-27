@@ -19,38 +19,36 @@
 #ifndef JOBMANAGER_H
 #define JOBMANAGER_H
 
-#include <functional>
 #include <mutex>
 #include <condition_variable>
 
 class Job;
+class JobFactory;
 class JobQueue;
 
 class JobManager
 {
 public:
-    JobManager(unsigned maxJobRunning);
+    JobManager(JobFactory& jobFactory, unsigned maxJobRunning);
     ~JobManager();
-
-    std::function<Job*()> onNeedMoreJobs;
 
     bool run();
 private:
+    JobFactory& m_jobFactory;
+
     unsigned m_maxJobsRunning;
     unsigned m_jobsRunning;
-    unsigned m_jobsProcessed;
-    unsigned m_jobCount;
-    int m_jobsNotIdle;
+    std::mutex m_jobsRunningMutex;
+
     bool m_errorOccured;
-    std::mutex m_jobStatsMutex;
     std::condition_variable m_needJobsCond;
     std::condition_variable m_allDoneCond;
 
     void printReportLine(const Job*) const;
     void onJobFinished(int result);
 
-    JobManager(const JobManager&);
-    JobManager& operator=(const JobManager&);
+    JobManager(const JobManager&) = delete;
+    JobManager& operator=(const JobManager&) = delete;
 };
 
 #endif // JOBMANAGER_H

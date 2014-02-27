@@ -37,6 +37,7 @@ JobFactory::JobFactory(MeiqueScript& script, NodeTree& nodeTree)
     , m_nodeTree(nodeTree)
     , m_root(nullptr)
     , m_needToWait(false)
+    , m_processedNodes(0)
 {
     m_nodeTree.onTreeChange = [&]() {
         m_treeChanged.notify_all();
@@ -100,6 +101,7 @@ Job* JobFactory::createJob()
         }
 
         node->status = Node::Building;
+        m_processedNodes++;
 
         LuaLocker luaLock(m_script.luaState());
         std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
@@ -446,4 +448,9 @@ void JobFactory::mergeCompilerAndLinkerOptions(Node* node)
             }
         }
     }
+}
+
+unsigned JobFactory::nodeCount() const
+{
+    return m_nodeTree.size();
 }

@@ -163,12 +163,10 @@ int Meique::buildTargets()
         throw Error("You should use a number greater than zero in -j option.");
 
     NodeTree tree(*m_script, getChosenTargetNames());
-    JobManager jobManager(jobLimit);
     JobFactory jobFactory(*m_script, tree);
+    JobManager jobManager(jobFactory, jobLimit);
 
-    // FIXME: Remove unneeded targets from tree before set the fake root
     jobFactory.setRoot(tree.root());
-    jobManager.onNeedMoreJobs = std::bind(&JobFactory::createJob, &jobFactory);
     if (!jobManager.run())
         throw Error("Build error.");
 
