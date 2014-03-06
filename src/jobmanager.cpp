@@ -21,7 +21,6 @@
 #include "job.h"
 #include "jobfactory.h"
 
-#include <cmath>
 #include <functional>
 #include <iomanip>
 
@@ -52,11 +51,7 @@ void JobManager::printReportLine(const Job* job) const
         break;
     }
 
-    // The tree is expanded before any jobs get created, so it's safe to cache this.
-    static unsigned nodeCount = m_jobFactory.nodeCount();
-    static unsigned digits = nodeCount > 0 ? log10(nodeCount) + 1 : 1;
-
-    Notice() << '[' << std::setw(digits) << m_jobFactory.processedNodes() << '/' << nodeCount << "] " << color << job->name();
+    Notice() << '[' << m_jobFactory.processedNodes() << '/' << m_jobFactory.nodeCount() << "] " << color << job->name();
 }
 
 bool JobManager::run()

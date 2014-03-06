@@ -48,8 +48,6 @@ JobFactory::JobFactory(MeiqueScript& script, const StringList& targets)
         cacheTargetCompilerOptions(node);
         mergeCompilerAndLinkerOptions(node);
     });
-
-    m_nodeTree.expandTargetNode(m_root);
 }
 
 JobFactory::~JobFactory()
@@ -71,6 +69,12 @@ Job* JobFactory::createJob()
         {
             std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
             node = findAGoodNode(&target, m_root);
+            // Found a not expanded target, expand it then search a good node again.
+            if (node && node->isTarget && node->status == Node::Pristine) {
+                LuaLocker luaLock(m_script.luaState());
+                m_nodeTree.expandTargetNode(node);
+                node = findAGoodNode(&target, node);
+            }
         }
         if (!node) {
             if (m_needToWait) {
@@ -116,9 +120,8 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
     if (node->isTarget)
         *target = node;
 
-    if (node->children.empty()) {
+    if (node->children.empty())
         return node;
-    }
 
     bool hasChildrenBuilding = false;
     bool hasDependenceBuilding = false;
@@ -143,6 +146,7 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
         m_needToWait = true;
         return nullptr;
     }
+
     return node;
 }
 
