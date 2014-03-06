@@ -42,24 +42,20 @@ JobFactory::JobFactory(MeiqueScript& script, const StringList& targets)
     m_nodeTree.onTreeChange = [&]() {
         m_treeChanged.notify_all();
     };
-    setRoot(m_nodeTree.root());
-}
 
-JobFactory::~JobFactory()
-{
-    for (auto i : m_targetCompilerOptions)
-        delete i.second;
-}
-
-void JobFactory::setRoot(Node* root)
-{
-    m_root = root;
+    m_root = m_nodeTree.root();
     NodeVisitor<>(m_root, [&](Node* node){
         cacheTargetCompilerOptions(node);
         mergeCompilerAndLinkerOptions(node);
     });
 
     m_nodeTree.expandTargetNode(m_root);
+}
+
+JobFactory::~JobFactory()
+{
+    for (auto i : m_targetCompilerOptions)
+        delete i.second;
 }
 
 Job* JobFactory::createJob()

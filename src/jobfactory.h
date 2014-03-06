@@ -50,8 +50,6 @@ private:
         LinkerOptions linkerOptions;
     };
 
-    void setRoot(Node* root);
-
     Node* findAGoodNode(Node** target, Node* node);
     Job* createCompilationJob(Node* target, Node* node);
     Job* createTargetJob(Node* target);
