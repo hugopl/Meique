@@ -59,21 +59,6 @@ void JobFactory::setRoot(Node* root)
         mergeCompilerAndLinkerOptions(node);
     });
 
-#if 0
-    // preTargetCompileHooks must be run before the target node expansion because they may create more nodes.
-    // execute pre-compile hook functions
-    getLuaField("_preTargetCompileHooks");
-    int tableIndex = lua_gettop(L);
-    lua_pushnil(L);  /* first key */
-    while (lua_next(L, tableIndex) != 0) {
-        // push the target to the stack, it'll be the arg.
-        lua_pushlightuserdata(L, (void *)this);
-        lua_gettable(L, LUA_REGISTRYINDEX);
-        luaPCall(L, 1, 0, "[preTargetCompileHook]");
-        lua_pop(L, 1); // removes 'value'; keeps 'key' for next iteration
-    }
-    lua_pop(L, 1); // remove the table
-#endif
     m_nodeTree.expandTargetNode(m_root);
 }
 
@@ -165,6 +150,11 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
 
 Job* JobFactory::createCompilationJob(Node* target, Node* node)
 {
+    if (m_defloweredTargets.find(target) == m_defloweredTargets.end()) {
+        m_defloweredTargets.insert(target);
+        m_script.runTargetHook(target->name);
+    }
+
     node->status = Node::Building;
 
     Options* options = m_targetCompilerOptions[target];

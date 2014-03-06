@@ -555,7 +555,9 @@ int option(lua_State* L)
 
 int meiqueAutomoc(lua_State* L)
 {
-#if 0
+    LuaLeakCheck(L);
+    LuaAutoPop autoPop(L);
+
     static std::string mocPath;
     if (mocPath.empty()) {
         const StringList args = {"--variable=moc_location", "QtCore"};
@@ -571,33 +573,30 @@ int meiqueAutomoc(lua_State* L)
         "h", "hpp", "hxx", "H", 0
     };
 
-    // get target name
-    lua_getfield(L, -1, "_name");
-    std::string targetName = lua_tocpp<std::string>(L, -1);
+    lua_getfield(L, -1, "_dir");
+    std::string directory = lua_tocpp<std::string>(L, -1);
     lua_pop(L, 1);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    Target* target = script->getTarget(targetName);
-    OS::mkdir(target->directory());
+    OS::mkdir(script->buildDir() + directory);
 
-    StringList files = target->files();
-    if (!files.size())
-        return 0;
+    StringList files;
+    lua_getfield(L, -1, "_files");
+    readLuaList(L, lua_gettop(L), files);
 
-    std::string srcDir = script->sourceDir() + target->directory();
-    std::string binDir = script->buildDir() + target->directory();
+    std::string srcDir = script->sourceDir() + directory;
+    std::string binDir = script->buildDir() + directory;
     // search what files need to be moced
-    StringList::const_iterator it = files.begin();
     Regex regex("# *include +[\"<]([^ ]+\\.moc)[\">]");
-    for (; it != files.end(); ++it) {
-        std::string filePath = srcDir + *it;
+    for (const std::string& file : files) {
+        std::string filePath = srcDir + file;
         std::ifstream f(filePath.c_str(), std::ios_base::in);
         std::string line;
         while (f && !f.eof()) {
             std::getline(f, line);
             if (regex.match(line)) {
                 // check if the header exists
-                std::string headerBase = *it;
+                std::string headerBase = file;
                 size_t dotIdx = headerBase.find_last_of('.');
                 if (dotIdx == std::string::npos)
                     break;
@@ -611,32 +610,32 @@ int meiqueAutomoc(lua_State* L)
                 }
 
                 if (headerPath.empty()) {
-                    Warn() << "Found moc include but can't deduce the header file for " << srcDir << *it;
+                    Warn() << "Found moc include but can't deduce the header file for " << srcDir << file;
                     break;
                 }
 
                 std::string mocFilePath = binDir + regex.group(1, line);
-                if (!OS::fileExists(mocFilePath) || script->cache()->isHashGroupOutdated(headerPath)) {
+                if (OS::timestampCompare(headerPath, mocFilePath) < 0 ) {
                     StringList args;
                     args.push_back("-o");
                     args.push_back(OS::normalizeFilePath(mocFilePath));
                     args.push_back(OS::normalizeFilePath(headerPath));
-                    Notice() << Blue << "Running moc for header of " << *it;
-                    if (!OS::exec(mocPath, args))
-                        script->cache()->updateHashGroup(headerPath);
-                    else
+                    Notice() << Blue << "Running moc for header of " << file;
+                    if (OS::exec(mocPath, args))
                         luaError(L, "Error running moc for file " + headerPath);
                 }
             }
         }
     }
-#endif
+
     return 0;
 }
 
 int meiqueQtResource(lua_State* L)
 {
-#if 0
+    LuaLeakCheck(L);
+    LuaAutoPop autoPop(L);
+
     static std::string rccPath;
     if (rccPath.empty()) {
         const StringList args = {"--variable=rcc_location", "QtCore"};
@@ -648,42 +647,40 @@ int meiqueQtResource(lua_State* L)
     }
 
     // get target name
-    lua_getfield(L, -1, "_name");
-    std::string targetName = lua_tocpp<std::string>(L, -1);
+    lua_getfield(L, -1, "_dir");
+    std::string directory = lua_tocpp<std::string>(L, -1);
     lua_pop(L, 1);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    Target* target = script->getTarget(targetName);
-    std::string srcDir = script->sourceDir() + target->directory();
-    std::string binDir = script->buildDir() + target->directory();
+    std::string srcDir = script->sourceDir() + directory;
+    std::string binDir = script->buildDir() + directory;
     OS::mkdir(binDir);
 
     lua_getfield(L, -1, "_qrcFiles");
-    StringList files;
-    StringList cppFiles;
-    readLuaList(L, lua_gettop(L), files);
+    StringList qrcFiles;
+    readLuaList(L, lua_gettop(L), qrcFiles);
     lua_pop(L, 1);
 
-    StringList::const_iterator it = files.begin();
-    for (; it != files.end(); ++it) {
-        std::string qrcFile = OS::normalizeFilePath(srcDir + *it);
-        std::string cppFile = OS::normalizeFilePath(binDir + *it + ".cpp");
+    StringList cppFiles;
+    for (const std::string& file : qrcFiles) {
+        std::string qrcFile = OS::normalizeFilePath(srcDir + file);
+        std::string cppFile = OS::normalizeFilePath(binDir + file + ".cpp");
         cppFiles.push_back(cppFile);
 
-        if (!OS::fileExists(cppFile) || script->cache()->isHashGroupOutdated(qrcFile)) {
+        if (OS::timestampCompare(qrcFile, cppFile) < 0) {
             StringList args;
             args.push_back("-o");
             args.push_back(OS::normalizeFilePath(cppFile));
             args.push_back(OS::normalizeFilePath(qrcFile));
 
-            if (!OS::exec(rccPath, args))
-                script->cache()->updateHashGroup(qrcFile);
-            else
+            Notice() << Blue << "Running qrc for " << file;
+            if (OS::exec(rccPath, args))
                 luaError(L, "Error running rcc on file " + qrcFile);
         }
     }
-    target->addFiles(cppFiles);
-#endif
+    // FIXME: Need to add the cppFiles on the target!!!
+//    target->addFiles(cppFiles);
+
     return 0;
 }
 
@@ -699,10 +696,10 @@ StringList MeiqueScript::projectFiles()
     return projectFiles;
 }
 
-void MeiqueScript::luaPushTarget(const std::string& target)
+void MeiqueScript::luaPushTarget(const char* target)
 {
     lua_getglobal(m_L, "_meiqueAllTargets");
-    lua_getfield(m_L, -1, target.c_str());
+    lua_getfield(m_L, -1, target);
     lua_remove(m_L, -2);
 }
 
@@ -900,5 +897,24 @@ void MeiqueScript::dumpProject(std::ostream& output)
         output << "Include: " << OS::normalizeDirPath(sourceDir + directory) << std::endl;
         for (const std::string& inc : getTargetIncludeDirectories(target))
             output << "Include: " << OS::normalizeDirPath(inc) << std::endl;
+    }
+}
+
+void MeiqueScript::runTargetHook(const char *target)
+{
+    LuaLeakCheck(m_L);
+
+    luaPushTarget(target);
+    int targetIdx = lua_gettop(m_L);
+    lua_getfield(m_L, -1, "_preTargetCompileHooks");
+    LuaAutoPop autoPop(m_L, 2);
+
+    int tableIndex = lua_gettop(m_L);
+    lua_pushnil(m_L);  /* first key */
+    while (lua_next(m_L, tableIndex) != 0) {
+        // push the target to the stack, it'll be the arg.
+        lua_pushvalue(m_L, targetIdx);
+        luaPCall(m_L, 1, 0, "[preTargetCompileHook]");
+        lua_pop(m_L, 1); // removes 'value'; keeps 'key' for next iteration
     }
 }

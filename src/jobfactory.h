@@ -21,6 +21,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <condition_variable>
 
@@ -69,6 +70,7 @@ private:
     std::condition_variable m_treeChanged;
 
     unsigned m_processedNodes;
+    std::unordered_set<Node*> m_defloweredTargets;
 
     DependenceChecker m_depChecker;
     typedef std::unordered_map<Node*, Options*> CompilerOptionsMap;

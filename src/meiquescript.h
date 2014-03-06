@@ -51,7 +51,8 @@ public:
 
     StringList projectFiles();
 
-    void luaPushTarget(const std::string& target);
+    void luaPushTarget(const char* target);
+    void luaPushTarget(const std::string& target) { luaPushTarget(target.c_str()); }
 
     void installTargets(const StringList& targets);
     void uninstallTargets(const StringList& targets);
@@ -60,6 +61,7 @@ public:
     void dumpProject(std::ostream& output);
 
     StringList getTargetIncludeDirectories(const std::string& target);
+    void runTargetHook(const char* target);
 private:
     LuaState m_L;
     OptionsMap m_options;
