@@ -634,7 +634,6 @@ int meiqueAutomoc(lua_State* L)
 int meiqueQtResource(lua_State* L)
 {
     LuaLeakCheck(L);
-    LuaAutoPop autoPop(L);
 
     static std::string rccPath;
     if (rccPath.empty()) {
@@ -678,8 +677,18 @@ int meiqueQtResource(lua_State* L)
                 luaError(L, "Error running rcc on file " + qrcFile);
         }
     }
-    // FIXME: Need to add the cppFiles on the target!!!
-//    target->addFiles(cppFiles);
+
+    if (!cppFiles.empty()) {
+        try {
+            lua_getfield(L, -1, "addFiles");
+            lua_pushvalue(L, -2);
+            lua_pushstring(L, join(cppFiles, " ").c_str());
+            LuaAutoPop autoPop(L);
+            luaPCall(L, 2, 0);
+        } catch (const Error& e) {
+            luaError(L, e.description());
+        }
+    }
 
     return 0;
 }
