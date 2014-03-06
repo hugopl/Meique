@@ -21,7 +21,6 @@
 
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <mutex>
 #include <condition_variable>
 
@@ -57,6 +56,7 @@ private:
     Job* createCompilationJob(Node* target, Node* node);
     Job* createTargetJob(Node* target);
     Job* createCustomTargetJob(Node* target);
+    Job* createHookJob(Node* target, Node* node);
     void fillTargetOptions(Node* node, Options* options);
     void mergeCompilerAndLinkerOptions(Node* node);
     void cacheTargetCompilerOptions(Node* node);
@@ -70,7 +70,6 @@ private:
     std::condition_variable m_treeChanged;
 
     unsigned m_processedNodes;
-    std::unordered_set<Node*> m_defloweredTargets;
 
     DependenceChecker m_depChecker;
     typedef std::unordered_map<Node*, Options*> CompilerOptionsMap;

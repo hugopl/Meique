@@ -91,12 +91,14 @@ Job* JobFactory::createJob()
         LuaLocker luaLock(m_script.luaState());
         std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
 
-        if (!node->isTarget)
-            job = createCompilationJob(target, node);
-        else if (node->isCustomTarget())
+        if (node->isCustomTarget())
             job = createCustomTargetJob(target);
+        else if (node->isTarget)
+            job = createTargetJob(node);
+        else if (node->isHook)
+            job = createHookJob(target, node);
         else
-            job = createTargetJob(target);
+            job = createCompilationJob(target, node);
     } while(!job);
 
     if (job) {
@@ -127,9 +129,9 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
     for (Node* child : node->children) {
         hasChildrenBuilding |= child->status < Node::Built;
 
-        // Don't build files from this target is some dependence still building
-        hasDependenceBuilding |= child->isTarget && child->status < Node::Built;
-        if (hasDependenceBuilding && !child->isTarget)
+        // Don't build files from this target if some dependence still building
+        hasDependenceBuilding |= (child->isTarget || child->isHook) && child->status < Node::Built;
+        if (hasDependenceBuilding && !child->isTarget && !child->isHook)
             continue;
 
         if (child->status < Node::Building) {
@@ -150,11 +152,6 @@ Node* JobFactory::findAGoodNode(Node** target, Node* node)
 
 Job* JobFactory::createCompilationJob(Node* target, Node* node)
 {
-    if (m_defloweredTargets.find(target) == m_defloweredTargets.end()) {
-        m_defloweredTargets.insert(target);
-        m_script.runTargetHook(target->name);
-    }
-
     node->status = Node::Building;
 
     Options* options = m_targetCompilerOptions[target];
@@ -197,8 +194,8 @@ Job* JobFactory::createTargetJob(Node* target)
 
     StringList objects;
     for (Node* child : target->children) {
-        if (!child->isTarget)
-        objects.push_back(compiler->nameForObject(child->name, target->name));
+        if (!child->isTarget && !child->isFake)
+            objects.push_back(compiler->nameForObject(child->name, target->name));
     }
 
     m_script.luaPushTarget(target->name);
@@ -271,6 +268,23 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     job->setName("Running custom target " + std::string(target->name));
     job->setWorkingDirectory(m_script.sourceDir() + options->targetDirectory);
 
+    return job;
+}
+
+Job* JobFactory::createHookJob(Node* target, Node* node)
+{
+    lua_State* L = m_script.luaState();
+    LuaLeakCheck(L);
+
+    node->status = Node::Building;
+
+    lua_getglobal(L, "_meiqueRunHooks");
+    m_script.luaPushTarget(target->name);
+    LuaJob* job = new LuaJob(m_nodeTree.createNodeGuard(node), L, 1);
+
+    job->setName("Running hook for " + std::string(target->name));
+    Options* options = m_targetCompilerOptions[target];
+    job->setWorkingDirectory(m_script.sourceDir() + options->targetDirectory);
     return job;
 }
 
@@ -406,7 +420,7 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
 
 void JobFactory::mergeCompilerAndLinkerOptions(Node* node)
 {
-    if (!node->isTarget || node->isCustomTarget())
+    if (!node->isTarget || node->isFake || node->isCustomTarget())
         return;
 
     assert(node->hasCachedCompilerFlags);

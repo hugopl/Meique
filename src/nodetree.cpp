@@ -39,6 +39,7 @@ Node::Node(const std::string& name)
     , hasCachedCompilerFlags(false)
     , shouldBuild(false)
     , isFake(false)
+    , isHook(false)
 {
 }
 
@@ -55,6 +56,7 @@ NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
     if (!targets.empty())
         removeUnusedTargets(targets);
     connectForest();
+    addTargetHookNodes();
     m_size = m_targetNodes.size();
 }
 
@@ -242,6 +244,21 @@ void NodeTree::connectForest()
         for (Node* root : roots) {
             m_root->children.push_front(root);
             root->parents.push_front(m_root);
+        }
+    }
+}
+
+void NodeTree::addTargetHookNodes()
+{
+    LuaLeakCheck(m_L);
+
+    for (const auto& pair : m_targetNodes) {
+        if (m_script.hasHook(pair.first.c_str())) {
+            Node* hookNode = new Node("<hook>");
+            hookNode->isFake = true;
+            hookNode->isHook = true;
+            hookNode->parents.push_back(pair.second);
+            pair.second->children.push_back(hookNode);
         }
     }
 }

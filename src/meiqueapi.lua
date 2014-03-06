@@ -132,6 +132,12 @@ function Target:new(name)
     return o
 end
 
+function _meiqueRunHooks(target)
+    for i, hook in pairs(target._preTargetCompileHooks) do
+        hook(target)
+    end
+end
+
 function Target:name()
     return self._name
 end

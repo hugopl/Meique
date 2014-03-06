@@ -61,7 +61,7 @@ public:
     void dumpProject(std::ostream& output);
 
     StringList getTargetIncludeDirectories(const std::string& target);
-    void runTargetHook(const char* target);
+    bool hasHook(const char* target);
 private:
     LuaState m_L;
     OptionsMap m_options;

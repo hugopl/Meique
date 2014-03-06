@@ -900,21 +900,19 @@ void MeiqueScript::dumpProject(std::ostream& output)
     }
 }
 
-void MeiqueScript::runTargetHook(const char *target)
+bool MeiqueScript::hasHook(const char *target)
 {
     LuaLeakCheck(m_L);
 
     luaPushTarget(target);
-    int targetIdx = lua_gettop(m_L);
     lua_getfield(m_L, -1, "_preTargetCompileHooks");
     LuaAutoPop autoPop(m_L, 2);
 
     int tableIndex = lua_gettop(m_L);
     lua_pushnil(m_L);  /* first key */
-    while (lua_next(m_L, tableIndex) != 0) {
-        // push the target to the stack, it'll be the arg.
-        lua_pushvalue(m_L, targetIdx);
-        luaPCall(m_L, 1, 0, "[preTargetCompileHook]");
-        lua_pop(m_L, 1); // removes 'value'; keeps 'key' for next iteration
+    if (lua_next(m_L, tableIndex) != 0) {
+        lua_pop(m_L, 2);
+        return true;
     }
+    return false;
 }

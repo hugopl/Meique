@@ -63,6 +63,7 @@ public:
     unsigned hasCachedCompilerFlags:1;
     unsigned shouldBuild:1;
     unsigned isFake:1;
+    unsigned isHook:1;
 
 private:
     Node(const Node&);
@@ -124,6 +125,7 @@ private:
     void buildNotExpandedTree();
     void removeUnusedTargets(const StringList& targets);
     void connectForest();
+    void addTargetHookNodes();
 
     MeiqueScript& m_script;
     lua_State* m_L;
