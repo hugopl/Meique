@@ -69,12 +69,15 @@ bool JobManager::run()
         Job* job = m_jobFactory.createJob();
         if (!job)
             break;
+
+        m_jobsRunningMutex.lock();
+        m_jobsRunning++;
+        m_jobsRunningMutex.unlock();
+
+        printReportLine(job);
+
         job->onFinished = [&](int result) { onJobFinished(result); };
         job->run();
-
-        std::lock_guard<std::mutex> lock(m_jobsRunningMutex);
-        m_jobsRunning++;
-        printReportLine(job);
     }
 
     std::unique_lock<std::mutex> lock(m_jobsRunningMutex);
