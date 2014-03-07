@@ -39,24 +39,25 @@ LuaJob::LuaJob(NodeGuard* nodeGuard, lua_State* L, int args)
     // store the table on lua registry
     lua_pushlightuserdata(L, this); // key
     lua_insert(L, -2);
-    lua_settable(L, LUA_REGISTRYINDEX);
+    lua_rawset(L, LUA_REGISTRYINDEX);
 }
 
 int LuaJob::doRun()
 {
     LuaLocker locker(m_L);
+    LuaLeakCheck(m_L);
 
     OS::ChangeWorkingDirectory dirChanger(workingDirectory());
     // Get the lua function and put it on lua stack
     lua_pushlightuserdata(m_L, this); // key
-    lua_gettable(m_L, LUA_REGISTRYINDEX);
+    lua_rawget(m_L, LUA_REGISTRYINDEX);
     int objlen = lua_objlen(m_L, -1);
     for (int i = 1; i <= objlen; ++i)
         lua_rawgeti(m_L, -i, objlen - i + 1);
 
     try {
+        LuaAutoPop autoPop(m_L, 2);
         luaPCall(m_L, objlen - 1, 0);
-        lua_pop(m_L, 2);
     } catch (const Error& e) {
         e.show();
         return 1;
