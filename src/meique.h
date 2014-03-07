@@ -34,6 +34,7 @@ private:
     bool m_firstRun;
 
     StringList getChosenTargetNames();
+    void printOptionsSummary();
 
     // program states
     int checkArgs();

@@ -92,6 +92,19 @@ MINGW = _meiqueNone
 -- Constants
 OPTIONAL = true
 
+-- name => defaultValue
+_meiqueOptionsDefaults = {}
+-- name => value
+_meiqueOptionsValues = {}
+function option(name, description, defaultValue)
+    _meiqueOptionsDefaults[name] = defaultValue
+    if not _meiqueOptionsValues[name] then
+        abortIf(not _meiqueOptionsDefaults[name], "Option --"..name.." need to be set in the command line, it mean:\n  "..description)
+        _meiqueOptionsValues[name] = _meiqueOptionsDefaults[name]
+    end
+    return _meiqueOptionsValues[name]
+end
+
 function addSubdirectory(dir)
     local strDir = tostring(dir)
     table.insert(_meiqueCurrentDir, dir)

@@ -192,17 +192,6 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     return 0;
 }
 
-void MeiqueCache::setUserOptionValue(const std::string& key, const std::string& value)
-{
-    m_userOptions[key] = value;
-}
-
-std::string MeiqueCache::userOption(const std::string& key) const
-{
-    StringMap::const_iterator it = m_userOptions.find(key);
-    return it == m_userOptions.end() ? std::string() : it->second;
-}
-
 StringMap MeiqueCache::package(const std::string& pkgName) const
 {
     std::map<std::string, StringMap>::const_iterator it = m_packages.find(pkgName);

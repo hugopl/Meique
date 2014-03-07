@@ -47,14 +47,11 @@ enum TargetTypes {
 
 // Key used to store the meique script object on lua registry
 #define MEIQUESCRIPTOBJ_KEY "MeiqueScript"
-// Key used to store the meique options, see option function
-#define MEIQUEOPTIONS_KEY "MeiqueOptions"
 
 static int requiresMeique(lua_State* L);
 static int findPackage(lua_State* L);
 static int copyFile(lua_State* L);
 static int configureFile(lua_State* L);
-static int option(lua_State* L);
 static int meiqueAutomoc(lua_State* L);
 static int meiqueQtResource(lua_State* L);
 
@@ -101,6 +98,23 @@ MeiqueScript::~MeiqueScript()
     delete m_cache;
 }
 
+void MeiqueScript::populateOptionsValues()
+{
+    LuaLeakCheck(m_L);
+    lua_getglobal(m_L, "_meiqueOptionsValues");
+    LuaAutoPop autoPop(m_L);
+    int idx = lua_gettop(m_L);
+
+    if (m_cmdLine)
+        m_cache->setUserOptionsValues(m_cmdLine->args());
+
+    for (const auto& pair : m_cache->userOptionsValues()) {
+        lua_pushstring(m_L, pair.first.c_str());
+        lua_pushstring(m_L, pair.second.c_str());
+        lua_rawset(m_L, idx);
+    }
+}
+
 void MeiqueScript::setSourceDir(const std::string& sourceDir)
 {
     m_cache->setSourceDir(sourceDir);
@@ -121,6 +135,8 @@ void MeiqueScript::exec()
     OS::ChangeWorkingDirectory dirChanger(sourceDir());
 
     exportApi();
+    populateOptionsValues();
+
     translateLuaError(m_L, luaL_loadfile(m_L, m_scriptName.c_str()), m_scriptName);
 
     luaPCall(m_L, 0, 0, m_scriptName);
@@ -143,43 +159,15 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
     lua_register(m_L, "copyFile", &copyFile);
-    lua_register(m_L, "option", &option);
     lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
     lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
     lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
     lua_register(m_L, "_meiqueQtResource", &meiqueQtResource);
     lua_settop(m_L, 0);
 
-    // Add options table to lua registry
-    lua_newtable(m_L);
-    lua_setfield(m_L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
-
     // Export MeiqueScript class to lua registry
     lua_pushlightuserdata(m_L, (void*) this);
     lua_setfield(m_L, LUA_REGISTRYINDEX, MEIQUESCRIPTOBJ_KEY);
-}
-
-template<>
-MeiqueOption lua_tocpp<MeiqueOption>(lua_State* L, int index)
-{
-    if (!lua_istable(L, index))
-        throw Error("Expecting a lua table! Got " + std::string(lua_typename(L, lua_type(L, index))));
-    IntStrMap map;
-    readLuaTable(L, index, map);
-    lua_pop(L, 1);
-    return MeiqueOption(map[1], map[2]);
-}
-
-OptionsMap MeiqueScript::options()
-{
-    if (m_options.size())
-        return m_options;
-
-    lua_getfield(m_L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
-    int tableIndex = lua_gettop(m_L);
-    readLuaTable(m_L, tableIndex, m_options);
-    lua_pop(m_L, 1);
-    return m_options;
 }
 
 std::list<StringList> MeiqueScript::getTests(const std::string& pattern)
@@ -240,6 +228,16 @@ StringList MeiqueScript::targetNames()
     return targets;
 }
 
+StringMap MeiqueScript::getOptionsValues()
+{
+    LuaLeakCheck(m_L);
+    lua_getglobal(m_L, "_meiqueOptionsValues");
+    StringMap options;
+    readLuaTable(m_L, lua_gettop(m_L), options);
+    lua_pop(m_L, 1);
+    return options;
+}
+
 struct StrFilter
 {
     StrFilter(const std::string& garbage) : m_garbage(garbage) {}
@@ -279,14 +277,7 @@ int findPackage(lua_State* L)
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     MeiqueCache* cache = script->cache();
-/*
-    // do nothing when showing the help screen
-    if (config.action() == MeiqueCache::ShowHelp) {
-        lua_settop(L, 0);
-        lua_getglobal(L, "_meiqueNone");
-        return 1;
-    }
-*/
+
     StringMap pkgData = cache->package(pkgName);
     if (pkgData.empty()) {
         // Check if the package exists
@@ -406,14 +397,6 @@ int configureFile(lua_State* L)
 
     // Configure anything when in the help screen
     MeiqueScript* script = getMeiqueScriptObject(L);
-
-/*
-    if (script->config().action() == MeiqueCache::ShowHelp) {
-        lua_settop(L, 0);
-        lua_getglobal(L, "_meiqueNotNone");
-        return 1;
-    }
-*/
     std::string input = OS::normalizeFilePath(script->sourceDir() + currentDir + lua_tocpp<std::string>(L, -2));
     std::string output = OS::normalizeFilePath(script->buildDir() + currentDir + lua_tocpp<std::string>(L, -1));
 
@@ -453,11 +436,6 @@ int configureFile(lua_State* L)
 
 void MeiqueScript::enableScope(const std::string& scopeName)
 {
-/*
-    // Don't enable any scopes when in help screen
-    if (m_cache.action() == MeiqueCache::ShowHelp)
-        return;
-*/
     lua_State* L = luaState();
     lua_getglobal(L, "_meiqueNotNone");
     lua_setglobal(L, scopeName.c_str());
@@ -465,11 +443,6 @@ void MeiqueScript::enableScope(const std::string& scopeName)
 
 void MeiqueScript::enableBuitinScopes()
 {
-/*
-    // Don't enable any scopes when in help screen
-    if (m_cache.action() == MeiqueCache::ShowHelp)
-        return;
-*/
     StringList scopes = m_cache->scopes();
     if (scopes.empty()) {
         // Enable debug/release scope
@@ -487,70 +460,6 @@ void MeiqueScript::enableBuitinScopes()
     StringList::const_iterator it = scopes.begin();
     for (; it != scopes.end(); ++it)
         enableScope(*it);
-}
-
-int option(lua_State* L)
-{
-    int nargs = lua_gettop(L);
-    if (nargs < 2 || nargs > 3)
-        luaError(L, "option(name, description [, defaultValue]) called with wrong number of arguments.");
-    if (nargs == 2)
-        lua_pushnil(L);
-
-    std::string name = lua_tocpp<std::string>(L, 1);
-    std::string description = lua_tocpp<std::string>(L, 2);
-
-    if (name.empty())
-        luaError(L, "An option MUST have a name.");
-    if (description.empty())
-        luaError(L, "Be nice and put a description for the option \"" + name + "\" :-).");
-
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    std::string optionValue = script->cache()->userOption(name);
-
-    if (optionValue.empty()) {
-        // get options table
-        lua_getfield(L, LUA_REGISTRYINDEX, MEIQUEOPTIONS_KEY);
-
-        // Create table {description, defaultValue}
-        lua_createtable(L, 2, 0);
-        lua_pushvalue(L, 2);
-        lua_rawseti(L, -2, 1);
-        lua_pushvalue(L, 3);
-        lua_rawseti(L, -2, 2);
-
-        // to options[name] = {description, defaultValue}
-        lua_setfield(L, -2, name.c_str());
-
-        if (script->commandLine()) {
-            bool valueFound;
-            optionValue = script->commandLine()->arg(name, lua_tocpp<std::string>(L, 3), &valueFound);
-            // option provided by the user but without a value, probably a boolean option, sets it to true.
-            if (valueFound && optionValue.empty())
-                optionValue = "true";
-        }
-
-        lua_settop(L, 0);
-    }
-
-    // Create return object, a table with a field "value"
-    lua_createtable(L, 0, 1);
-    lua_pushstring(L, optionValue.c_str());
-    lua_setfield(L, -2, "value");
-
-    // Decide if the we will return a valid scope or not.
-    // options setted to false
-    std::transform(optionValue.begin(), optionValue.end(), optionValue.begin(), ::tolower);
-
-    if (optionValue == "false" || optionValue == "off" || optionValue.empty())
-        lua_getglobal(L, "_meiqueNone");
-    else
-        lua_getglobal(L, "_meiqueNotNone");
-
-    lua_setmetatable(L, -2);
-    script->cache()->setUserOptionValue(name, optionValue);
-
-    return 1;
 }
 
 int meiqueAutomoc(lua_State* L)

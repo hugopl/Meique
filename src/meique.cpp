@@ -104,6 +104,8 @@ int Meique::configureProject()
 
     try {
         m_script->exec();
+        printOptionsSummary();
+        std::cout << "-- Done!\n";
     } catch (const Error&) {
         m_script->cache()->setAutoSave(false);
         throw;
@@ -296,20 +298,6 @@ int Meique::showHelp()
     std::cout << " --release                          Create a release build.\n";
     std::cout << " --install-prefix                   Install directory used by install, this directory\n";
     std::cout << "                                    is prepended onto all install directories.\n";
-/*
-    if (options.size()) {
-        OptionsMap::const_iterator it = options.begin();
-        for (; it != options.end(); ++it) {
-            std::cout << " --" << std::left;
-            std::cout.width(33);
-            std::cout << it->first;
-            std::cout << it->second.description;
-            if (!it->second.defaultValue.empty())
-                std::cout << " [default value: " << it->second.defaultValue << ']';
-            std::cout << std::endl;
-        }
-    }
-*/
     std::cout << "Build mode options:\n";
     std::cout << " -jN                                Allow N jobs at once, default to number of\n";
     std::cout << "                                    cores + 1.\n";
@@ -324,4 +312,12 @@ int Meique::showHelp()
     std::cout << " -t [regex]                         Run tests matching a regular expression, all\n";
     std::cout << "                                    tests if none was specified.\n";
     return 0;
+}
+
+void Meique::printOptionsSummary()
+{
+    std::cout << "-- Project options:\n";
+    StringMap options = m_script->getOptionsValues();
+    for (auto pair : options)
+        std::cout << "    " << std::setw(33) << std::left << pair.first << pair.second << std::endl;
 }

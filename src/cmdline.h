@@ -31,6 +31,8 @@ public:
     int intArg(const std::string& name, int defaultValue = 0) const;
     int numberOfFreeArgs() const;
     std::string freeArg(int idx) const;
+
+    const StringMap& args() const { return m_args; }
 private:
     StringMap m_args;
     StringVector m_freeArgs;

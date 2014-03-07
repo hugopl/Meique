@@ -23,7 +23,6 @@
 #include <list>
 #include "basictypes.h"
 #include "luastate.h"
-#include "meiqueoption.h"
 
 class CmdLine;
 class MeiqueCache;
@@ -35,9 +34,10 @@ public:
     MeiqueScript(const std::string scriptName, const CmdLine* cmdLine);
     ~MeiqueScript();
     void exec();
-    OptionsMap options();
+
     MeiqueCache* cache() { return m_cache; }
     StringList targetNames();
+    StringMap getOptionsValues();
     lua_State* luaState() { return m_L; }
 
     std::list<StringList> getTests(const std::string& pattern);
@@ -64,7 +64,6 @@ public:
     bool hasHook(const char* target);
 private:
     LuaState m_L;
-    OptionsMap m_options;
     MeiqueCache* m_cache;
 
     std::string m_scriptName;
@@ -72,9 +71,11 @@ private:
 
     const CmdLine* m_cmdLine;
 
+    void populateOptionsValues();
+
     // disable copy
-    MeiqueScript(const MeiqueScript&);
-    MeiqueScript& operator=(const MeiqueScript&);
+    MeiqueScript(const MeiqueScript&) = delete;
+    MeiqueScript& operator=(const MeiqueScript&) = delete;
 
     void exportApi();
 

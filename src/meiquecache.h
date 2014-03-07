@@ -20,7 +20,6 @@
 #define MEIQUECACHE_H
 
 #include "basictypes.h"
-#include "meiqueoption.h"
 
 class CmdLine;
 struct lua_State;
@@ -40,8 +39,8 @@ public:
 
     Compiler* compiler();
 
-    void setUserOptionValue(const std::string& key, const std::string& value);
-    std::string userOption(const std::string& key) const;
+    void setUserOptionsValues(const StringMap& options) { m_userOptions = options; }
+    const StringMap& userOptionsValues() const { return m_userOptions; }
 
     void saveCache();
     void loadCache();
