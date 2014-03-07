@@ -151,6 +151,9 @@ void NodeTree::removeUnusedTargets(const StringList &targets)
             NodeVisitor<>(it->second, [&](Node* node) {
                 usedTargets.insert(node->name);
             });
+        } else {
+            std::string msg = target == ".." ? "Call meique without \"..\", you need to tell where meique.lua file is just once ;-)." : "Target not found \"" + target + '\"';
+            throw Error(msg);
         }
     }
 
