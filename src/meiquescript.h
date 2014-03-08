@@ -73,14 +73,12 @@ private:
 
     void populateOptionsValues();
 
-    // disable copy
-    MeiqueScript(const MeiqueScript&) = delete;
-    MeiqueScript& operator=(const MeiqueScript&) = delete;
-
     void exportApi();
 
     void enableScope(const std::string& scopeName);
     void enableBuitinScopes();
+
+    MeiqueScript(const MeiqueScript&) = delete;
 };
 
 #endif

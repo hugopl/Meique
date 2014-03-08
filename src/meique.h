@@ -50,6 +50,8 @@ private:
     int uninstallTargets();
     int buildTargets();
     int cleanTargets();
+
+    Meique(const Meique&) = delete;
 };
 
 #endif

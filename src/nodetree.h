@@ -66,8 +66,7 @@ public:
     unsigned isHook:1;
 
 private:
-    Node(const Node&);
-    Node& operator=(const Node&);
+    Node(const Node&) = delete;
 };
 
 class NodeGuard {
@@ -135,6 +134,8 @@ private:
     unsigned m_size;
 
     std::mutex m_mutex;
+
+    NodeTree(const NodeTree&) = delete;
 };
 
 #endif

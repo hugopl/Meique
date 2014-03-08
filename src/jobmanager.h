@@ -48,7 +48,6 @@ private:
     void onJobFinished(int result);
 
     JobManager(const JobManager&) = delete;
-    JobManager& operator=(const JobManager&) = delete;
 };
 
 #endif // JOBMANAGER_H

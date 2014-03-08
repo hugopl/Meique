@@ -29,6 +29,8 @@ public:
     ~LuaLocker();
 private:
     std::mutex* m_mutex;
+
+    LuaLocker(const LuaLocker&) = delete;
 };
 
 #endif // LUALOCKER_H

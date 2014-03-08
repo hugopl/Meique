@@ -37,8 +37,7 @@ private:
     StringMap m_args;
     StringVector m_freeArgs;
 
-    CmdLine(const CmdLine&);
-    CmdLine& operator=(const CmdLine&);
+    CmdLine(const CmdLine&) = delete;
 };
 
 #endif // CMDLINE_H

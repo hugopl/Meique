@@ -54,7 +54,6 @@ private:
     NodeGuard* m_nodeGuard;
 
     Job(const Job&) = delete;
-    Job& operator=(const Job&) = delete;
 
     friend void initJobThread(Job*);
 };

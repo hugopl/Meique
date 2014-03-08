@@ -43,6 +43,7 @@ Language identifyLanguage(const std::string& fileName);
 class Compiler
 {
 public:
+    Compiler() {}
     virtual ~Compiler() {}
     virtual const char* name() const = 0;
     virtual std::string fullName() const = 0;
@@ -53,6 +54,8 @@ public:
     virtual std::string nameForStaticLibrary(const std::string& name) const = 0;
     virtual std::string nameForSharedLibrary(const std::string& name) const = 0;
     virtual std::string nameForObject(const std::string& name, const std::string& target) const;
+private:
+    Compiler(const Compiler&) = delete;
 };
 
 #endif

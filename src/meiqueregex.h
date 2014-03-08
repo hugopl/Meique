@@ -36,8 +36,7 @@ private:
     regex_t m_regex;
     regmatch_t* m_matches;
 
-    Regex(const Regex&);
-    Regex& operator=(const Regex&);
+    Regex(const Regex&) = delete;
 };
 
 #endif

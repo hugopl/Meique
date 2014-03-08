@@ -92,9 +92,7 @@ private:
     static int readScopes(lua_State* L);
     static int readTargetHash(lua_State* L);
 
-    // disable copy
-    MeiqueCache(const MeiqueCache&);
-    MeiqueCache& operator=(const MeiqueCache&);
+    MeiqueCache(const MeiqueCache&) = delete;
 };
 
 #endif

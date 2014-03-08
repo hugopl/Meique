@@ -24,6 +24,7 @@
 class DependenceChecker
 {
 public:
+    DependenceChecker() {}
     void setWorkingDirectory(const std::string& cwd) { m_cwd = cwd; }
     bool shouldCompile(const std::string& file, const std::string& output);
 private:
@@ -31,6 +32,8 @@ private:
 
     StringList getDependencies(const std::string& file);
     void preprocessFile(const std::string& source, StringList& includeDirs, StringList& deps);
+
+    DependenceChecker(const DependenceChecker&) = delete;
 };
 
 #endif
