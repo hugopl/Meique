@@ -88,7 +88,7 @@ inline StringList lua_tocpp<StringList>(lua_State* L, int index)
 {
     StringList list;
     readLuaList(L, index, list);
-    return list;
+    return std::move(list);
 }
 
 template<typename Map>
@@ -126,7 +126,9 @@ void createLuaArray(lua_State* L, const StringList& list);
 template<typename List>
 void readLuaList(lua_State* L, int tableIndex, List& list)
 {
-    assert(tableIndex >= 0);
+    if (tableIndex < 0)
+        tableIndex += lua_gettop(L) + 1;
+
     assert(lua_istable(L, tableIndex));
 
     lua_pushnil(L);  /* first key */
@@ -138,12 +140,11 @@ void readLuaList(lua_State* L, int tableIndex, List& list)
 }
 
 template<typename T>
-T getField(lua_State* L, const char* key, int tableIndex = -1)
+T luaGetField(lua_State* L, const char* key, int tableIndex = -1)
 {
     lua_getfield(L, tableIndex, key);
-    T retval = lua_tocpp<T>(L, -1);
-    lua_pop(L, 1);
-    return retval;
+    LuaAutoPop autoPop(L);
+    return lua_tocpp<T>(L, -1);
 }
 
 void luaError(lua_State* L, const std::string& msg);

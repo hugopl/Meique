@@ -104,29 +104,22 @@ void NodeTree::expandTargetNode(Node* target)
 
     // Expand the dependencies first
     m_script.luaPushTarget(target->name);
-    lua_getfield(m_L, -1, "_deps");
-    StringList deps;
-    readLuaList(m_L, lua_gettop(m_L), deps);
-    lua_pop(m_L, 2);
-    for (std::string& dep : deps)
+    LuaAutoPop autoPop(m_L);
+
+    for (std::string& dep : luaGetField<StringList>(m_L, "_deps"))
         expandTargetNode(dep);
 
     if (target->isCustomTarget())
         return;
 
     // populate the node
-    m_script.luaPushTarget(target->name);
-    lua_getfield(m_L, -1, "_files");
-    StringList files;
-    readLuaList(m_L, lua_gettop(m_L), files);
-    for (std::string& file : files) {
+    for (std::string& file : luaGetField<StringList>(m_L, "_files")) {
         Node* fileNode = new Node(file);
         fileNode->shouldBuild = target->shouldBuild;
         fileNode->parents.push_back(target);
         target->children.push_back(fileNode);
         m_size++;
     }
-    lua_pop(m_L, 2);
 }
 
 void NodeTree::expandTargetNode(const std::string& target)
@@ -185,17 +178,13 @@ void NodeTree::buildNotExpandedTree()
     lua_pushnil(m_L);  /* first key */
     while (lua_next(m_L, tableIndex) != 0) {
         // Get target name
-        lua_getfield(m_L, -1, "_name");
-        std::string targetName = lua_tocpp<std::string>(m_L, -1);
+        std::string targetName = luaGetField<std::string>(m_L, "_name");
         Node* node = new Node(targetName);
         node->isTarget = true;
-
-        // Get target type
-        lua_getfield(m_L, -2, "_type");
-        node->targetType = lua_tocpp<int>(m_L, -1);
+        node->targetType = luaGetField<int>(m_L, "_type");
 
         m_targetNodes[targetName] = node;
-        lua_pop(m_L, 3);
+        lua_pop(m_L, 1);
     }
     lua_pop(m_L, 1);
 
@@ -206,11 +195,8 @@ void NodeTree::buildNotExpandedTree()
     for (auto pair : m_targetNodes) {
         const std::string& target = pair.first;
         m_script.luaPushTarget(target);
-        // Get dependencies
-        lua_getfield(m_L, -1, "_deps");
-        StringList deps;
-        readLuaList(m_L, lua_gettop(m_L), deps);
-        lua_pop(m_L, 2);
+        StringList deps = luaGetField<StringList>(m_L, "_deps");
+        lua_pop(m_L, 1);
 
         for (const std::string& dep : deps) {
             Node*& targetNode = m_targetNodes[target];

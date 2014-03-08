@@ -157,8 +157,8 @@ void MeiqueCache::saveCache()
 int MeiqueCache::readOption(lua_State* L)
 {
     MeiqueCache* self = getSelf(L);
-    std::string name = getField<std::string>(L, "name");
-    std::string value = getField<std::string>(L, "value");
+    std::string name = luaGetField<std::string>(L, "name");
+    std::string value = luaGetField<std::string>(L, "value");
     self->m_userOptions[name] = value;
     return 0;
 }
@@ -184,8 +184,8 @@ int MeiqueCache::readTargetHash(lua_State* L)
 {
     LuaLeakCheck(L);
     MeiqueCache* self = getSelf(L);
-    std::string target = getField<std::string>(L, "target");
-    std::string hash = getField<std::string>(L, "hash");
+    std::string target = luaGetField<std::string>(L, "target");
+    std::string hash = luaGetField<std::string>(L, "hash");
     self->m_targetHashes[target] = hash;
     return 0;
 }

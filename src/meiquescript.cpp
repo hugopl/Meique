@@ -465,7 +465,6 @@ void MeiqueScript::enableBuitinScopes()
 int meiqueAutomoc(lua_State* L)
 {
     LuaLeakCheck(L);
-    LuaAutoPop autoPop(L);
 
     static std::string mocPath;
     if (mocPath.empty()) {
@@ -482,22 +481,16 @@ int meiqueAutomoc(lua_State* L)
         "h", "hpp", "hxx", "H", 0
     };
 
-    lua_getfield(L, -1, "_dir");
-    std::string directory = lua_tocpp<std::string>(L, -1);
-    lua_pop(L, 1);
+    std::string directory = luaGetField<std::string>(L, "_dir");
 
     MeiqueScript* script = getMeiqueScriptObject(L);
     OS::mkdir(script->buildDir() + directory);
-
-    StringList files;
-    lua_getfield(L, -1, "_files");
-    readLuaList(L, lua_gettop(L), files);
 
     std::string srcDir = script->sourceDir() + directory;
     std::string binDir = script->buildDir() + directory;
     // search what files need to be moced
     Regex regex("# *include +[\"<]([^ ]+\\.moc)[\">]");
-    for (const std::string& file : files) {
+    for (const std::string& file : luaGetField<StringList>(L, "_files")) {
         std::string filePath = srcDir + file;
         std::ifstream f(filePath.c_str(), std::ios_base::in);
         std::string line;
@@ -554,23 +547,14 @@ int meiqueQtResource(lua_State* L)
         }
     }
 
-    // get target name
-    lua_getfield(L, -1, "_dir");
-    std::string directory = lua_tocpp<std::string>(L, -1);
-    lua_pop(L, 1);
-
     MeiqueScript* script = getMeiqueScriptObject(L);
+    std::string directory = luaGetField<std::string>(L, "_dir");
     std::string srcDir = script->sourceDir() + directory;
     std::string binDir = script->buildDir() + directory;
     OS::mkdir(binDir);
 
-    lua_getfield(L, -1, "_qrcFiles");
-    StringList qrcFiles;
-    readLuaList(L, lua_gettop(L), qrcFiles);
-    lua_pop(L, 1);
-
     StringList cppFiles;
-    for (const std::string& file : qrcFiles) {
+    for (const std::string& file : luaGetField<StringList>(L, "_qrcFiles")) {
         std::string qrcFile = OS::normalizeFilePath(srcDir + file);
         std::string cppFile = OS::normalizeFilePath(binDir + file + ".cpp");
         cppFiles.push_back(cppFile);
@@ -629,9 +613,7 @@ void MeiqueScript::installTargets(const StringList& targets)
         luaPushTarget(target);
         LuaAutoPop autoPop(m_L);
 
-        lua_getfield(m_L, -1, "_dir");
-        std::string directory = lua_tocpp<std::string>(m_L, -1);
-        lua_pop(m_L, 1);
+        std::string directory = luaGetField<std::string>(m_L, "_dir");
 
         lua_getfield(m_L, -1, "_installFiles");
         std::list<StringList> installDirectives;
@@ -652,11 +634,7 @@ void MeiqueScript::installTargets(const StringList& targets)
             const std::string srcDir = m_cache->sourceDir() + directory;
 
             if (directiveSize == 1) { // Target installation
-                lua_getfield(m_L, -1, "_output");
-                std::string output = lua_tocpp<std::string>(m_L, -1);
-                lua_pop(m_L, 1);
-
-                std::string targetFile = OS::normalizeFilePath(directory + output);
+                std::string targetFile = OS::normalizeFilePath(directory + luaGetField<std::string>(m_L, "_output"));
                 OS::install(targetFile, destDir);
             } else if (directiveSize > 1) { // custom file install
                 for (const std::string& item : directive)
@@ -692,10 +670,7 @@ void MeiqueScript::uninstallTargets(const StringList& targets)
             const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
 
             if (directiveSize == 1) { // Target installation
-                lua_getfield(m_L, -1, "_output");
-                std::string output = lua_tocpp<std::string>(m_L, -1);
-                lua_pop(m_L, 1);
-                OS::uninstall(destDir + output);
+                OS::uninstall(destDir + luaGetField<std::string>(m_L, "_output"));
             } else if (directiveSize > 1) { // custom file install
                 for (const std::string& item : directive)
                     OS::uninstall(destDir + OS::baseName(item));
@@ -712,15 +687,8 @@ void MeiqueScript::cleanTargets(const StringList& targets)
         luaPushTarget(target);
         LuaAutoPop autoPop(m_L);
 
-        lua_getfield(m_L, -1, "_dir");
-        std::string directory = lua_tocpp<std::string>(m_L, -1);
-        lua_pop(m_L, 1);
-        // get sources
-        lua_getfield(m_L, -1, "_files");
-        StringList files;
-        readLuaList(m_L, lua_gettop(m_L), files);
-        lua_pop(m_L, 1);
-
+        std::string directory = luaGetField<std::string>(m_L, "_dir");
+        StringList files = luaGetField<StringList>(m_L, "_files");
         Compiler* compiler = m_cache->compiler();
         for (const std::string& file : files) {
             std::string objFile = compiler->nameForObject(file, target);
@@ -739,17 +707,11 @@ StringList MeiqueScript::getTargetIncludeDirectories(const std::string& target)
     LuaAutoPop autoPop(m_L);
 
     StringList list;
-    {
-        lua_getfield(m_L, -1, "_type");
-        LuaAutoPop autoPop(m_L);
-        if (lua_tocpp<int>(m_L, -1) == CUSTOM_TARGET)
-            return list;
-    }
+    if (luaGetField<int>(m_L, "_type") == CUSTOM_TARGET)
+        return list;
 
     // explicit include directories
-    lua_getfield(m_L, -1, "_incDirs");
-    readLuaList(m_L, lua_gettop(m_L), list);
-    lua_pop(m_L, 1);
+    list = luaGetField<StringList>(m_L, "_incDirs");
     list.sort();
 
     lua_getfield(m_L, -1, "_packages");
@@ -787,16 +749,9 @@ void MeiqueScript::dumpProject(std::ostream& output)
         luaPushTarget(target);
         LuaAutoPop autoPop(m_L);
 
-        lua_getfield(m_L, -1, "_dir");
-        std::string directory = lua_tocpp<std::string>(m_L, -1);
-        lua_pop(m_L, 1);
-        // get sources
-        lua_getfield(m_L, -1, "_files");
-        StringList files;
-        readLuaList(m_L, lua_gettop(m_L), files);
-        lua_pop(m_L, 1);
+        std::string directory = luaGetField<std::string>(m_L, "_dir");
 
-        for (const std::string& fileName : files) {
+        for (const std::string& fileName : luaGetField<StringList>(m_L, "_files")) {
             if (fileName.empty())
                 continue;
             std::string absPath = fileName[0] == '/' ? fileName : sourceDir + directory + fileName;

@@ -199,9 +199,8 @@ Job* JobFactory::createTargetJob(Node* target)
     }
 
     m_script.luaPushTarget(target->name);
-    lua_getfield(L, -1, "_output");
-    std::string outputName = lua_tocpp<std::string>(L, -1);
-    lua_pop(L, 2);
+    std::string outputName = luaGetField<std::string>(L, "_output");
+    lua_pop(L, 1);
 
     // Check if the target must be build
     if (!target->shouldBuild && OS::fileExists(buildDir + outputName)) {
@@ -226,22 +225,15 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     m_script.luaPushTarget(target->name);
     LuaAutoPop autoPop(L);
 
-    StringList files;
-    lua_getfield(L, -1, "_files");
-    readLuaList(L, lua_gettop(L), files);
-    lua_pop(L, 1);
+    StringList files = luaGetField<StringList>(L, "_files");
 
     Options* options = m_targetCompilerOptions[target];
 
     if (!target->shouldBuild) {
-        StringList outputs;
-        lua_getfield(L, -1, "_outputs");
-        readLuaList(L, lua_gettop(L), outputs);
-        lua_pop(L, 1);
-
         const std::string buildDir = m_script.buildDir() + options->targetDirectory;
         const std::string sourceDir = m_script.sourceDir() + options->targetDirectory;
 
+        StringList outputs = luaGetField<StringList>(L, "_outputs");
         if (!outputs.empty()) {
             bool shouldRun = false;
             for (const std::string& file : files) {
@@ -321,16 +313,13 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     LuaLeakCheck(L);
 
     m_script.luaPushTarget(node->name);
+    LuaAutoPop autoPop(L);
 
-    lua_getfield(L, -1, "_dir");
-    options->targetDirectory = lua_tocpp<std::string>(L, -1);
+    options->targetDirectory = luaGetField<std::string>(L, "_dir");
     const std::string& targetDirectory = options->targetDirectory;
-    lua_pop(L, 1);
 
-    if (node->isCustomTarget()) {
-        lua_pop(L, 1);
+    if (node->isCustomTarget())
         return;
-    }
 
     CompilerOptions& compilerOptions = options->compilerOptions;
     LinkerOptions& linkerOptions = options->linkerOptions;
@@ -366,9 +355,7 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
 
     StringList list;
     // explicit include directories
-    lua_getfield(L, -1, "_incDirs");
-    readLuaList(L, lua_gettop(L), list);
-    lua_pop(L, 1);
+    list = luaGetField<StringList>(L, "_incDirs");
     for (std::string& item : list) {
         if (!item.empty() && item[0] != '/')
             item.insert(0, sourcePath);
@@ -377,18 +364,10 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     list.clear();
 
     // explicit link libraries
-    lua_getfield(L, -1, "_linkLibraries");
-    readLuaList(L, lua_gettop(L), list);
-    lua_pop(L, 1);
-    linkerOptions.addLibraries(list);
-    list.clear();
+    linkerOptions.addLibraries(luaGetField<StringList>(L, "_linkLibraries"));
 
     // explicit library include dirs
-    lua_getfield(L, -1, "_libDirs");
-    readLuaList(L, lua_gettop(L), list);
-    lua_pop(L, 1);
-    linkerOptions.addLibraryPaths(list);
-    list.clear();
+    linkerOptions.addLibraryPaths(luaGetField<StringList>(L, "_libDirs"));
 
     // Add build dir in the include path
     compilerOptions.addIncludePath(m_script.buildDir() + targetDirectory);
@@ -396,11 +375,8 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
 
     if (node->isLibraryTarget()) {
         compilerOptions.setCompileForLibrary(true);
-        lua_getfield(L, -1, "_libType");
-        int libType = lua_tocpp<int>(L, -1);
-        lua_pop(L, 1);
         LinkerOptions::LinkType linkType;
-        switch (libType) {
+        switch (luaGetField<int>(L, "_libType")) {
             case 1:
                 linkType = LinkerOptions::SharedLibrary;
                 break;
@@ -408,14 +384,12 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
                 linkType = LinkerOptions::StaticLibrary;
                 break;
             default:
-                throw Error("Unknown library type! " + libType);
+                throw Error("Unknown library type!");
         }
         linkerOptions.setLinkType(linkType);
     } else {
         linkerOptions.setLinkType(LinkerOptions::Executable);
     }
-
-    lua_pop(L, 1);
 
     std::string targetHash = compilerOptions.hash() + linkerOptions.hash();
     if (m_script.cache()->targetHash(node->name) != targetHash) {
@@ -435,12 +409,10 @@ void JobFactory::mergeCompilerAndLinkerOptions(Node* node)
     LuaLeakCheck(L);
 
     m_script.luaPushTarget(node->name);
+    LuaAutoPop autoPop(L);
+
     // other targets
-    StringList targets;
-    lua_getfield(L, -1, "_targets");
-    readLuaList(L, lua_gettop(L), targets);
-    lua_pop(L, 2);
-    for (const std::string& usedTarget : targets) {
+    for (const std::string& usedTarget : luaGetField<StringList>(L, "_targets")) {
         Node* dependence = m_nodeTree.getTargetNode(usedTarget);
 
         Options* sourceOptions = m_targetCompilerOptions[node];
