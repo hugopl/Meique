@@ -84,10 +84,10 @@ Compiler* MeiqueCache::compiler()
 void MeiqueCache::loadCache()
 {
     lua_State* L = luaL_newstate();
-    lua_register(L, "userOption", &readOption);
-    lua_register(L, "meiqueConfig", &readMeiqueConfig);
-    lua_register(L, "package", &readPackage);
-    lua_register(L, "scopes", &readScopes);
+    lua_register(L, "UserOption", &readOption);
+    lua_register(L, "Config", &readMeiqueConfig);
+    lua_register(L, "Package", &readPackage);
+    lua_register(L, "Scopes", &readScopes);
     lua_register(L, "TargetHash", &readTargetHash);
     // put a pointer to this instance of Config in lua registry, the key is the L address.
     lua_pushlightuserdata(L, (void *)L);
@@ -125,13 +125,13 @@ void MeiqueCache::saveCache()
         stringReplace(name, "\"", "\\\"");
         std::string value(mapIt->second);
         stringReplace(name, "\"", "\\\"");
-        file << "userOption {\n"
+        file << "UserOption {\n"
                 "    name = \"" << name << "\",\n"
                 "    value = \"" << value << "\"\n"
                 "}\n\n";
     }
 
-    file << "meiqueConfig {\n";
+    file << "Config {\n";
     file << "    " CFG_BUILD_TYPE " = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
     file << "    " CFG_COMPILER " = \"" << m_compilerName << "\",\n";
     file << "    " CFG_SOURCE_DIR " = \"" << m_sourceDir << "\",\n";
@@ -140,7 +140,7 @@ void MeiqueCache::saveCache()
     file << "}\n\n";
 
     // Cached scopes
-    file << "scopes {\n";
+    file << "Scopes {\n";
     StringList::const_iterator listIt = m_scopes.begin();
     for (; listIt != m_scopes.end(); ++listIt) {
         file << "    \"" << *listIt << "\"," << std::endl;
@@ -151,7 +151,7 @@ void MeiqueCache::saveCache()
     // Info about packages
     std::map<std::string, StringMap>::iterator mapMapIt = m_packages.begin();
     for (; mapMapIt != m_packages.end(); ++mapMapIt) {
-        file << "package {\n";
+        file << "Package {\n";
         std::string name(mapMapIt->first);
         stringReplace(name, "\"", "\\\"");
         file << "    name = \"" << name << "\",\n";
@@ -195,7 +195,7 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
         self->m_compilerName = opts.at(CFG_COMPILER);
         self->m_installPrefix = opts[CFG_INSTALL_PREFIX];
     } catch (std::out_of_range&) {
-        throw Error(MEIQUECACHE " file corrupted, some fundamental entry is missing.");
+        throw Error(MEIQUECACHE " file corrupted or created by a old version of meique.");
     }
     return 0;
 }
