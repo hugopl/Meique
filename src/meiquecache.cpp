@@ -32,10 +32,6 @@
 #include "compiler.h"
 
 #define MEIQUECACHE "meiquecache.lua"
-#define CFG_SOURCE_DIR "sourceDir"
-#define CFG_COMPILER "compiler"
-#define CFG_BUILD_TYPE "buildType"
-#define CFG_INSTALL_PREFIX "installPrefix"
 
 /*
  * We need to save the cache when the user hits CTRL+C.
@@ -98,7 +94,7 @@ void MeiqueCache::loadCache()
     if (res)
         throw Error("Error loading " MEIQUECACHE ", this *should* never happen. A bug? maybe...");
     if (lua_pcall(L, 0, 0, 0))
-        throw Error("Error loading " MEIQUECACHE ": " + std::string(lua_tostring(L, -1)));
+        throw Error(MEIQUECACHE " corrupted of created by an older version of meique (" + std::string(lua_tostring(L, -1)) + ')');
 }
 
 // Retrieve the Config instance
@@ -117,51 +113,35 @@ void MeiqueCache::saveCache()
     if (!file.is_open())
         throw Error("Can't open " MEIQUECACHE " for write.");
 
-    StringMap::const_iterator mapIt = m_userOptions.begin();
-    for (; mapIt != m_userOptions.end(); ++mapIt) {
-        std::string name(mapIt->first);
-        if (name.empty())
+    for (auto& pair : m_userOptions) {
+        if (pair.first.empty())
             continue; // Default package doesn't need to be saved.
-        stringReplace(name, "\"", "\\\"");
-        std::string value(mapIt->second);
-        stringReplace(name, "\"", "\\\"");
         file << "UserOption {\n"
-                "    name = \"" << name << "\",\n"
-                "    value = \"" << value << "\"\n"
+                "    name = \"" << escape(pair.first) << "\",\n"
+                "    value = \"" << escape(pair.second) << "\"\n"
                 "}\n\n";
     }
 
     file << "Config {\n";
-    file << "    " CFG_BUILD_TYPE " = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
-    file << "    " CFG_COMPILER " = \"" << m_compilerName << "\",\n";
-    file << "    " CFG_SOURCE_DIR " = \"" << m_sourceDir << "\",\n";
+    file << "    buildType = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
+    file << "    compiler = \"" << m_compilerName << "\",\n";
+    file << "    sourceDir = \"" << m_sourceDir << "\",\n";
     if (!m_installPrefix.empty())
-        file << "    " CFG_INSTALL_PREFIX " = \"" << m_installPrefix << "\",\n";
+        file << "    installPrefix = \"" << m_installPrefix << "\",\n";
     file << "}\n\n";
 
-    // Cached scopes
     file << "Scopes {\n";
-    StringList::const_iterator listIt = m_scopes.begin();
-    for (; listIt != m_scopes.end(); ++listIt) {
-        file << "    \"" << *listIt << "\"," << std::endl;
-    }
+    for (const std::string& scope : m_scopes)
+        file << "    \"" << scope << "\",\n";
     file << "}\n\n";
-
 
     // Info about packages
-    std::map<std::string, StringMap>::iterator mapMapIt = m_packages.begin();
-    for (; mapMapIt != m_packages.end(); ++mapMapIt) {
+    for (auto& pair : m_packages) {
         file << "Package {\n";
-        std::string name(mapMapIt->first);
-        stringReplace(name, "\"", "\\\"");
-        file << "    name = \"" << name << "\",\n";
+        file << "    name = \"" << escape(pair.first) << "\",\n";
         // Write package data
-        StringMap::const_iterator it = mapMapIt->second.begin();
-        for (; it != mapMapIt->second.end(); ++it) {
-            std::string value(it->second);
-            stringReplace(value, "\"", "\\\"");
-            file << "    " << it->first << " = \"" << value << "\",\n";
-        }
+        for (auto& p : pair.second)
+            file << "    " << p.first << " = \"" << escape(p.second) << "\",\n";
         file << "}\n\n";
     }
 
@@ -190,12 +170,12 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     readLuaTable(L, lua_gettop(L), opts);
     lua_pop(L, 1);
     try {
-        self->m_sourceDir = OS::normalizeDirPath(opts.at(CFG_SOURCE_DIR));
-        self->m_buildType = opts.at(CFG_BUILD_TYPE) == "debug" ? Debug : Release;
-        self->m_compilerName = opts.at(CFG_COMPILER);
-        self->m_installPrefix = opts[CFG_INSTALL_PREFIX];
+        self->m_sourceDir = OS::normalizeDirPath(opts.at("sourceDir"));
+        self->m_buildType = opts.at("buildType") == "debug" ? Debug : Release;
+        self->m_compilerName = opts.at("compiler");
+        self->m_installPrefix = opts["installPrefix"];
     } catch (std::out_of_range&) {
-        throw Error(MEIQUECACHE " file corrupted or created by a old version of meique.");
+        luaError(L, MEIQUECACHE " file corrupted or created by a old version of meique.");
     }
     return 0;
 }
