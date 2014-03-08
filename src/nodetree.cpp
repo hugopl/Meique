@@ -32,7 +32,7 @@
 #include "logger.h"
 
 Node::Node(const std::string& name)
-    : name(strdup(name.c_str()))
+    : name(name)
     , status(Pristine)
     , targetType(0)
     , isTarget(false)
@@ -41,11 +41,6 @@ Node::Node(const std::string& name)
     , isFake(false)
     , isHook(false)
 {
-}
-
-Node::~Node()
-{
-    free(name);
 }
 
 NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)

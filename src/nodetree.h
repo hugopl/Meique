@@ -49,12 +49,11 @@ public:
     };
 
     explicit Node(const std::string& name);
-    ~Node();
 
     bool isCustomTarget() const { return targetType == Node::CustomTarget; }
     bool isLibraryTarget() const { return targetType == Node::LibraryTarget; }
 
-    char* name;
+    std::string name;
     NodeList parents;
     NodeList children;
     unsigned status:2;
