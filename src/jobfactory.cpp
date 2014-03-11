@@ -103,10 +103,12 @@ Job* JobFactory::createJob()
 
     if (job) {
         std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
-        NodeVisitor<NodeGetParent>(node, [node](Node* parent) {
-            if (node != parent)
-                parent->shouldBuild = 1;
-        });
+        if (!node->isFake) {
+            NodeVisitor<NodeGetParent>(node, [node](Node* parent) {
+                if (node != parent)
+                    parent->shouldBuild = 1;
+            });
+        }
     }
 
     return job;
