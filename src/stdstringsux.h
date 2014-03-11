@@ -44,4 +44,14 @@ bool contains(T container, typename T::value_type value) {
     return std::find(container.begin(), container.end(), value) != container.end();
 }
 
+template<typename T, typename Predicate>
+void eraseIf(T& container, Predicate p) {
+    for(auto it = container.begin(), endIt = container.end(); it != endIt;){
+        if(p(*it))
+            it = container.erase(it);
+        else
+            ++it;
+    }
+}
+
 #endif

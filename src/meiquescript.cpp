@@ -105,8 +105,20 @@ void MeiqueScript::populateOptionsValues()
     LuaAutoPop autoPop(m_L);
     int idx = lua_gettop(m_L);
 
-    if (m_cmdLine)
-        m_cache->setUserOptionsValues(m_cmdLine->args());
+    if (m_cmdLine) {
+        StringMap args = m_cmdLine->args();
+        // Remove meique options from args.
+        // TODO: The list of arguments should go to a proper global place some day
+        eraseIf(args, [](const StringMap::value_type& pair) {
+            static const char* options[] = {
+                "debug",
+                "install-prefix",
+                "release"
+            };
+            return std::find(options, options + sizeof(options)/sizeof(char*), pair.first);
+        });
+        m_cache->setUserOptionsValues(args);
+    }
 
     for (const auto& pair : m_cache->userOptionsValues()) {
         lua_pushstring(m_L, pair.first.c_str());
