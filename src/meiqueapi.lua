@@ -102,6 +102,10 @@ function option(name, description, defaultValue)
         abortIf(not _meiqueOptionsDefaults[name], "Option --"..name.." need to be set in the command line, it mean:\n  "..description)
         _meiqueOptionsValues[name] = _meiqueOptionsDefaults[name]
     end
+    local lowerValue = _meiqueOptionsValues[name]:lower()
+    if lowerValue == "false" or lowerValue == "off" then
+        return _meiqueNone
+    end
     return _meiqueOptionsValues[name]
 end
 
