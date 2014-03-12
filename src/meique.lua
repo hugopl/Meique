@@ -27,7 +27,6 @@ jobfactory.cpp
 jobmanager.cpp
 oscommandjob.cpp
 luajob.cpp
-graph.cpp
 luacpputil.cpp
 lualocker.cpp
 ]])

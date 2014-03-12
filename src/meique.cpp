@@ -23,7 +23,6 @@
 #include "compilerfactory.h"
 #include "jobmanager.h"
 #include "jobfactory.h"
-#include "graph.h"
 #include "meiqueversion.h"
 #include <vector>
 #include <sstream>
