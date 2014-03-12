@@ -1,3 +1,10 @@
 addSubdirectory("ext")
 addSubdirectory("src")
 addSubdirectory("tests")
+
+manpage = CustomTarget:new("manpage", function()
+    os.execute("gzip meique.1 -c > "..manpage:buildDir().."meique.1.gz")
+end)
+manpage:addFile("meique.1")
+manpage:addOutput("meique.1.gz")
+manpage:install(manpage:buildDir().."meique.1.gz", "share/man/man1")

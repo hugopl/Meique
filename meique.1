@@ -1,0 +1,118 @@
+.TH MEIQUE 1 "12 March 2014" "" "User Commands"
+.SH NAME
+meique \- A simple build system.
+.SH SYNOPSIS
+.B meique
+[\fIOPTION\fR]... [\fITARGET\fR]...
+.SH DESCRIPTION
+.LP
+.I Meique
+is an open source build system for C and C++ programming languages where you
+describe your projects using Lua as script language, an imperative approach
+to the world of build systems.
+
+The tool supports most important features a build system would require plus
+some special ones like Qt support:
+
+* Shadow build (out of source builds).
+
+* Parallel compilation.
+
+* Automatic dependency check.
+
+* Qt support (auto moc, rcc, etc).
+
+* pkg-config integration.
+
+* Aim to be multiplatform.
+
+* Automatic uninstall targets.
+
+* Everything you can do in a Lua script to get your project built!
+
+Using
+.B meique
+in a new project consist in write a script, called
+.IR meique.lua ,
+to create instances of objects representing targets. Targets have the same meaning of targets on GNU/make, i.e. you can create a target that compile your project, a target that generates the project documentation, etc.
+
+You can specify what target to run on meique command line, by default all targets are ran respecting the dependencies between them.
+
+The first time you call
+.B meique
+you need to tell him where the meique.lua describing the project is, after that you can just call
+.B meique
+without arguments.
+.SH GENERAL OPTIONS
+.sp 1
+.TP 0.5i
+\fB\--help\fR
+Print summary of available options and exit.
+.TP 0.5i
+\fB\--version\fR
+Print the version of the
+.B meique
+program plus a copyright and exit.
+.SH CONFIG MODE OPTIONS
+.sp 1
+.TP 0.5i
+\fB\--debug\fR
+Create a debug build.
+.TP 0.5i
+\fB\--release\fR
+Create a release build.
+.TP 0.5i
+\fB\--install-prefix\fR
+Install directory used by the install target, this directory is prepended onto all install directories.
+.SH BUILD MODE OPTIONS
+.sp 1
+.TP 0.5i
+\fB\-j\fR [\fIjobs\fR]
+Specifies the number of
+.I jobs
+(commands) to run simultaneously, default to number of cores + 1.
+.TP 0.5i
+\fB\-d\fR
+Disable colored output.
+.TP 0.5i
+\fB\-s\fR
+Stop after configure step.
+.TP 0.5i
+\fB\-c\fR [\fItarget\fR]...
+Clean a specific target or all targets if none was specified.
+.TP 0.5i
+\fB\-i\fR [\fItarget\fR]...
+Install a specific target or all targets if none was specified.
+.TP 0.5i
+\fB\-u\fR [\fItarget\fR]...
+Uninstall a specific target or all targets if none was specified.
+.TP 0.5i
+\fB\-t\fR [\fIregex\fR]
+Run tests matching a regular expression, all tests if none was specified.
+.SH "EXIT STATUS"
+.B meique
+exits with a status of zero if all meique.lua files were successfully parsed
+and no targets that were built failed.  A status of one will be returned
+otherwise.
+.SH "SEE ALSO"
+The full documentation about how to write
+.I meique.lua
+files can be found on meique website,
+.IR http://www.meique.org .
+.SH BUGS
+See the github issue tracker (\fIhttps://github.com/Meique/Meique/issues\fR)
+to file and see bug reports, code contributions can be made via github pull
+requests.
+.SH "COPYRIGHT"
+Copyright \(co 2009-2014 Hugo Parente Lima.
+This file is part of
+.IR Meique .
+.LP
+Meique is free software; you can redistribute it and/or modify it under the
+terms of the GNU General Public License as published by the Free Software
+Foundation; either version 3 of the License, or (at your option) any later
+version.
+.LP
+Meique is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
+A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
