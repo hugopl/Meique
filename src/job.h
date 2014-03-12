@@ -26,12 +26,6 @@ class NodeGuard;
 class Job
 {
 public:
-    enum Type {
-        Compilation,
-        Linking,
-        CustomTarget
-    };
-
     Job(NodeGuard* nodeGuard);
     virtual ~Job();
     void run();
