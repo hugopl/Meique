@@ -17,6 +17,7 @@ local tests = [[
     basic_relink
     basic_header_dependence
     change_compiler_flags
+    lua_lock
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)

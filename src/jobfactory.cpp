@@ -28,7 +28,6 @@
 #include "oscommandjob.h"
 #include "logger.h"
 #include "luacpputil.h"
-#include "lualocker.h"
 #include "luajob.h"
 #include <cassert>
 
@@ -71,7 +70,7 @@ Job* JobFactory::createJob()
             node = findAGoodNode(&target, m_root);
             // Found a not expanded target, expand it then search a good node again.
             if (node && node->isTarget && node->status == Node::Pristine) {
-                LuaLocker luaLock(m_script.luaState());
+                std::lock_guard<LuaState> lock(m_script.luaState());
                 m_nodeTree.expandTargetNode(node);
                 node = findAGoodNode(&target, node);
             }
@@ -88,7 +87,7 @@ Job* JobFactory::createJob()
         node->status = Node::Building;
         m_processedNodes++;
 
-        LuaLocker luaLock(m_script.luaState());
+        std::lock_guard<LuaState> lock(m_script.luaState());
         std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
 
         if (node->isCustomTarget())
@@ -219,7 +218,7 @@ Job* JobFactory::createTargetJob(Node* target)
 
 Job* JobFactory::createCustomTargetJob(Node* target)
 {
-    lua_State* L = m_script.luaState();
+    LuaState& L = m_script.luaState();
     LuaLeakCheck(L);
 
     target->status = Node::Building;
@@ -267,7 +266,7 @@ Job* JobFactory::createCustomTargetJob(Node* target)
 
 Job* JobFactory::createHookJob(Node* target, Node* node)
 {
-    lua_State* L = m_script.luaState();
+    LuaState& L = m_script.luaState();
     LuaLeakCheck(L);
 
     node->status = Node::Building;

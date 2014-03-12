@@ -35,6 +35,16 @@ LuaLeakCheckImpl::~LuaLeakCheckImpl()
         Warn() << m_func << "is leaking " << leak << " lua values on the stack!";
 }
 
+LuaState::LuaState()
+{
+    m_L = luaL_newstate();
+}
+
+LuaState::~LuaState()
+{
+    lua_close(m_L);
+}
+
 static int meiqueErrorHandler(lua_State* L)
 {
     int level = 2;

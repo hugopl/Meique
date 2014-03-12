@@ -79,7 +79,7 @@ Compiler* MeiqueCache::compiler()
 
 void MeiqueCache::loadCache()
 {
-    lua_State* L = luaL_newstate();
+    LuaState L;
     lua_register(L, "UserOption", &readOption);
     lua_register(L, "Config", &readMeiqueConfig);
     lua_register(L, "Package", &readPackage);

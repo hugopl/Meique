@@ -17,12 +17,13 @@
 */
 
 #include "luajob.h"
-#include "lualocker.h"
 #include "lua.h"
 #include "luacpputil.h"
 #include "logger.h"
 
-LuaJob::LuaJob(NodeGuard* nodeGuard, lua_State* L, int args)
+#include <mutex>
+
+LuaJob::LuaJob(NodeGuard* nodeGuard, LuaState& L, int args)
     : Job(nodeGuard)
     , m_L(L)
 {
@@ -44,7 +45,7 @@ LuaJob::LuaJob(NodeGuard* nodeGuard, lua_State* L, int args)
 
 int LuaJob::doRun()
 {
-    LuaLocker locker(m_L);
+    std::lock_guard<LuaState> lock(m_L);
     LuaLeakCheck(m_L);
 
     OS::ChangeWorkingDirectory dirChanger(workingDirectory());

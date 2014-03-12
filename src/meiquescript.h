@@ -22,7 +22,7 @@
 #include <string>
 #include <list>
 #include "basictypes.h"
-#include "luastate.h"
+#include "luacpputil.h"
 
 class CmdLine;
 class MeiqueCache;
@@ -38,7 +38,7 @@ public:
     MeiqueCache* cache() { return m_cache; }
     StringList targetNames();
     StringMap getOptionsValues();
-    lua_State* luaState() { return m_L; }
+    LuaState& luaState() { return m_L; }
 
     std::list<StringList> getTests(const std::string& pattern);
 

@@ -14,7 +14,6 @@ cmdline.cpp
 logger.cpp
 meiquescript.cpp
 meiquecache.cpp
-luastate.cpp
 stdstringsux.cpp
 compilerfactory.cpp
 compiler.cpp
@@ -28,7 +27,6 @@ jobmanager.cpp
 oscommandjob.cpp
 luajob.cpp
 luacpputil.cpp
-lualocker.cpp
 ]])
 
 meique:addFiles(meique:buildDir().."meiqueapi.cpp")

@@ -23,6 +23,7 @@
 #include <sstream>
 #include <list>
 #include <cassert>
+#include <mutex>
 #include "lua.h"
 #include "basictypes.h"
 
@@ -53,6 +54,21 @@ public:
 private:
     lua_State* m_L;
     int m_n;
+};
+
+class LuaState
+{
+public:
+    LuaState();
+    ~LuaState();
+    void lock() { m_mutex.lock(); }
+    void unlock() { m_mutex.unlock(); }
+    operator lua_State*() { return m_L; }
+private:
+    lua_State* m_L;
+    std::mutex m_mutex;
+
+    LuaState(const LuaState&) = delete;
 };
 
 template<typename List>

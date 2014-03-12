@@ -20,16 +20,17 @@
 #define LUAJOB_H
 #include "job.h"
 
-struct lua_State;
+class LuaState;
+
 class LuaJob : public Job
 {
 public:
     /// Pops a lua_function from stack, store in the lua registry and execute them later
-    LuaJob(NodeGuard* nodeGuard, lua_State* L, int args);
+    LuaJob(NodeGuard* nodeGuard, LuaState& L, int args);
 protected:
     virtual int doRun();
 private:
-    lua_State* m_L;
+    LuaState& m_L;
 };
 
 #endif // LUAJOB_H
