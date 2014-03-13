@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2009-2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2009-2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -77,19 +77,32 @@ inline std::ostream& operator<<(std::ostream& out, const std::pair<T1, T2>& pair
 }
 
 template<typename T>
-inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
+inline std::ostream& printContainer(std::ostream& out, const T& container)
 {
     out << '[';
-    if (list.size()) {
-        typename std::list<T>::const_iterator it = list.begin();
+    if (container.size()) {
+        typename T::const_iterator it = container.begin();
         out << *it;
         ++it;
-        for (; it != list.end(); ++it)
+        for (; it != container.end(); ++it)
             out << ", " << *it;
     }
     out << ']';
     return out;
 }
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::list<T>& list)
+{
+    return printContainer(out, list);
+}
+
+template<typename T>
+inline std::ostream& operator<<(std::ostream& out, const std::vector<T>& vector)
+{
+    return printContainer(out, vector);
+}
+
 
 template<typename T>
 inline std::ostream& operator<<(std::ostream& out, const std::set<T>& set)
