@@ -1,6 +1,6 @@
-int bar();
+int bar2();
 
 int main()
 {
-    bar();
+    bar2();
 }

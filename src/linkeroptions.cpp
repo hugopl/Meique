@@ -27,7 +27,7 @@ void LinkerOptions::addCustomFlag(const std::string& customFlag)
 
 void LinkerOptions::addStaticLibrary(const std::string& library)
 {
-    m_staticLibraries.push_back(library);
+    m_staticLibraries.push_front(library);
 }
 
 void LinkerOptions::addLibrary(const std::string& library)
