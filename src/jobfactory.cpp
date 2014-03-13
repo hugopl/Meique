@@ -39,6 +39,9 @@ JobFactory::JobFactory(MeiqueScript& script, const StringList& targets)
     , m_processedNodes(0)
 {
     m_nodeTree.onTreeChange = [&]() {
+        m_treeChangedMutex.lock();
+        m_treeChangedMeanWhile = true;
+        m_treeChangedMutex.unlock();
         m_treeChanged.notify_all();
     };
 
@@ -64,6 +67,7 @@ Job* JobFactory::createJob()
     Node* node;
 
     do {
+        m_treeChangedMeanWhile = false;
         m_needToWait = false;
         {
             std::lock_guard<NodeTree> nodeTreeLock(m_nodeTree);
@@ -76,7 +80,7 @@ Job* JobFactory::createJob()
             }
         }
         if (!node) {
-            if (m_needToWait) {
+            if (m_needToWait && !m_treeChangedMeanWhile) {
                 std::unique_lock<std::mutex> lock(m_treeChangedMutex);
                 m_treeChanged.wait(lock);
                 continue;

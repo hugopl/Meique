@@ -66,6 +66,7 @@ private:
     bool m_needToWait;
     std::mutex m_treeChangedMutex;
     std::condition_variable m_treeChanged;
+    bool m_treeChangedMeanWhile;
 
     unsigned m_processedNodes;
 
