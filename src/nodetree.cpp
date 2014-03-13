@@ -248,23 +248,17 @@ void NodeTree::addTargetHookNodes()
     }
 }
 
-NodeGuard* NodeTree::createNodeGuard(Node* node)
-{
-    return new NodeGuard(this, node, m_mutex);
-}
-
-NodeGuard::NodeGuard(NodeTree* tree, Node* node, std::mutex& mutex)
+NodeGuard::NodeGuard(NodeTree& tree, Node* node)
     : m_tree(tree)
     , m_node(node)
-    , m_mutex(mutex)
 {
 }
 
 NodeGuard::~NodeGuard()
 {
     {
-        std::lock_guard<std::mutex> lock(m_mutex);
+        std::lock_guard<NodeTree> lock(m_tree);
         m_node->status = Node::Built;
     }
-    m_tree->onTreeChange();
+    m_tree.onTreeChange();
 }

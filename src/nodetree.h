@@ -70,15 +70,14 @@ private:
 
 class NodeGuard {
 public:
-    NodeGuard(NodeTree* tree, Node* node, std::mutex& mutex);
+    NodeGuard(NodeTree& tree, Node* node);
     ~NodeGuard();
 
     NodeGuard(const NodeGuard&) = delete;
     NodeGuard& operator=(const NodeGuard&) = delete;
 private:
-    NodeTree* m_tree;
+    NodeTree& m_tree;
     Node* m_node;
-    std::mutex& m_mutex;
 };
 
 class NodeTree
@@ -112,8 +111,6 @@ public:
 
     void dump(const char* fileName = 0) const;
     Node* root() const { return m_root; }
-
-    NodeGuard* createNodeGuard(Node* node);
 
     std::function<void ()> onTreeChange;
 

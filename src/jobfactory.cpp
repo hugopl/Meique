@@ -175,7 +175,7 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     }
 
     Compiler* compiler = m_script.cache()->compiler();
-    OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(node), compiler->compile(source, output, &options->compilerOptions));
+    OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, node), compiler->compile(source, output, &options->compilerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Compiling " + OS::baseName(fileName));
 
@@ -209,7 +209,7 @@ Job* JobFactory::createTargetJob(Node* target)
         return nullptr;
     }
 
-    OSCommandJob* job = new OSCommandJob(m_nodeTree.createNodeGuard(target), compiler->link(outputName, objects, &options->linkerOptions));
+    OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, target), compiler->link(outputName, objects, &options->linkerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Linking " + outputName);
 
@@ -257,7 +257,7 @@ Job* JobFactory::createCustomTargetJob(Node* target)
     lua_getfield(L, -1, "_func");
     createLuaArray(L, files);
 
-    LuaJob* job = new LuaJob(m_nodeTree.createNodeGuard(target), L, 1);
+    LuaJob* job = new LuaJob(new NodeGuard(m_nodeTree, target), L, 1);
     job->setName("Running custom target " + std::string(target->name));
     job->setWorkingDirectory(m_script.sourceDir() + options->targetDirectory);
 
@@ -273,7 +273,7 @@ Job* JobFactory::createHookJob(Node* target, Node* node)
 
     lua_getglobal(L, "_meiqueRunHooks");
     m_script.luaPushTarget(target->name);
-    LuaJob* job = new LuaJob(m_nodeTree.createNodeGuard(node), L, 1);
+    LuaJob* job = new LuaJob(new NodeGuard(m_nodeTree, node), L, 1);
 
     job->setName("Running hook for " + std::string(target->name));
     Options* options = m_targetCompilerOptions[target];
