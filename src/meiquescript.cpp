@@ -637,20 +637,21 @@ void MeiqueScript::installTargets(const StringList& targets)
 
         Notice() << Cyan << "Installing " << target << "...";
 
-        for (const StringList& directive : installDirectives) {
+        for (StringList& directive : installDirectives) {
             const int directiveSize = directive.size();
             if (!directiveSize)
                 continue;
 
             const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            directive.pop_front();
             const std::string srcDir = m_cache->sourceDir() + directory;
 
-            if (directiveSize == 1) { // Target installation
+            if (directive.empty()) { // Target installation
                 std::string targetFile = OS::normalizeFilePath(directory + luaGetField<std::string>(m_L, "_output"));
                 OS::install(targetFile, destDir);
-            } else if (directiveSize > 1) { // custom file install
+            } else { // custom file install
                 for (const std::string& item : directive)
-                    OS::install(srcDir + item, destDir);
+                    OS::install(srcDir[0] == '/' ? item : srcDir + item, destDir);
             }
         }
     }
@@ -674,16 +675,17 @@ void MeiqueScript::uninstallTargets(const StringList& targets)
 
         Notice() << Cyan << "Uninstalling " << target << "...";
 
-        for (const StringList& directive : installDirectives) {
+        for (StringList& directive : installDirectives) {
             const int directiveSize = directive.size();
             if (!directiveSize)
                 continue;
 
             const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            directive.pop_front();
 
-            if (directiveSize == 1) { // Target installation
+            if (directive.empty()) { // Target installation
                 OS::uninstall(destDir + luaGetField<std::string>(m_L, "_output"));
-            } else if (directiveSize > 1) { // custom file install
+            } else { // custom file install
                 for (const std::string& item : directive)
                     OS::uninstall(destDir + OS::baseName(item));
             }
