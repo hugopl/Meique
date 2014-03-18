@@ -164,21 +164,20 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     const std::string buildDir = m_script.buildDir() + options->targetDirectory;
     const std::string& fileName = node->name;
 
-    const std::string absSourcePath = fileName.at(0) == '/' ? fileName : sourceDir + fileName;
-    std::string absObjPath = m_script.cache()->compiler()->nameForObject(node->name, target->name);
-    if (absObjPath.at(0) != '/')
-        absObjPath.insert(0, buildDir);
+    Compiler* compiler = m_script.cache()->compiler();
 
-    std::string source = OS::normalizeFilePath(absSourcePath);
-    std::string output = OS::normalizeFilePath(absObjPath);
+    std::string source = fileName.at(0) == '/' ? fileName : sourceDir + fileName;
+    std::string output = compiler->nameForObject(node->name, target->name);
+    if (output.at(0) != '/')
+        output.insert(0, buildDir);
+    output = OS::normalizeFilePath(output);
+    source = OS::normalizeFilePath(source);
 
-    m_depChecker.setWorkingDirectory(sourceDir);
-    if (!node->shouldBuild && !m_depChecker.shouldCompile(source, output)) {
+    if (!node->shouldBuild && !compiler->shouldCompile(source, output)) {
         node->status = Node::Built;
         return nullptr;
     }
 
-    Compiler* compiler = m_script.cache()->compiler();
     OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, node), compiler->compile(source, output, &options->compilerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Compiling " + OS::baseName(fileName));

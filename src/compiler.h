@@ -54,6 +54,7 @@ public:
     virtual std::string nameForStaticLibrary(const std::string& name) const = 0;
     virtual std::string nameForSharedLibrary(const std::string& name) const = 0;
     virtual std::string nameForObject(const std::string& name, const std::string& target) const;
+    virtual bool shouldCompile(const std::string& source, const std::string& output) const = 0;
 private:
     Compiler(const Compiler&) = delete;
 };

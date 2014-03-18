@@ -22,6 +22,7 @@
 #include "logger.h"
 #include "stdstringsux.h"
 #include <algorithm>
+#include <fstream>
 
 Gcc::Gcc() : m_isAvailable(false)
 {
@@ -39,9 +40,42 @@ Gcc::Gcc() : m_isAvailable(false)
     }
 }
 
+bool Gcc::shouldCompile(const std::string& source, const std::string& output) const
+{
+    if (OS::timestampCompare(source, output) < 0)
+        return true;
+
+    std::ifstream f((output + ".d").c_str());
+    if (!f)
+        return true;
+
+    std::string line;
+    std::getline(f, line);
+    stringReplace(line, output + ": ", "");
+
+    do {
+        if (line.length() > 2) {
+            if (*line.rbegin() == '\\')
+            line.erase(line.length()-2);
+
+            StringList deps = split(line, ' ');
+            for (const std::string& dep : deps) {
+                if (OS::timestampCompare(dep, output) < 0)
+                    return true;
+            }
+        }
+        std::getline(f, line);
+        trim(line);
+    } while (f);
+    return false;
+}
+
 OS::Command Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
 {
     StringList args;
+    args.push_back("-MMD");
+    args.push_back("-MF");
+    args.push_back(output + ".d");
     args.push_back("-c");
     args.push_back(fileName);
     args.push_back("-o");

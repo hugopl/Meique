@@ -25,7 +25,6 @@
 #include <condition_variable>
 
 #include "compileroptions.h"
-#include "dependencechecker.h"
 #include "linkeroptions.h"
 #include "nodetree.h"
 
@@ -70,7 +69,6 @@ private:
 
     unsigned m_processedNodes;
 
-    DependenceChecker m_depChecker;
     typedef std::unordered_map<Node*, Options*> CompilerOptionsMap;
     CompilerOptionsMap m_targetCompilerOptions;
 };

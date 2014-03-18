@@ -32,6 +32,7 @@ public:
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;
+    bool shouldCompile(const std::string& source, const std::string& output) const;
 private:
     bool m_isAvailable;
     std::string m_fullName;
