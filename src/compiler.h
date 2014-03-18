@@ -25,7 +25,6 @@
 class LinkerOptions;
 class CompilerOptions;
 
-/// Languages supported by meique, except the UnsupportedLanguage value ;-)
 enum Language {
     CLanguage,
     CPlusPlusLanguage,
@@ -37,17 +36,11 @@ enum Language {
 */
 Language identifyLanguage(const std::string& fileName);
 
-/**
-*   Interface for all compiler implementations.
-*/
 class Compiler
 {
 public:
     Compiler() {}
     virtual ~Compiler() {}
-    virtual const char* name() const = 0;
-    virtual std::string fullName() const = 0;
-    virtual bool isAvailable() const = 0;
     virtual OS::Command compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const = 0;
     virtual OS::Command link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
     virtual std::string nameForExecutable(const std::string& name) const = 0;
@@ -57,6 +50,12 @@ public:
     virtual bool shouldCompile(const std::string& source, const std::string& output) const = 0;
 private:
     Compiler(const Compiler&) = delete;
+};
+
+struct CompilerFactory {
+    const char* id;
+    bool (*probe)(std::string&);
+    Compiler* (*create)();
 };
 
 #endif

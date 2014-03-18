@@ -67,12 +67,9 @@ MeiqueCache::~MeiqueCache()
 Compiler* MeiqueCache::compiler()
 {
     if (!m_compiler) {
-        if (m_compilerName.empty()) {
-            m_compiler = CompilerFactory::findCompiler();
-            m_compilerName = m_compiler->name();
-        } else {
-            m_compiler = CompilerFactory::createCompiler(m_compilerName);
-        }
+        if (m_compilerId.empty())
+            m_compilerId = findCompilerId();
+        m_compiler = createCompiler(m_compilerId);
     }
     return m_compiler;
 }
@@ -124,7 +121,7 @@ void MeiqueCache::saveCache()
 
     file << "Config {\n";
     file << "    buildType = \"" << (m_buildType == Debug ? "debug" : "release") << "\",\n";
-    file << "    compiler = \"" << m_compilerName << "\",\n";
+    file << "    compiler = \"" << m_compilerId << "\",\n";
     file << "    sourceDir = \"" << m_sourceDir << "\",\n";
     if (!m_installPrefix.empty())
         file << "    installPrefix = \"" << m_installPrefix << "\",\n";
@@ -172,7 +169,7 @@ int MeiqueCache::readMeiqueConfig(lua_State* L)
     try {
         self->m_sourceDir = OS::normalizeDirPath(opts.at("sourceDir"));
         self->m_buildType = opts.at("buildType") == "debug" ? Debug : Release;
-        self->m_compilerName = opts.at("compiler");
+        self->m_compilerId = opts.at("compiler");
         self->m_installPrefix = opts["installPrefix"];
     } catch (std::out_of_range&) {
         luaError(L, MEIQUECACHE " file corrupted or created by a old version of meique.");

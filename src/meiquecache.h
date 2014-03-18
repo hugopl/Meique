@@ -38,6 +38,7 @@ public:
     ~MeiqueCache();
 
     Compiler* compiler();
+    const std::string compilerId() const { return m_compilerId; }
 
     void setUserOptionsValues(const StringMap& options) { m_userOptions = options; }
     const StringMap& userOptionsValues() const { return m_userOptions; }
@@ -69,7 +70,7 @@ private:
     BuildType m_buildType;
 
     // Env. stuff
-    std::string m_compilerName;
+    std::string m_compilerId;
     Compiler* m_compiler;
 
     std::string m_sourceDir;

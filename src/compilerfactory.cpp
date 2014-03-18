@@ -17,35 +17,31 @@
 */
 
 #include "compilerfactory.h"
-#include <cstring>
 #include "gcc.h"
 #include "logger.h"
 
-const char** CompilerFactory::availableCompilers()
-{
-    static const char* compilers[] = {"Gcc", 0};
-    return compilers;
-}
+static CompilerFactory factories[] = {
+    Gcc::factory()
+};
 
-Compiler* CompilerFactory::createCompiler(const std::string& compiler)
+Compiler* createCompiler(const std::string& compilerId)
 {
-    if (compiler == "Gcc")
-        return new Gcc;
-
-    throw Error("Unable to create compiler wrapper for " + compiler);
+    for (CompilerFactory& factory : factories) {
+        if (compilerId == factory.id)
+            return factory.create();
+    }
+    throw Error("Unable to create compiler wrapper for " + compilerId);
     return 0;
 }
 
-Compiler* CompilerFactory::findCompiler()
+const char* findCompilerId()
 {
-    const char** compilers = availableCompilers();
-    for (int i = 0; compilers[i]; ++i) {
-        Compiler* compiler = createCompiler(compilers[i]);
-        if (compiler->isAvailable()) {
-            Notice() << "-- Found " << compiler->fullName();
-            return compiler;
+    std::string fullName;
+    for (CompilerFactory& factory : factories) {
+        if (factory.probe(fullName)) {
+            Notice() << "-- Found " << fullName;
+            return factory.id;
         }
-        delete compiler;
     }
     throw Error("No usable compilers were found!");
     return 0;

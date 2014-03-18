@@ -443,7 +443,7 @@ void MeiqueScript::enableBuitinScopes()
         // Enable debug/release scope
         scopes.push_back(m_cache->buildType() == MeiqueCache::Debug ? "DEBUG" : "RELEASE");
         // Enable compiler scope
-        std::string compiler = m_cache->compiler()->name();
+        std::string compiler = m_cache->compilerId();
         std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
         scopes.push_back(compiler.c_str());
         // Enable OS scopes

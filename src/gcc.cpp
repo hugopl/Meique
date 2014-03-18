@@ -24,20 +24,29 @@
 #include <algorithm>
 #include <fstream>
 
-Gcc::Gcc() : m_isAvailable(false)
+static bool isAvailable(std::string& fullName)
 {
-    std::string output;
-    int retval = OS::exec("g++", "--version", &output);
-    if (!retval) {
-        size_t it = output.find('\n');
-        m_fullName = output.substr(0, it);
-
-        OS::exec("g++", "-dumpversion", &m_version);
-        std::string machine;
-        OS::exec("g++", "-dumpmachine", &machine);
-
-        m_isAvailable = true;
+    int res = OS::exec("g++", "--version", &fullName);
+    if (!res) {
+        size_t it = fullName.find('\n');
+        fullName.erase(it);
+        return true;
     }
+    return false;
+}
+
+static Compiler* create()
+{
+    return new Gcc;
+}
+
+CompilerFactory Gcc::factory()
+{
+    CompilerFactory f;
+    f.id = "Gcc";
+    f.probe = isAvailable;
+    f.create = create;
+    return std::move(f);
 }
 
 bool Gcc::shouldCompile(const std::string& source, const std::string& output) const
