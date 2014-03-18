@@ -37,6 +37,14 @@ function currentDir()
     end
 end
 
+function sourceDir()
+    return _meiqueSourceDir;
+end
+
+function buildDir()
+    return _meiqueBuildDir;
+end
+
 -- Object used for disabled scopes
 _meiqueNone = {}
 -- Object used for enabled scopes
@@ -141,6 +149,7 @@ function Target:new(name)
         o._files = {}
         o._deps = {}
         o._dir = currentDir()
+        o._buildDir = _meiqueBuildDir..o._dir
         o._preTargetCompileHooks = {}
         o._installFiles = {}
         abortIf(_meiqueAllTargets[tostring(name)], "You already have a target named "..name)
@@ -160,11 +169,11 @@ function Target:name()
 end
 
 function Target:sourceDir()
-    return meiqueSourceDir()..self._dir
+    return _meiqueSourceDir..self._dir
 end
 
 function Target:buildDir()
-    return meiqueBuildDir()..self._dir
+    return self._buildDir
 end
 
 function Target:addFile(file)

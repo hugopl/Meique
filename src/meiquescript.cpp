@@ -65,20 +65,6 @@ static MeiqueScript* getMeiqueScriptObject(lua_State* L)
     return obj;
 }
 
-static int meiqueSourceDir(lua_State* L)
-{
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    lua_pushstring(L, script->sourceDir().c_str());
-    return 1;
-}
-
-static int meiqueBuildDir(lua_State* L)
-{
-    MeiqueScript* script = getMeiqueScriptObject(L);
-    lua_pushstring(L, script->buildDir().c_str());
-    return 1;
-}
-
 MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
 {
     m_cache->loadCache();
@@ -156,6 +142,12 @@ void MeiqueScript::exportApi()
     // Opens all standard Lua libraries
     luaL_openlibs(m_L);
 
+    // Build and source dir
+    lua_pushstring(m_L, m_buildDir.c_str());
+    lua_setglobal(m_L, "_meiqueBuildDir");
+    lua_pushstring(m_L, sourceDir().c_str());
+    lua_setglobal(m_L, "_meiqueSourceDir");
+
     // export lua API
     int sanityCheck = luaL_loadstring(m_L, meiqueApi);
     translateLuaError(m_L, sanityCheck, "[meiqueApi]");
@@ -168,8 +160,6 @@ void MeiqueScript::exportApi()
     lua_register(m_L, "findPackage", &findPackage);
     lua_register(m_L, "configureFile", &configureFile);
     lua_register(m_L, "copyFile", &copyFile);
-    lua_register(m_L, "meiqueSourceDir", &meiqueSourceDir);
-    lua_register(m_L, "meiqueBuildDir", &meiqueBuildDir);
     lua_register(m_L, "_meiqueAutomoc", &meiqueAutomoc);
     lua_register(m_L, "_meiqueQtResource", &meiqueQtResource);
     lua_settop(m_L, 0);
