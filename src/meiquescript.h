@@ -43,7 +43,6 @@ public:
     std::list<StringList> getTests(const std::string& pattern);
 
     void setSourceDir(const std::string& sourceDir);
-    void setBuildDir(const std::string& buildDir);
     std::string sourceDir() const;
     std::string buildDir() const { return m_buildDir; }
 
