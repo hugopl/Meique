@@ -52,16 +52,27 @@ void trim(std::string& str)
         str.erase(e + 1);
 }
 
-StringList split(const std::string& str, char sep)
+template<typename T>
+T splitImpl(const std::string& str, char sep)
 {
     std::istringstream s(str);
     std::string token;
-    StringList result;
+    T result;
     while (std::getline(s, token, sep)) {
         if (!token.empty())
             result.push_back(token);
     }
-    return result;
+    return std::move(result);
+}
+
+StringList split(const std::string& str, char sep)
+{
+    return splitImpl<StringList>(str, sep);
+}
+
+StringVector splitToVector(const std::string& str, char sep)
+{
+    return splitImpl<StringVector>(str, sep);
 }
 
 std::string join(const StringList& list, const std::string& sep)

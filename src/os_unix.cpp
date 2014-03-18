@@ -221,6 +221,31 @@ std::string normalizeDirPath(const std::string& path)
     return normalizePath(path) + PathSep;
 }
 
+std::string relativePath(const std::string& path, const std::string& relative)
+{
+    StringVector pathParts = splitToVector(path, '/');
+    StringVector relativeParts = splitToVector(relative, '/');
+    std::string result;
+
+    unsigned i = 0;
+    while (i < pathParts.size() && i < relativeParts.size() && pathParts[i] == relativeParts[i])
+        ++i;
+
+    for (unsigned j = 0; j < relativeParts.size() - i; ++j)
+        result += "../";
+
+    for (unsigned j = i; j < pathParts.size(); ++j) {
+        result += pathParts[j];
+        if (j < pathParts.size() - 1)
+            result += '/';
+    }
+
+    if (*path.rbegin() == '/')
+        result += '/';
+
+    return std::move(result);
+}
+
 void (*ctrlCHandler)();
 
 extern "C" {
@@ -244,7 +269,7 @@ void install(const std::string& sourceFile, const std::string& destDir)
     Notice() << "-- Install " << destDir << sourceFileNoPath;
 
     mkdir(destDir);
-    // FIXME Use the install command or copy files by hand!?
+
     StringList args;
     args.push_back("-C");
     args.push_back("-D");

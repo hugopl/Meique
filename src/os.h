@@ -79,6 +79,8 @@ namespace OS
     /// Returns the canonical form of \p path + OS::PathSep
     std::string normalizeDirPath(const std::string& path);
 
+    std::string relativePath(const std::string& path, const std::string& relative);
+
     void setCTRLCHandler(void (*func)());
 
     void install(const std::string& sourceFile, const std::string& destDir);

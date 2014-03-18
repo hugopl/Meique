@@ -34,6 +34,7 @@ std::string escape(std::string str);
 void trim(std::string& str);
 
 StringList split(const std::string& str, char sep = ' ');
+StringVector splitToVector(const std::string& str, char sep = ' ');
 std::string join(const StringList& list, const std::string& sep);
 
 /**

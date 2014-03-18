@@ -21,3 +21,23 @@ local tests = [[
 ]]
 
 string.gsub(tests, '([^%s]+)', addMeiqueTest)
+
+function addMeiqueUnitTest(testName, deps)
+    local tgt = Executable:new(testName)
+    tgt:addFile(testName..".cpp")
+    tgt:addIncludePath(meique:sourceDir())
+    tgt:addFiles(deps)
+    -- add basic files used by all tests
+    tgt:addFiles("../src/logger.cpp ../src/stdstringsux.cpp")
+    addTest(tgt)
+end
+
+local unitTests = {
+    testnormalizepath = [[
+        ../src/os_unix.cpp
+    ]]
+}
+
+for test, deps in pairs(unitTests) do
+    addMeiqueUnitTest(test, deps)
+end
