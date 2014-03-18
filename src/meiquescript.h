@@ -42,7 +42,6 @@ public:
 
     std::list<StringList> getTests(const std::string& pattern);
 
-    void setSourceDir(const std::string& sourceDir);
     std::string sourceDir() const;
     std::string buildDir() const { return m_buildDir; }
 

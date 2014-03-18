@@ -76,6 +76,7 @@ MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine)
 {
     m_cache->setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
     m_cache->setInstallPrefix(cmdLine->arg("install-prefix"));
+    m_cache->setSourceDir(OS::dirName(scriptName));
 
     m_scriptName = OS::normalizeFilePath(scriptName);
     m_buildDir = OS::pwd();
@@ -113,11 +114,6 @@ void MeiqueScript::populateOptionsValues()
         lua_pushstring(m_L, pair.second.c_str());
         lua_rawset(m_L, idx);
     }
-}
-
-void MeiqueScript::setSourceDir(const std::string& sourceDir)
-{
-    m_cache->setSourceDir(sourceDir);
 }
 
 std::string MeiqueScript::sourceDir() const

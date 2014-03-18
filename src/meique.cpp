@@ -97,7 +97,6 @@ int Meique::configureProject()
 {
     std::string meiqueLuaPath = OS::normalizeDirPath(m_args.freeArg(0));
     m_script = new MeiqueScript(meiqueLuaPath + "/meique.lua", &m_args);
-    m_script->setSourceDir(meiqueLuaPath);
     m_firstRun = true;
 
     try {
