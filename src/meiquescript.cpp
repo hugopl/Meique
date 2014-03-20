@@ -444,16 +444,14 @@ void MeiqueScript::enableBuitinScopes()
         // Enable compiler scope
         std::string compiler = m_cache.compilerId();
         std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
-        scopes.push_back(compiler.c_str());
+        scopes.push_back(compiler);
         // Enable OS scopes
-        StringList osVars = OS::getOSType();
-        for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
-            scopes.push_back(it->c_str());
+        scopes.merge(OS::getOSType());
         m_cache.setScopes(scopes);
     }
-    StringList::const_iterator it = scopes.begin();
-    for (; it != scopes.end(); ++it)
-        enableScope(*it);
+
+    for (const std::string& scope : scopes)
+        enableScope(scope);
 }
 
 int meiqueAutomoc(lua_State* L)
