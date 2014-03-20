@@ -28,6 +28,7 @@
 #include "meiquescript.h"
 #include "cmdline.h"
 #include "compiler.h"
+#include "compilerfactory.h"
 #include "meiquecache.h"
 #include "logger.h"
 #include "luacpputil.h"
@@ -77,6 +78,7 @@ MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine)
     m_cache->setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
     m_cache->setInstallPrefix(cmdLine->arg("install-prefix"));
     m_cache->setSourceDir(OS::dirName(scriptName));
+    m_cache->setCompilerId(findCompilerId());
 
     m_scriptName = OS::normalizeFilePath(scriptName);
     m_buildDir = OS::pwd();

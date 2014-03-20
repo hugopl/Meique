@@ -66,11 +66,9 @@ MeiqueCache::~MeiqueCache()
 
 Compiler* MeiqueCache::compiler()
 {
-    if (!m_compiler) {
-        if (m_compilerId.empty())
-            m_compilerId = findCompilerId();
+    assert(!m_compilerId.empty());
+    if (!m_compiler)
         m_compiler = createCompiler(m_compilerId);
-    }
     return m_compiler;
 }
 

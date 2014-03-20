@@ -38,6 +38,7 @@ public:
     ~MeiqueCache();
 
     Compiler* compiler();
+    void setCompilerId(const std::string& compilerId) { m_compilerId = compilerId; }
     const std::string compilerId() const { return m_compilerId; }
 
     void setUserOptionsValues(const StringMap& options) { m_userOptions = options; }
