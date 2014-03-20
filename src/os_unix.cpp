@@ -36,6 +36,46 @@ extern "C" {
 namespace OS
 {
 
+int exec(const char* cmd, std::string* output, const char* workingDir, ExecOptions options)
+{
+    enum { READ, WRITE };
+
+    Debug() << cmd;
+    int status;
+    int out2me[2];  // pipe from external program stdout to meique
+    if (output && pipe(out2me))
+        throw Error("Unable to create unix pipes!");
+
+    pid_t pid = fork();
+    if (pid == -1) {
+        throw Error("Error forking process to run: " + std::string(cmd));
+    } else if (!pid) {
+        if (workingDir)
+            OS::cd(workingDir);
+        if (output) {
+            close(out2me[READ]);
+            dup2(out2me[WRITE], 1);
+            if (options == OS::MergeErr)
+                dup2(out2me[WRITE], 2);
+        }
+        execl("/usr/bin/env", "-i", "sh", "-c", cmd, (char*)0);
+        throw Error("Fatal error: shell not found!");
+    }
+
+    if (output) {
+        close(out2me[WRITE]);
+        char buffer[512];
+        int bytes;
+        while((bytes = read(out2me[READ], buffer, sizeof(buffer) - 1)) > 0) {
+            buffer[bytes] = 0;
+            *output += buffer;
+        }
+        trim(*output);
+    }
+    waitpid(pid, &status, 0);
+    return status;
+}
+
 int exec(const std::string& cmd, const StringList& args, std::string* output, const std::string& workingDir, ExecOptions options)
 {
     enum { READ, WRITE };
@@ -80,10 +120,10 @@ int exec(const std::string& cmd, const StringList& args, std::string* output, co
     return status;
 }
 
-void cd(const std::string& dir)
+void cd(const char* dir)
 {
-    if (::chdir(dir.c_str()) == -1)
-        throw Error("Error changing to directory " + dir + '.');
+    if (::chdir(dir) == -1)
+        throw Error("Error changing to directory " + std::string(dir) + '.');
 }
 
 std::string pwd()
@@ -166,7 +206,7 @@ StringList getOSType()
     StringList retVal;
     retVal.push_back("UNIX");
     std::string osName;
-    OS::exec("uname", "-s", &osName);
+    OS::exec("uname -s", &osName);
     bool isLinux = osName.find("Linux") != std::string::npos;
 
     if (isLinux)
@@ -244,13 +284,7 @@ void install(const std::string& sourceFile, const std::string& destDir)
     Notice() << "-- Install " << destDir << sourceFileNoPath;
 
     mkdir(destDir);
-    // FIXME Use the install command or copy files by hand!?
-    StringList args;
-    args.push_back("-C");
-    args.push_back("-D");
-    args.push_back(sourceFile);
-    args.push_back(destDir);
-    int status = OS::exec("install", args);
+    int status = OS::exec("install -C -D " + sourceFile + ' ' + destDir);
     if (status)
         throw Error("Error installing " + sourceFile + " into " + destDir);
 }

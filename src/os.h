@@ -28,25 +28,15 @@ namespace OS
         MergeErr
     };
 
-    struct Command {
-        std::string executable;
-        StringList arguments;
-    };
-
-    int exec(const std::string& cmd, const StringList& args = StringList(), std::string* output = 0, const std::string& workingDir = std::string(), ExecOptions options = None);
-    inline int exec(const std::string& cmd, const std::string& arg, std::string* output = 0, const std::string& workingDir = std::string(), ExecOptions options = None)
+    int exec(const char* cmd, std::string* output = 0, const char* workingDir = 0, ExecOptions options = None);
+    inline int exec(const std::string& cmd, std::string* output = 0, const char* workingDir = 0, ExecOptions options = None)
     {
-        StringList args;
-        args.push_back(arg);
-        return exec(cmd, args, output, workingDir, options);
-    }
-    inline int exec(const Command& cmd, std::string* output = 0, const std::string& workingDir = std::string(), ExecOptions options = None)
-    {
-        return OS::exec(cmd.executable, cmd.arguments, output, workingDir, options);
+        return exec(cmd.c_str(), output, workingDir, options);
     }
 
     /// Like cd command.
-    void cd(const std::string& dir);
+    void cd(const char* dir);
+    inline void cd(const std::string& dir) { cd(dir.c_str()); }
     /// Like pwd command.
     std::string pwd();
     /// Like mkdir -p.

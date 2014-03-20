@@ -36,9 +36,11 @@ void trim(std::string& str);
 StringList split(const std::string& str, char sep = ' ');
 std::string join(const StringList& list, const std::string& sep);
 
-/**
- * Why this function exists at all!? Simple, I hate STL iterators verbosity!!
- */
+inline bool contains(const std::string& str, const char* value)
+{
+    return str.find(value) != std::string::npos;
+}
+
 template<typename T>
 bool contains(T container, typename T::value_type value) {
     return std::find(container.begin(), container.end(), value) != container.end();

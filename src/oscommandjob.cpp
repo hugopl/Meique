@@ -19,7 +19,7 @@
 #include "oscommandjob.h"
 #include "os.h"
 
-OSCommandJob::OSCommandJob(NodeGuard* nodeGuard, const OS::Command& command)
+OSCommandJob::OSCommandJob(NodeGuard* nodeGuard, const std::string& command)
     : Job(nodeGuard)
     , m_command(command)
 {
@@ -27,5 +27,5 @@ OSCommandJob::OSCommandJob(NodeGuard* nodeGuard, const OS::Command& command)
 
 int OSCommandJob::doRun()
 {
-    return OS::exec(m_command, 0, workingDirectory());
+    return OS::exec(m_command, 0, workingDirectory().c_str());
 }

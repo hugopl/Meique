@@ -216,7 +216,7 @@ int Meique::testTargets()
 
         unsigned long start = OS::getTimeInMillis();
         Debug() << i << ": Test Command: " << NoBreak;
-        int res = OS::exec(testCmd, StringList(), &output, testDir, OS::MergeErr);
+        int res = OS::exec(testCmd, &output, testDir.c_str(), OS::MergeErr);
         unsigned long end = OS::getTimeInMillis();
 
         if (verboseMode) {

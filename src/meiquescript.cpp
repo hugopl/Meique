@@ -260,7 +260,7 @@ struct StrFilter
 
 int findPackage(lua_State* L)
 {
-    const char PKGCONFIG[] = "pkg-config";
+    const char PKGCONFIG[] = "pkg-config ";
     int nargs = lua_gettop(L);
     if (nargs < 1 || nargs > 3)
         luaError(L, "findPackage(name [, version, flags]) called with wrong number of arguments.");
@@ -280,7 +280,7 @@ int findPackage(lua_State* L)
         // TODO: Interpret >, >=, < and <= from the version expression
         if (!version.empty())
             args.push_back("--atleast-version="+version);
-        int retval = OS::exec(PKGCONFIG, args);
+        int retval = OS::exec(PKGCONFIG + join(args, " "));
         if (!version.empty())
             args.pop_back();
         if (retval) {
@@ -327,7 +327,7 @@ int findPackage(lua_State* L)
         for (int i = 0; i < N; ++i) {
             std::string output;
             args.push_back(pkgConfigCmds[i]);
-            OS::exec("pkg-config", args, &output);
+            OS::exec(PKGCONFIG + join(args, " "), &output);
             args.pop_back();
             trim(output);
             if (filters[i])
@@ -460,8 +460,7 @@ int meiqueAutomoc(lua_State* L)
 
     static std::string mocPath;
     if (mocPath.empty()) {
-        const StringList args = {"--variable=moc_location", "QtCore"};
-        OS::exec("pkg-config", args, &mocPath);
+        OS::exec("pkg-config --variable=moc_location QtCore", &mocPath);
         if (mocPath.empty()) {
             Warn() << "moc not found via pkg-config, trying to use \"rcc\".";
             mocPath = "moc";
@@ -510,12 +509,8 @@ int meiqueAutomoc(lua_State* L)
 
                 std::string mocFilePath = binDir + regex.group(1, line);
                 if (OS::timestampCompare(headerPath, mocFilePath) < 0 ) {
-                    StringList args;
-                    args.push_back("-o");
-                    args.push_back(OS::normalizeFilePath(mocFilePath));
-                    args.push_back(OS::normalizeFilePath(headerPath));
                     Notice() << Blue << "Running moc for header of " << file;
-                    if (OS::exec(mocPath, args))
+                    if (OS::exec(mocPath + " -o " + OS::normalizeFilePath(mocFilePath) + ' ' + OS::normalizeFilePath(headerPath)))
                         luaError(L, "Error running moc for file " + headerPath);
                 }
             }
@@ -531,8 +526,7 @@ int meiqueQtResource(lua_State* L)
 
     static std::string rccPath;
     if (rccPath.empty()) {
-        const StringList args = {"--variable=rcc_location", "QtCore"};
-        OS::exec("pkg-config", args, &rccPath);
+        OS::exec("pkg-config --variable=rcc_location QtCore", &rccPath);
         if (rccPath.empty()) {
             Warn() << "rcc not found via pkg-config, trying to use \"rcc\".";
             rccPath = "rcc";
@@ -552,13 +546,8 @@ int meiqueQtResource(lua_State* L)
         cppFiles.push_back(cppFile);
 
         if (OS::timestampCompare(qrcFile, cppFile) < 0) {
-            StringList args;
-            args.push_back("-o");
-            args.push_back(OS::normalizeFilePath(cppFile));
-            args.push_back(OS::normalizeFilePath(qrcFile));
-
             Notice() << Blue << "Running qrc for " << file;
-            if (OS::exec(rccPath, args))
+            if (OS::exec(rccPath + " -o " + OS::normalizeFilePath(cppFile) + ' ' + OS::normalizeFilePath(qrcFile)))
                 luaError(L, "Error running rcc on file " + qrcFile);
         }
     }

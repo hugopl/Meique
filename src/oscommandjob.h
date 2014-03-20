@@ -20,17 +20,16 @@
 #define OSCOMMANDJOB_H
 
 #include "job.h"
-#include "os.h"
 
 class OSCommandJob : public Job
 {
 public:
-    OSCommandJob(NodeGuard* nodeGuard, const OS::Command& command);
+    OSCommandJob(NodeGuard* nodeGuard, const std::string& command);
 
 protected:
     virtual int doRun();
 private:
-    OS::Command m_command;
+    std::string m_command;
 };
 
 #endif // OSCOMMANDJOB_H

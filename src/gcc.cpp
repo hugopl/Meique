@@ -26,7 +26,7 @@
 
 static bool isAvailable(std::string& fullName)
 {
-    int res = OS::exec("g++", "--version", &fullName);
+    int res = OS::exec("g++ --version", &fullName);
     if (!res) {
         size_t it = fullName.find('\n');
         fullName.erase(it);
@@ -79,69 +79,59 @@ bool Gcc::shouldCompile(const std::string& source, const std::string& output) co
     return false;
 }
 
-OS::Command Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options)
+std::string Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options)
 {
     CompilerCommandCache::const_iterator it = m_compileCommandCache.find(options);
     if (it != m_compileCommandCache.end()) {
-        Language lang = identifyLanguage(fileName);
-        std::string compiler;
-        if (lang == CLanguage)
-            compiler = "gcc";
-        else if (lang == CPlusPlusLanguage)
-            compiler = "g++";
-        else
-            throw Error("Unknown programming language used for " + fileName);
-
-
-        StringList cachedArgs = it->second;
-        cachedArgs.push_back("-MMD");
-        cachedArgs.push_back("-MF");
-        cachedArgs.push_back(output + ".d");
-        cachedArgs.push_back("-c");
-        cachedArgs.push_back(fileName);
-        cachedArgs.push_back("-o");
-        cachedArgs.push_back(output);
-        return { compiler, cachedArgs };
+        std::string cachedCmd = it->second;
+        cachedCmd += " -MMD -MF ";
+        cachedCmd += output + ".d";
+        cachedCmd += " -c ";
+        cachedCmd += fileName;
+        cachedCmd += " -o ";
+        cachedCmd += output;
+        return std::move(cachedCmd);
     }
 
-    StringList args;
-    if (options->compileForLibrary()) {
-        if (!contains(args, "-fPIC") && !contains(args, "-fpic"))
-            args.push_back("-fPIC");
-        args.push_back("-fvisibility=hidden");
-    }
-    if (options->debugInfoEnabled()) {
-        if (!contains(args, "-g") && !contains(args, "-ggdb"))
-            args.push_back("-ggdb");
-    }
-
-    bool addWall = true;
-    for (const std::string& arg : args) {
-        if (arg.find("-W") == 0) {
-            addWall = false;
-            break;
-        }
-    }
-    if (addWall)
-        args.push_back("-Wall");
+    std::string command;
+    Language lang = identifyLanguage(fileName);
+    if (lang == CLanguage)
+        command += "gcc";
+    else if (lang == CPlusPlusLanguage)
+        command += "g++";
+    else
+        throw Error("Unknown programming language used for " + fileName);
 
     // custom flags
-    StringList flags = options->customFlags();
-    std::copy(flags.begin(), flags.end(), std::back_inserter(args));
+    command += " " + join(options->customFlags(), " ");
 
     // include paths
     for (const std::string& path : options->includePaths())
-        args.push_back("-I\"" + path + '"');
+        command += " -I\"" + path + '"';
 
     // defines
     for (const std::string& path : options->defines())
-        args.push_back("-D" + path);
+        command += " -D" + path;
 
-    m_compileCommandCache[options] = args;
+    // Extra arguments
+    if (options->compileForLibrary()) {
+        if (!contains(command, " -fPIC") && !contains(command, " -fpic"))
+            command += " -fPIC";
+        command += " -fvisibility=hidden";
+    }
+    if (options->debugInfoEnabled()) {
+        if (!contains(command, " -g") && !contains(command, " -ggdb"))
+            command += " -ggdb";
+    }
+
+    if (!contains(command, " -W"))
+        command += " -Wall";
+
+    m_compileCommandCache[options] = command;
     return compile(fileName, output, options);
 }
 
-OS::Command Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
+std::string Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
 {
     StringList args = objects;
     std::string linker;
@@ -192,7 +182,7 @@ OS::Command Gcc::link(const std::string& output, const StringList& objects, cons
             args.push_back("-Wl,-rpath=" + join(paths, ":"));
     }
 
-    return { linker, args };
+    return linker + ' ' + join(args, " ");
 }
 
 std::string Gcc::nameForExecutable(const std::string& name) const
