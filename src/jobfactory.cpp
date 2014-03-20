@@ -164,7 +164,7 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
     const std::string buildDir = m_script.buildDir() + options->targetDirectory;
     const std::string& fileName = node->name;
 
-    Compiler* compiler = m_script.cache()->compiler();
+    Compiler* compiler = m_script.cache().compiler();
 
     std::string source = fileName.at(0) == '/' ? fileName : sourceDir + fileName;
     std::string output = compiler->nameForObject(node->name, target->name);
@@ -192,7 +192,7 @@ Job* JobFactory::createTargetJob(Node* target)
 
     target->status = Node::Building;
 
-    Compiler* compiler = m_script.cache()->compiler();
+    Compiler* compiler = m_script.cache().compiler();
     Options* options = m_targetCompilerOptions[target];
     const std::string buildDir = m_script.buildDir() + options->targetDirectory;
 
@@ -352,7 +352,7 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     lua_pop(L, 1);
 
 
-    if (m_script.cache()->buildType() == MeiqueCache::Debug)
+    if (m_script.cache().buildType() == MeiqueCache::Debug)
         compilerOptions.enableDebugInfo();
     else
         compilerOptions.addDefine("NDEBUG");
@@ -396,9 +396,9 @@ void JobFactory::fillTargetOptions(Node* node, Options* options)
     }
 
     std::string targetHash = compilerOptions.hash() + linkerOptions.hash();
-    if (m_script.cache()->targetHash(node->name) != targetHash) {
+    if (m_script.cache().targetHash(node->name) != targetHash) {
         node->shouldBuild = true;
-        m_script.cache()->setTargetHash(node->name, targetHash);
+        m_script.cache().setTargetHash(node->name, targetHash);
     }
 }
 
@@ -429,7 +429,7 @@ void JobFactory::mergeCompilerAndLinkerOptions(Node* node)
                 sourceOptions->linkerOptions.addLibraryPath(m_script.buildDir() + depOptions->targetDirectory);
                 sourceOptions->linkerOptions.addLibrary(dependence->name);
             } else {
-                std::string libName = m_script.cache()->compiler()->nameForStaticLibrary(dependence->name);
+                std::string libName = m_script.cache().compiler()->nameForStaticLibrary(dependence->name);
                 sourceOptions->linkerOptions.addStaticLibrary(m_script.buildDir() + depOptions->targetDirectory + libName);
             }
         }

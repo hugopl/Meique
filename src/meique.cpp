@@ -104,7 +104,7 @@ int Meique::configureProject()
         printOptionsSummary();
         std::cout << "-- Done!\n";
     } catch (const Error&) {
-        m_script->cache()->setAutoSave(false);
+        m_script->cache().setAutoSave(false);
         throw;
     }
     return m_args.boolArg("s") ? 0 : Ok;

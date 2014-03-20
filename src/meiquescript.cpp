@@ -66,27 +66,24 @@ static MeiqueScript* getMeiqueScriptObject(lua_State* L)
     return obj;
 }
 
-MeiqueScript::MeiqueScript() : m_cache(new MeiqueCache), m_cmdLine(0)
+MeiqueScript::MeiqueScript()
+    : m_cmdLine(0)
 {
-    m_cache->loadCache();
-    m_scriptName = m_cache->sourceDir() + "meique.lua";
+    m_cache.loadCache();
+    m_scriptName = m_cache.sourceDir() + "meique.lua";
     m_buildDir = OS::pwd();
 }
 
-MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine) : m_cache(new MeiqueCache), m_cmdLine(cmdLine)
+MeiqueScript::MeiqueScript(const std::string scriptName, const CmdLine* cmdLine)
+    : m_cmdLine(cmdLine)
 {
-    m_cache->setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
-    m_cache->setInstallPrefix(cmdLine->arg("install-prefix"));
-    m_cache->setSourceDir(OS::dirName(scriptName));
-    m_cache->setCompilerId(findCompilerId());
+    m_cache.setBuildType(cmdLine->boolArg("debug") ? MeiqueCache::Debug : MeiqueCache::Release);
+    m_cache.setInstallPrefix(cmdLine->arg("install-prefix"));
+    m_cache.setSourceDir(OS::dirName(scriptName));
+    m_cache.setCompilerId(findCompilerId());
 
     m_scriptName = OS::normalizeFilePath(scriptName);
     m_buildDir = OS::pwd();
-}
-
-MeiqueScript::~MeiqueScript()
-{
-    delete m_cache;
 }
 
 void MeiqueScript::populateOptionsValues()
@@ -108,10 +105,10 @@ void MeiqueScript::populateOptionsValues()
             };
             return std::find(options, options + sizeof(options)/sizeof(char*), pair.first);
         });
-        m_cache->setUserOptionsValues(args);
+        m_cache.setUserOptionsValues(args);
     }
 
-    for (const auto& pair : m_cache->userOptionsValues()) {
+    for (const auto& pair : m_cache.userOptionsValues()) {
         lua_pushstring(m_L, pair.first.c_str());
         lua_pushstring(m_L, pair.second.c_str());
         lua_rawset(m_L, idx);
@@ -120,7 +117,7 @@ void MeiqueScript::populateOptionsValues()
 
 std::string MeiqueScript::sourceDir() const
 {
-    return m_cache->sourceDir();
+    return m_cache.sourceDir();
 }
 
 void MeiqueScript::exec()
@@ -273,9 +270,9 @@ int findPackage(lua_State* L)
     bool optional = lua_tocpp<bool>(L, 3);
 
     MeiqueScript* script = getMeiqueScriptObject(L);
-    MeiqueCache* cache = script->cache();
+    MeiqueCache& cache = script->cache();
 
-    StringMap pkgData = cache->package(pkgName);
+    StringMap pkgData = cache.package(pkgName);
     if (pkgData.empty()) {
         // Check if the package exists
         StringList args;
@@ -292,7 +289,7 @@ int findPackage(lua_State* L)
             } else {
                 Notice() << "-- " << pkgName << Red << " not found!";
                 pkgData["NOT_FOUND"] = "NOT_FOUND"; // dummy data to avoid an empty map
-                cache->setPackage(pkgName, pkgData);
+                cache.setPackage(pkgName, pkgData);
                 lua_getglobal(L, "_meiqueNone");
                 return 1;
             }
@@ -338,7 +335,7 @@ int findPackage(lua_State* L)
             pkgData[names[i]] = output;
         }
         // Store pkg information
-        cache->setPackage(pkgName, pkgData);
+        cache.setPackage(pkgName, pkgData);
         Notice() << "-- " << pkgName << Green << " found!" << NoColor << " (" << pkgData["version"] << ')';
     }
 
@@ -440,19 +437,19 @@ void MeiqueScript::enableScope(const std::string& scopeName)
 
 void MeiqueScript::enableBuitinScopes()
 {
-    StringList scopes = m_cache->scopes();
+    StringList scopes = m_cache.scopes();
     if (scopes.empty()) {
         // Enable debug/release scope
-        scopes.push_back(m_cache->buildType() == MeiqueCache::Debug ? "DEBUG" : "RELEASE");
+        scopes.push_back(m_cache.buildType() == MeiqueCache::Debug ? "DEBUG" : "RELEASE");
         // Enable compiler scope
-        std::string compiler = m_cache->compilerId();
+        std::string compiler = m_cache.compilerId();
         std::transform(compiler.begin(), compiler.end(), compiler.begin(), ::toupper);
         scopes.push_back(compiler.c_str());
         // Enable OS scopes
         StringList osVars = OS::getOSType();
         for (StringList::iterator it = osVars.begin(); it != osVars.end(); ++it)
             scopes.push_back(it->c_str());
-        m_cache->setScopes(scopes);
+        m_cache.setScopes(scopes);
     }
     StringList::const_iterator it = scopes.begin();
     for (; it != scopes.end(); ++it)
@@ -627,9 +624,9 @@ void MeiqueScript::installTargets(const StringList& targets)
             if (!directiveSize)
                 continue;
 
-            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            const std::string destDir = OS::normalizeDirPath(m_cache.installPrefix() + directive.front());
             directive.pop_front();
-            const std::string srcDir = m_cache->sourceDir() + directory;
+            const std::string srcDir = m_cache.sourceDir() + directory;
 
             if (directive.empty()) { // Target installation
                 std::string targetFile = OS::normalizeFilePath(directory + luaGetField<std::string>(m_L, "_output"));
@@ -665,7 +662,7 @@ void MeiqueScript::uninstallTargets(const StringList& targets)
             if (!directiveSize)
                 continue;
 
-            const std::string destDir = OS::normalizeDirPath(m_cache->installPrefix() + directive.front());
+            const std::string destDir = OS::normalizeDirPath(m_cache.installPrefix() + directive.front());
             directive.pop_front();
 
             if (directive.empty()) { // Target installation
@@ -688,7 +685,7 @@ void MeiqueScript::cleanTargets(const StringList& targets)
 
         std::string directory = luaGetField<std::string>(m_L, "_dir");
         StringList files = luaGetField<StringList>(m_L, "_files");
-        Compiler* compiler = m_cache->compiler();
+        Compiler* compiler = m_cache.compiler();
         for (const std::string& file : files) {
             std::string objFile = compiler->nameForObject(file, target);
             if (objFile[0] != '/')
@@ -735,7 +732,7 @@ void MeiqueScript::dumpProject(std::ostream& output)
 {
     LuaLeakCheck(m_L);
 
-    const std::string sourceDir = m_cache->sourceDir();
+    const std::string sourceDir = m_cache.sourceDir();
     output << "Project: " << OS::baseName(sourceDir) << std::endl;
 
     // Project files
