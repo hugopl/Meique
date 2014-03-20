@@ -79,16 +79,32 @@ bool Gcc::shouldCompile(const std::string& source, const std::string& output) co
     return false;
 }
 
-OS::Command Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const
+OS::Command Gcc::compile(const std::string& fileName, const std::string& output, const CompilerOptions* options)
 {
+    CompilerCommandCache::const_iterator it = m_compileCommandCache.find(options);
+    if (it != m_compileCommandCache.end()) {
+        Language lang = identifyLanguage(fileName);
+        std::string compiler;
+        if (lang == CLanguage)
+            compiler = "gcc";
+        else if (lang == CPlusPlusLanguage)
+            compiler = "g++";
+        else
+            throw Error("Unknown programming language used for " + fileName);
+
+
+        StringList cachedArgs = it->second;
+        cachedArgs.push_back("-MMD");
+        cachedArgs.push_back("-MF");
+        cachedArgs.push_back(output + ".d");
+        cachedArgs.push_back("-c");
+        cachedArgs.push_back(fileName);
+        cachedArgs.push_back("-o");
+        cachedArgs.push_back(output);
+        return { compiler, cachedArgs };
+    }
+
     StringList args;
-    args.push_back("-MMD");
-    args.push_back("-MF");
-    args.push_back(output + ".d");
-    args.push_back("-c");
-    args.push_back(fileName);
-    args.push_back("-o");
-    args.push_back(output);
     if (options->compileForLibrary()) {
         if (!contains(args, "-fPIC") && !contains(args, "-fpic"))
             args.push_back("-fPIC");
@@ -114,26 +130,15 @@ OS::Command Gcc::compile(const std::string& fileName, const std::string& output,
     std::copy(flags.begin(), flags.end(), std::back_inserter(args));
 
     // include paths
-    StringList paths = options->includePaths();
-    StringList::iterator it = paths.begin();
-    for (; it != paths.end(); ++it)
-        args.push_back("-I\"" + *it + '"');
+    for (const std::string& path : options->includePaths())
+        args.push_back("-I\"" + path + '"');
 
     // defines
-    StringList defines = options->defines();
-    it = defines.begin();
-    for (; it != defines.end(); ++it)
-        args.push_back("-D" + *it);
+    for (const std::string& path : options->defines())
+        args.push_back("-D" + path);
 
-    Language lang = identifyLanguage(fileName);
-    std::string compiler;
-    if (lang == CLanguage)
-        compiler = "gcc";
-    else if (lang == CPlusPlusLanguage)
-        compiler = "g++";
-    else
-        throw Error("Unknown programming language used for " + fileName);
-    return { compiler, args };
+    m_compileCommandCache[options] = args;
+    return compile(fileName, output, options);
 }
 
 OS::Command Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const

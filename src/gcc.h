@@ -19,18 +19,22 @@
 #ifndef GCC_H
 #define GCC_H
 #include "compiler.h"
+#include <unordered_map>
 
 class Gcc : public Compiler
 {
 public:
     static CompilerFactory factory();
 
-    OS::Command compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) const;
+    OS::Command compile(const std::string& fileName, const std::string& output, const CompilerOptions* options);
     OS::Command link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;
     bool shouldCompile(const std::string& source, const std::string& output) const;
+private:
+    typedef std::unordered_map<const CompilerOptions*, StringList> CompilerCommandCache;
+    CompilerCommandCache m_compileCommandCache;
 };
 
 #endif
