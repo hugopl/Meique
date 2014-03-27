@@ -1,13 +1,16 @@
 #! /bin/bash
 
-TUP=tup
-
-rm -rf run_test_tmp
-mkdir run_test_tmp
-cd run_test_tmp
+rm -rf "$2run_test_tmp"
+mkdir "$2run_test_tmp"
+pwd=`pwd`
+cd "$2run_test_tmp"
 niter=3
-python ../gen-test-case.py "$@" || exit 1
+python $pwd/gen-test-case.py "$1" || exit 1
 sync
+
+n=$1
+output="$2/out-$1.txt"
+rm -f $output
 
 # Run the full gamut of tests for one of the tools:
 benchmark ()
@@ -16,43 +19,50 @@ benchmark ()
     firstbuild="$2"
     update="$3"
 
-    rm -rf "build_$tool"
     mkdir "build_$tool"
     cd "build_$tool"
     # try to make the SO cache some files
-    find .. -type f | while read i; do cat $i > /dev/null; done
+    find .. -type f -name *.c -o -name *.h | while read i; do cat $i > /dev/null; done
 
-    echo "$tool: initial"
-    time -p eval "$firstbuild"
+    echo "first build, tool=$tool, n=$n"
+    echo "$tool: initial" >> $output
+    { time -p eval "$firstbuild"; } 2>> $output
     sync
     cfile="../module0/0.c";
     hfile="../module0/0.h";
 
-    echo "$tool: 0.c touched"
+    echo "0.c touched, tool=$tool, n=$n"
+    echo "$tool: 0.c touched" >> $output
     for i in `seq 1 $niter`; do
+        echo "round $i..."
         sleep 1; touch $cfile
-        time -p eval "$update"
+        { time -p eval "$update"; } 2>> $output
     done
 
-    echo "$tool: 0.h touched"
+    echo "0.h touched, tool=$tool, n=$n"
+    echo "$tool: 0.h touched" >> $output
     for i in `seq 1 $niter`; do
+        echo "round $i..."
         sleep 1; touch $hfile
-        time -p eval "$update"
+        { time -p eval "$update"; } 2>> $output
     done
 
-    echo "$tool: nothing"
+    echo "doing nothing, tool=$tool, n=$n"
+    echo "$tool: nothing" >> $output
     for i in `seq 1 $niter`; do
-        time -p eval "$update"
+        echo "round $i..."
+        { time -p eval "$update"; } 2>> $output
     done
 
     cd ..
 }
 
-benchmark "cmake|make" "cmake .. > /dev/null && make -j9 > /dev/null" "make -j9 > /dev/null"
-benchmark "meique" "meique .. > /dev/null" "meique > /dev/null"
+# Default number of jobs for make = number of cores + 1
+j=`grep -c ^processor /proc/cpuinfo`
+j=`expr $j + 1`
 
+benchmark "cmake_make" "cmake .. > /dev/null && make -j$j > /dev/null" "make -j$j > /dev/null"
+benchmark "cmake_ninja" "cmake -G\"Ninja\" .. > /dev/null && ninja > /dev/null" "ninja > /dev/null"
+benchmark "meique" "../../../src/meique .. > /dev/null" "../../../src/meique > /dev/null"
 
-# benchmark "tup" "$TUP init --force > /dev/null" "$TUP monitor" "$TUP upd > /dev/null" "$TUP stop"
-
-#diff -r tmake ttup | grep -v Makefile | grep -v build | grep -v '\.d$' | grep -v '\.tup'
-cd ..
+echo "done!"

@@ -55,9 +55,11 @@ $('#\@CHARTID@').highcharts({
     });
 eos
 
+abort if ARGV.empty?
+
 results = {}
 
-Dir["out-*.txt"].each do |fileName|
+Dir["#{ARGV[0]}out-*.txt"].each do |fileName|
     /out-(\d+)\.txt/ =~ fileName
     extractData($1.to_i, fileName, results)
 end
@@ -75,7 +77,7 @@ results.each do |test, testData|
     series = "series: ["
 
     testData.each do |tool, toolData|
-        series += "{\n        name: \"#{tool}\",\n"
+        series += "{\n        name: \"#{tool.gsub("_", "/")}\",\n"
         series += "        data: ["
         toolData.keys.sort.each do |n|
             values = toolData[n]
