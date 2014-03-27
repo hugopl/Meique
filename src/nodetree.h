@@ -119,7 +119,7 @@ public:
 private:
     void buildNotExpandedTree();
     void removeUnusedTargets(const StringList& targets);
-    void connectForest();
+    void connectForest(const StringList& selectedTargets);
     void addTargetHookNodes();
 
     MeiqueScript& m_script;

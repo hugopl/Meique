@@ -30,6 +30,7 @@
 #include "nodevisitor.h"
 #include "luacpputil.h"
 #include "logger.h"
+#include "stdstringsux.h"
 
 Node::Node(const std::string& name)
     : name(name)
@@ -50,7 +51,7 @@ NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
     buildNotExpandedTree();
     if (!targets.empty())
         removeUnusedTargets(targets);
-    connectForest();
+    connectForest(targets);
     addTargetHookNodes();
     m_size = m_targetNodes.size();
 }
@@ -207,13 +208,20 @@ void NodeTree::buildNotExpandedTree()
     }
 }
 
-void NodeTree::connectForest()
+void NodeTree::connectForest(const StringList& selectedTargets)
 {
+    LuaLeakCheck(m_L);
+
     // Connect trees to create a single tree
     std::list<Node*> roots;
     for (auto pair : m_targetNodes) {
         Node*& node = pair.second;
-        if (node->parents.empty())
+        if (!node->parents.empty())
+            continue;
+
+        m_script.luaPushTarget(node->name);
+        LuaAutoPop autoPop(m_L);
+        if (contains(selectedTargets, node->name) || !luaGetField<bool>(m_L, "_excludeFromAll"))
             roots.push_back(node);
     }
 

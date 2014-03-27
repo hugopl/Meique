@@ -152,6 +152,7 @@ function Target:new(name)
         o._buildDir = _meiqueBuildDir..o._dir
         o._preTargetCompileHooks = {}
         o._installFiles = {}
+        o._excludeFromAll = false
         abortIf(_meiqueAllTargets[tostring(name)], "You already have a target named "..name)
         _meiqueAllTargets[tostring(name)] = o
     end
@@ -174,6 +175,10 @@ end
 
 function Target:buildDir()
     return self._buildDir
+end
+
+function Target:excludeFromAll()
+    self._excludeFromAll = true
 end
 
 function Target:addFile(file)
