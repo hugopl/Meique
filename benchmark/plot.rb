@@ -28,7 +28,7 @@ $('#\@CHARTID@').highcharts({
         text: '5 modules depending on a single module'
     },
     xAxis: {
-        reversed: false,
+        type: 'logarithmic',
         title: {
             enabled: true,
             text: 'Number of files per module'
@@ -40,6 +40,7 @@ $('#\@CHARTID@').highcharts({
         },
     },
     yAxis: {
+        type: 'logarithmic',
         title: {
             text: 'seconds'
         },
