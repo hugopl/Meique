@@ -90,22 +90,33 @@ results.each do |test, testData|
     template.gsub!("@CHATSERIES@", series)
 end
 
+javascriptBlob = File.read("jquery-1.11.0.min.js") + File.read("highcharts.js")
+
 puts <<-eos
 <html>
-<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
-<script src="http://code.highcharts.com/highcharts.js"></script>
-<script src="http://code.highcharts.com/modules/exporting.js"></script>
-<script>
+<head>
+<title>Meique benchmark</title>
+<style>
+body > div {
+    min-width: 310px;
+    height: 400px;
+    margin: 0 auto;
+}
+</style>
+<script type="text/javascript">
+#{javascriptBlob}
+
 $(function () {
 eos
 puts chartData.values.join
 puts <<-eos
 });
 </script>
+</head>
 <body>
 eos
 chartData.keys.each do |key|
-    puts "<div id=\"#{key}\" style=\"min-width: 310px; height: 400px; margin: 0 auto\"></div>"
+    puts "<div id=\"#{key}\"></div>"
 end
 puts <<-eos
 </body>
