@@ -33,7 +33,10 @@ Job::~Job()
 
 void initJobThread(Job* job)
 {
-    job->onFinished(job->doRun());
+    int result = job->doRun();
+    job->onFinished(result);
+    if (result)
+        job->m_nodeGuard->failed();
     delete job;
 }
 

@@ -47,6 +47,7 @@ Node::Node(const std::string& name)
 NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
     : m_script(script)
     , m_L(script.luaState())
+    , m_hasFail(false)
 {
     buildNotExpandedTree();
     if (!targets.empty())
@@ -259,6 +260,7 @@ void NodeTree::addTargetHookNodes()
 NodeGuard::NodeGuard(NodeTree& tree, Node* node)
     : m_tree(tree)
     , m_node(node)
+    , m_failed(false)
 {
 }
 
@@ -266,7 +268,10 @@ NodeGuard::~NodeGuard()
 {
     {
         std::lock_guard<NodeTree> lock(m_tree);
-        m_node->status = Node::Built;
+        if (m_failed)
+            m_tree.failed();
+        else
+            m_node->status = Node::Built;
     }
     m_tree.onTreeChange();
 }

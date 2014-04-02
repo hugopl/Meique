@@ -83,6 +83,8 @@ Job* JobFactory::createJob()
             if (m_needToWait && !m_treeChangedMeanWhile) {
                 std::unique_lock<std::mutex> lock(m_treeChangedMutex);
                 m_treeChanged.wait(lock);
+                if (m_nodeTree.hasFail())
+                    break;
                 continue;
             }
             break;

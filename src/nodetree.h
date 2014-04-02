@@ -73,11 +73,14 @@ public:
     NodeGuard(NodeTree& tree, Node* node);
     ~NodeGuard();
 
+    void failed() { m_failed = true; }
+
     NodeGuard(const NodeGuard&) = delete;
     NodeGuard& operator=(const NodeGuard&) = delete;
 private:
     NodeTree& m_tree;
     Node* m_node;
+    bool m_failed;
 };
 
 class NodeTree
@@ -114,6 +117,9 @@ public:
 
     std::function<void ()> onTreeChange;
 
+    void failed() { m_hasFail = true; }
+    bool hasFail() const { return m_hasFail; }
+
     void lock() { m_mutex.lock(); }
     void unlock() { m_mutex.unlock(); }
 private:
@@ -126,6 +132,7 @@ private:
     lua_State* m_L;
     TargetNodeMap m_targetNodes;
     Node* m_root;
+    bool m_hasFail;
 
     unsigned m_size;
 
