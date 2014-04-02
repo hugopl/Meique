@@ -103,7 +103,8 @@ void MeiqueScript::populateOptionsValues()
                 "install-prefix",
                 "release"
             };
-            return std::find(options, options + sizeof(options)/sizeof(char*), pair.first);
+            static auto end = options + sizeof(options)/sizeof(char*);
+            return std::find(options, end, pair.first) != end;
         });
         m_cache.setUserOptionsValues(args);
     }
