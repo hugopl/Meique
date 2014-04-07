@@ -47,11 +47,14 @@ Node::Node(const std::string& name)
 NodeTree::NodeTree(MeiqueScript& script, const StringList& targets)
     : m_script(script)
     , m_L(script.luaState())
+    , m_root(nullptr)
     , m_hasFail(false)
 {
     buildNotExpandedTree();
     if (!targets.empty())
         removeUnusedTargets(targets);
+    // Check for cyclic dependencies
+    NodeVisitor<>(*this, [](Node* n) {});
     connectForest(targets);
     addTargetHookNodes();
     m_size = m_targetNodes.size();
@@ -190,9 +193,6 @@ void NodeTree::buildNotExpandedTree()
     }
     lua_pop(m_L, 1);
 
-    if (m_targetNodes.empty())
-        throw Error("No targets found in this meique.lua file.");
-
     // Connect the targets regarding their dependencies
     for (auto pair : m_targetNodes) {
         const std::string& target = pair.first;
@@ -227,12 +227,10 @@ void NodeTree::connectForest(const StringList& selectedTargets)
     }
 
     auto numRoots = roots.size();
-    // FIXME: Replace this by a proper circular dependency check!
-    if (!numRoots) {
-        throw Error("Circular dependency found!");
-    } else if (numRoots == 1) {
+
+    if (numRoots == 1) {
         m_root = roots.front();
-    } else {
+    } else if (numRoots > 1) {
         m_root = new Node("<fakeroot>");
         m_root->isFake = true;
         for (Node* root : roots) {

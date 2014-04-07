@@ -50,7 +50,7 @@ void NodeVisitor<NextNodeGetter>::visitNode(Node* node)
             visitNode(child);
             break;
         case Visiting:
-            throw Error("Node tree is cyclic!");
+            throw Error("Cyclic dependence found on your targets.");
         case Visited:
             return;
         }

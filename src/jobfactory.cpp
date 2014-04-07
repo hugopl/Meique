@@ -46,6 +46,9 @@ JobFactory::JobFactory(MeiqueScript& script, const StringList& targets)
     };
 
     m_root = m_nodeTree.root();
+    if (!m_root)
+        return;
+
     NodeVisitor<>(m_root, [&](Node* node){
         cacheTargetCompilerOptions(node);
         mergeCompilerAndLinkerOptions(node);
@@ -60,7 +63,8 @@ JobFactory::~JobFactory()
 
 Job* JobFactory::createJob()
 {
-    assert(m_root);
+    if (!m_root)
+        return nullptr;
 
     Job* job = nullptr;
     Node* target;
