@@ -170,6 +170,14 @@ bool fileExists(const std::string& fileName)
     return S_ISREG(fileAtt.st_mode);
 }
 
+bool dirExists(const std::string& fileName)
+{
+    struct stat fileAtt;
+    if (::stat(fileName.c_str(), &fileAtt) != 0)
+        return false;
+    return S_ISDIR(fileAtt.st_mode);
+}
+
 bool rm(const std::string& fileName)
 {
     Debug() << "rm " << fileName;

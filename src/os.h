@@ -43,6 +43,7 @@ namespace OS
     void mkdir(const std::string& dir);
     /// Returns true if \p fileName exists.
     bool fileExists(const std::string& fileName);
+    bool dirExists(const std::string& dirName);
     /// Removes a file from file system, returns true on success.
     bool rm(const std::string& fileName);
     /// Returns the current process id

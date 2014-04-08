@@ -184,6 +184,10 @@ Job* JobFactory::createCompilationJob(Node* target, Node* node)
         return nullptr;
     }
 
+    std::string outputDir = OS::dirName(output);
+    if (!OS::dirExists(outputDir))
+        OS::mkdir(outputDir);
+
     OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, node), compiler->compile(source, output, &options->compilerOptions));
     job->setWorkingDirectory(buildDir);
     job->setName("Compiling " + OS::baseName(fileName));
