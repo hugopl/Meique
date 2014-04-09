@@ -1,6 +1,6 @@
 /*
     This file is part of the Meique project
-    Copyright (C) 2010 Hugo Parente Lima <hugo.pl@gmail.com>
+    Copyright (C) 2014 Hugo Parente Lima <hugo.pl@gmail.com>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@
 #define STRINGIFY(X) STRINGIFY_HELPER(X)
 
 #define MEIQUE_MAJOR_VERSION 0
-#define MEIQUE_MINOR_VERSION 93
+#define MEIQUE_MINOR_VERSION 94
 #define MEIQUE_VERSION STRINGIFY(MEIQUE_MAJOR_VERSION) "." STRINGIFY(MEIQUE_MINOR_VERSION)
 
 #endif
