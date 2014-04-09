@@ -193,6 +193,11 @@ StringMap MeiqueCache::package(const std::string& pkgName) const
     return StringMap();
 }
 
+bool MeiqueCache::hasPackage(const std::string& pkgName) const
+{
+    return m_packages.find(pkgName) != m_packages.end();
+}
+
 void MeiqueCache::setPackage(const std::string& pkgName, const StringMap& pkgData)
 {
     m_packages[pkgName] = pkgData;

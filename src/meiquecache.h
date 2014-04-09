@@ -54,6 +54,7 @@ public:
     BuildType buildType() const { return m_buildType; }
 
     StringMap package(const std::string& pkgName) const;
+    bool hasPackage(const std::string& pkgName) const;
     void setPackage(const std::string& pkgName, const StringMap& pkgData);
     StringList scopes() const;
     void setScopes(const StringList& scopes);

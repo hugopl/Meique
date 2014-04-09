@@ -459,12 +459,17 @@ int meiqueAutomoc(lua_State* L)
 {
     LuaLeakCheck(L);
 
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    bool usingQt5 = script->cache().hasPackage("Qt5Core");
+    std::string query = usingQt5 ? "--variable=host_bins Qt5Core" : "--variable=moc_location QtCore";
     static std::string mocPath;
     if (mocPath.empty()) {
-        OS::exec("pkg-config --variable=moc_location QtCore", &mocPath);
+        OS::exec("pkg-config " + query, &mocPath);
         if (mocPath.empty()) {
             Warn() << "moc not found via pkg-config, trying to use \"rcc\".";
             mocPath = "moc";
+        } else if (usingQt5) {
+            mocPath += "/moc";
         }
     }
 
@@ -475,7 +480,6 @@ int meiqueAutomoc(lua_State* L)
 
     std::string directory = luaGetField<std::string>(L, "_dir");
 
-    MeiqueScript* script = getMeiqueScriptObject(L);
     OS::mkdir(script->buildDir() + directory);
 
     std::string srcDir = script->sourceDir() + directory;
@@ -525,16 +529,20 @@ int meiqueQtResource(lua_State* L)
 {
     LuaLeakCheck(L);
 
+    MeiqueScript* script = getMeiqueScriptObject(L);
+    bool usingQt5 = script->cache().hasPackage("Qt5Core");
+    std::string query = usingQt5 ? "--variable=host_bins Qt5Core" : "--variable=rcc_location QtCore";
     static std::string rccPath;
     if (rccPath.empty()) {
-        OS::exec("pkg-config --variable=rcc_location QtCore", &rccPath);
+        OS::exec("pkg-config " + query, &rccPath);
         if (rccPath.empty()) {
             Warn() << "rcc not found via pkg-config, trying to use \"rcc\".";
             rccPath = "rcc";
+        } else if (usingQt5) {
+            rccPath += "/rcc";
         }
     }
 
-    MeiqueScript* script = getMeiqueScriptObject(L);
     std::string directory = luaGetField<std::string>(L, "_dir");
     std::string srcDir = script->sourceDir() + directory;
     std::string binDir = script->buildDir() + directory;
