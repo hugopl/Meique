@@ -206,6 +206,9 @@ int requiresMeique(lua_State* L)
     if (nargs != 1)
         luaError(L, "requiresMeique(version) called with wrong number of arguments.");
 
+    if (lua_type(L, -1) != LUA_TSTRING)
+        luaError(L, "requiresMeique parameter should be a string.");
+
     std::string requiredVersion = lua_tocpp<std::string>(L, -1);
     if (!checkVersion(requiredVersion))
         luaError(L, "This project requires a newer version of meique (" + requiredVersion + "), you are using version " MEIQUE_VERSION);
