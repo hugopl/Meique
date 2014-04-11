@@ -196,12 +196,12 @@ function Target:addDependency(target)
     table.insert(self._deps, target._name)
 end
 
-function Target:install(srcs, destDir)
+function Target:install(srcs, destDir, newName)
     if destDir then
-        installEntry = {destDir}
-        string.gsub(srcs, '([^%s]+)', function(f) table.insert(installEntry, f) end)
-        table.insert(self._installFiles, installEntry )
+        -- Custom install
+        table.insert(self._installFiles, {srcs, destDir, newName} )
     else
+        -- Target install
         table.insert(self._installFiles, {srcs})
     end
 end

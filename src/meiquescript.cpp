@@ -606,30 +606,37 @@ void MeiqueScript::installTargets(const StringList& targets)
         std::string directory = luaGetField<std::string>(m_L, "_dir");
 
         lua_getfield(m_L, -1, "_installFiles");
-        std::list<StringList> installDirectives;
-        readLuaList(m_L, lua_gettop(m_L), installDirectives);
+        std::list<StringList> installInstructions;
+        readLuaList(m_L, lua_gettop(m_L), installInstructions);
         lua_pop(m_L, 1);
 
-        if (installDirectives.empty())
+        if (installInstructions.empty())
             continue;
 
         Notice() << Cyan << "Installing " << target << "...";
 
-        for (StringList& directive : installDirectives) {
-            const int directiveSize = directive.size();
-            if (!directiveSize)
+        const std::string targetDir = m_cache.sourceDir() + directory;
+
+        for (StringList& installInstruction : installInstructions) {
+            if (installInstruction.empty())
                 continue;
 
-            const std::string destDir = OS::normalizeDirPath(m_cache.installPrefix() + directive.front());
-            directive.pop_front();
-            const std::string srcDir = m_cache.sourceDir() + directory;
-
-            if (directive.empty()) { // Target installation
-                std::string targetFile = OS::normalizeFilePath(directory + luaGetField<std::string>(m_L, "_output"));
-                OS::install(targetFile, destDir);
-            } else { // custom file install
-                for (const std::string& item : directive)
-                    OS::install(srcDir[0] == '/' ? item : srcDir + item, destDir);
+            if (installInstruction.size() == 1) {
+                // Target install
+                const std::string source = OS::normalizeFilePath(directory + luaGetField<std::string>(m_L, "_output"));
+                const std::string dest = OS::normalizeDirPath(m_cache.installPrefix() + installInstruction.front());
+                OS::install(source, dest);
+            } else {
+                // Custom install
+                StringList::const_iterator it = installInstruction.begin();
+                const std::string source = OS::normalizeFilePath((!it->empty() && it->at(0) == '/') ? *it : (targetDir + *it));
+                ++it;
+                std::string dest = OS::normalizeDirPath((!it->empty() && it->at(0) == '/') ? *it : (m_cache.installPrefix() + *it));
+                ++it;
+                bool destIsFile = it != installInstruction.end();
+                if (destIsFile)
+                    dest += *it;
+                OS::install(source, dest, destIsFile);
             }
         }
     }

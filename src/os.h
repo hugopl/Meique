@@ -72,7 +72,7 @@ namespace OS
 
     void setCTRLCHandler(void (*func)());
 
-    void install(const std::string& sourceFile, const std::string& destDir);
+    void install(const std::string& sourceFile, const std::string& destDir, bool destIsFile = false);
     void uninstall(const std::string& file);
     std::string defaultInstallPrefix();
 

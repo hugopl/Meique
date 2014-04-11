@@ -284,15 +284,19 @@ void setCTRLCHandler(void (*func)())
     signal(SIGINT, _handleCtrlC);
 }
 
-void install(const std::string& sourceFile, const std::string& destDir)
+void install(const std::string& sourceFile, const std::string& destDir, bool destIsFile)
 {
-    // cosmetic stuff :-D
-    size_t idx = sourceFile.find_last_of('/');
-    std::string sourceFileNoPath = idx == std::string::npos ? sourceFile : sourceFile.substr(idx + 1);
-    Notice() << "-- Install " << destDir << sourceFileNoPath;
+    std::string label;
+    std::string command("install -C -D ");
+    if (destIsFile) {
+        label = destDir;
+        command += "-T ";
+    } else {
+        label = destDir + OS::baseName(sourceFile);
+    }
+    Notice() << "-- Install " << label;
 
-    mkdir(destDir);
-    int status = OS::exec("install -C -D " + sourceFile + ' ' + destDir);
+    int status = OS::exec(command + sourceFile + ' ' + destDir);
     if (status)
         throw Error("Error installing " + sourceFile + " into " + destDir);
 }
