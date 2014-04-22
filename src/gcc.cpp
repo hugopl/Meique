@@ -134,19 +134,24 @@ std::string Gcc::compile(const std::string& fileName, const std::string& output,
 std::string Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options, const std::string& targetDirectory) const
 {
     StringList args;
-    const char* linker;
+    std::string command;
 
     if (options->linkType() == LinkerOptions::StaticLibrary) {
-        linker = "ar";
-        args.push_front(output);
-        args.push_front("-rcs");
+        command = "ar -rcs " + output;
     } else {
         if (options->language() == CPlusPlusLanguage)
-            linker = "g++";
+            command = "g++";
         else if (options->language() == CLanguage)
-            linker = "gcc";
+            command = "gcc";
         else
             throw Error("Unsupported programming language sent to the linker!");
+
+        args.push_back("-o");
+        args.push_back(output);
+
+        // custom flags
+        StringList flags = options->customFlags();
+        std::copy(flags.begin(), flags.end(), std::back_inserter(args));
 
         if (options->linkType() == LinkerOptions::SharedLibrary) {
             if (!contains(args, "-fPIC") && !contains(args, "-fpic"))
@@ -154,12 +159,6 @@ std::string Gcc::link(const std::string& output, const StringList& objects, cons
             args.push_front("-shared");
             args.push_front("-Wl,-soname=" + output);
         }
-        args.push_back("-o");
-        args.push_back(output);
-
-        // custom flags
-        StringList flags = options->customFlags();
-        std::copy(flags.begin(), flags.end(), std::back_inserter(args));
 
         // library paths
         StringList paths = options->libraryPaths();
@@ -182,9 +181,6 @@ std::string Gcc::link(const std::string& output, const StringList& objects, cons
             args.push_back("-Wl,-rpath=" + join(paths, ":"));
     }
 
-    std::string command(linker);
-    command += ' ';
-    command += join(args, " ");
     command += ' ';
     const std::string objectsStr = join(objects, " ");
 
@@ -196,6 +192,8 @@ std::string Gcc::link(const std::string& output, const StringList& objects, cons
     } else {
         command.append(objectsStr);
     }
+    command += ' ';
+    command += join(args, " ");
 
     return command;
 }
