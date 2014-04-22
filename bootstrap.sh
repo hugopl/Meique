@@ -27,20 +27,14 @@ echo "Generating meiqueapi.cpp..."
 srcs="`ls -1 ../src/*.cpp ../ext/lua/*.cpp`"
 
 echo "Compiling meique in one go, this can take some minutes..."
-g++ -std=c++11 -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs -I../ext/lua -lpthread
+g++ -std=c++0x -o meique -O2 -I. -DNDEBUG -DLUA_USE_POSIX -lpthread meiqueapi.cpp $srcs -I../ext/lua -lpthread
 
 if [ ! -r ./meique ]; then
     fatalError
 fi
 
-numJobs=1
-if [ -r /proc/cpuinfo ]; then
-  numJobs=`grep 'physical id' /proc/cpuinfo | wc -l`
-fi
-numJobs=`expr $numJobs + 1`
-
 echo "Compiling meique using bootstraped meique :-)"
-./meique -j$numJobs ..
+./meique ..
 
 if [ -r ./src/meique ]; then
     echo "All done! Go into build dir (cd build) and type \"./meique -i\" to install meique on /usr or \"DESTDIR=MYPREFIX ./meique -i\" to install meique on MYPREFIX."
