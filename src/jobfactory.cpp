@@ -222,7 +222,7 @@ Job* JobFactory::createTargetJob(Node* target)
         return nullptr;
     }
 
-    OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, target), compiler->link(outputName, objects, &options->linkerOptions));
+    OSCommandJob* job = new OSCommandJob(new NodeGuard(m_nodeTree, target), compiler->link(outputName, objects, &options->linkerOptions, options->targetDirectory));
     job->setWorkingDirectory(buildDir);
     job->setName("Linking " + outputName);
 

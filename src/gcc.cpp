@@ -131,10 +131,10 @@ std::string Gcc::compile(const std::string& fileName, const std::string& output,
     return compile(fileName, output, options);
 }
 
-std::string Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options) const
+std::string Gcc::link(const std::string& output, const StringList& objects, const LinkerOptions* options, const std::string& targetDirectory) const
 {
-    StringList args = objects;
-    std::string linker;
+    StringList args;
+    const char* linker;
 
     if (options->linkType() == LinkerOptions::StaticLibrary) {
         linker = "ar";
@@ -182,7 +182,22 @@ std::string Gcc::link(const std::string& output, const StringList& objects, cons
             args.push_back("-Wl,-rpath=" + join(paths, ":"));
     }
 
-    return linker + ' ' + join(args, " ");
+    std::string command(linker);
+    command += ' ';
+    command += join(args, " ");
+    command += ' ';
+    const std::string objectsStr = join(objects, " ");
+
+    // The arg limit is about 16K on Linux
+    if (objectsStr.size() > 10000) {
+        std::ofstream args(targetDirectory + output + ".meiqueobjectlist", std::ios::out | std::ios::trunc);
+        args << objectsStr;
+        command += '@' + output + ".meiqueobjectlist";
+    } else {
+        command.append(objectsStr);
+    }
+
+    return command;
 }
 
 std::string Gcc::nameForExecutable(const std::string& name) const

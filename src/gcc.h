@@ -27,7 +27,7 @@ public:
     static CompilerFactory factory();
 
     std::string compile(const std::string& fileName, const std::string& output, const CompilerOptions* options);
-    std::string link(const std::string& output, const StringList& objects, const LinkerOptions* options) const;
+    std::string link(const std::string& output, const StringList& objects, const LinkerOptions* options, const std::string& targetDirectory) const;
     std::string nameForExecutable(const std::string& name) const;
     std::string nameForStaticLibrary(const std::string& name) const;
     std::string nameForSharedLibrary(const std::string& name) const;

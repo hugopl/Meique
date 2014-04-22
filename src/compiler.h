@@ -42,7 +42,7 @@ public:
     Compiler() {}
     virtual ~Compiler() {}
     virtual std::string compile(const std::string& fileName, const std::string& output, const CompilerOptions* options) = 0;
-    virtual std::string link(const std::string& output, const StringList& objects, const LinkerOptions* options) const = 0;
+    virtual std::string link(const std::string& output, const StringList& objects, const LinkerOptions* options, const std::string& targetDirectory) const = 0;
     virtual std::string nameForExecutable(const std::string& name) const = 0;
     virtual std::string nameForStaticLibrary(const std::string& name) const = 0;
     virtual std::string nameForSharedLibrary(const std::string& name) const = 0;

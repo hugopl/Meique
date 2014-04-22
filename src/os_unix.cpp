@@ -25,12 +25,14 @@ extern "C" {
 #include <errno.h>
 #include <time.h>
 #include <signal.h>
+#include <string.h>
 }
 #include "logger.h"
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
 #include <libgen.h>
+
 #include "stdstringsux.h"
 
 namespace OS
@@ -59,7 +61,8 @@ int exec(const char* cmd, std::string* output, const char* workingDir, ExecOptio
                 dup2(out2me[WRITE], 2);
         }
         execl("/usr/bin/env", "-i", "sh", "-c", cmd, (char*)0);
-        throw Error("Fatal error: shell not found!");
+        std::cerr << "meique: error on execl call: " << strerror(errno) << std::endl;
+        return 1;
     }
 
     if (output) {
