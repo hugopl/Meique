@@ -188,6 +188,7 @@ static void writeTestResults(LogWriter& s, int result, unsigned long start, unsi
 
 int Meique::testTargets()
 {
+    buildTargets();
     bool hasRegex = m_args.numberOfFreeArgs() > 0;
     auto tests = m_script->getTests(hasRegex ? m_args.freeArg(0) : std::string());
     if (tests.empty()) {
